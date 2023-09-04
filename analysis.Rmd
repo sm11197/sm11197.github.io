@@ -6,5 +6,5 @@ output: html_document
 ### Debate
 
 <div>
-  <a href="script.html" target = "_blank">Full Paper Analysis</a> <br>
+  <a href="analysis/script.html" target = "_blank">Full Paper Analysis</a> <br>
 </div>
