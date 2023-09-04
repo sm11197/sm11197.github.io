@@ -1,0 +1,9 @@
+name: "sm11197"
+output_dir: "."
+navbar:
+  title: "sm11197"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Analysis"
+      href: analysis.html
