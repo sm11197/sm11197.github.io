@@ -1,0 +1,987 @@
+---
+title: 'Results'
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    toc_float: true
+site: "site"
+#runtime: shiny
+---
+>Notes:  
+- Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python    
+- Some of this won't make it to the paper. You can probably skip preprocessing unless you want to check certain things, example: did we make sure to remove judgments based on X condition. To find bits that I think will be in the paper search [insight]  
+- If you want to clarify/comment anything do so at https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd) or message me elsewhere
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(class.source = "foldable")
+options(scipen = 999)
+library(reticulate)
+reticulate::use_virtualenv("/Users/bila/git/for-debate/debate/.venv")
+library(ggplot2)
+library(dplyr)
+library(survey)
+library(lme4)
+library(lmerTest)
+library(brms)
+library(boot)
+```
+
+# Preprocessing
+
+## Importing, then merging, filtering, and adding columns for judgments
+
+We have 3 sets of data:
+
+```{python preprocessing}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load summaries that can be downloaded from the interface
+debates = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/debates.csv", keep_default_na=True)
+sessions = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/sessions.csv", keep_default_na=True)
+turns = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/turns.csv", keep_default_na=True)
+print(f' {debates.shape} - Debates') ;print(f'{sessions.shape} - Sessions, which has multiple rows (of participants) for each debate') ; print(f'{turns.shape} - and Turns, which has multiple rows (of participant turns) for each debate')
+
+# Only include debates within a given period
+debates["Start time"] = pd.to_datetime(debates["Start time"], unit="ms")
+debates["End time"] = pd.to_datetime(debates["End time"], unit="ms")
+debates["Last modified time"] = pd.to_datetime(debates["Last modified time"], unit="ms")
+debates = debates[
+    (debates["Start time"] > pd.to_datetime("10/02/23", format="%d/%m/%y")) &
+    (debates["End time"] < pd.to_datetime("21/05/24", format="%d/%m/%y"))
+]
+### for filtering to when we had AI debates: 16/07/23
+# Filter sessions & turns to only the selected debates
+sessions = sessions.merge(debates[["Room name"]], how="inner", on="Room name")
+turns = turns.merge(debates[["Room name"]], how="inner", on="Room name")
+print(f'We have {len(debates)} debates when filtering out the initial pilots last fall')
+
+#Secondary analysis -- add comment
+# Create a new column with the bin labels
+debates['Untimed annotator context bins'] = pd.cut(debates['Untimed annotator context'].round(), bins=[0, 1, 2, 3, 4], labels=['1', '2', '3', '4'], right=True)
+debates['Speed annotator accuracy bins'] = pd.cut(debates['Speed annotator accuracy'], bins=[-0.999, 0.001, 0.201, 0.401], labels=['0', '0.2', '0.4'])
+# 0 right, 1 right, 2 right
+
+debates['Final_Accuracy'] = debates.apply(lambda row: row['Final probability correct'] > 0.5, axis=1)
+
+print(f'Average accuracy per context required by question:\n{debates.groupby("Untimed annotator context bins")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+
+print(f'Average accuracy per difficulty based on speed annotator accuracy:\n{debates.groupby("Speed annotator accuracy bins")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+
+
+# Determine settings
+def setups(row):
+    if 'GPT-4' in (row['Honest debater'], row['Dishonest debater']):
+        if row['Is single debater']:
+            return "AI Consultancy " + ("Honest" if row['Has honest debater'] else "Dishonest")
+        else:
+            return "AI Debate"
+    else:
+        if row['Is single debater']:
+            return "Human Consultancy " + ("Honest" if row['Has honest debater'] else "Dishonest")
+        else:
+            return "Human Debate"
+
+debates['Setting'] = debates.apply(setups, axis=1)
+debates['Final_Setting'] = debates['Setting'].str.replace(' Honest', '').str.replace(' Dishonest', '')
+
+# Merge sessions with debates, so we have each judge's final probability correct and the debate's metadata
+source = sessions.merge(
+        debates[["Room name", "Debater A","Debater B","Honest debater", "Dishonest debater",
+                 "Is single debater", 'Has honest debater',
+                 "Final_Setting", "Setting",
+                 "Question", "Article ID",
+                 "Speed annotator accuracy bins","Untimed annotator context bins",
+                 "Speed annotator accuracy","Untimed annotator context", "Is offline",
+                 'End time', 'Last modified time']],
+        how="left",
+        on="Room name",
+    )
+print(f'After merging debates with sessions, we have the following judge participant counts for those debates:\n{source["Role"].value_counts()}') 
+#[source['Is over'] == True] to check for completed online/offline debates
+
+# Filter out incomplete judgments
+judgments = source[source['Final probability correct'].notnull()]
+print(f'After filtering to judges that have finalized their judgment, we have the following judgments per role:\n{judgments["Role"].value_counts()}\nfor a total of {len(judgments)} judgments.')
+judgments['Final_Accuracy'] = judgments.apply(lambda row: row['Final probability correct'] > 0.5, axis=1)
+
+print(f'Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):\n{judgments["Setting"].value_counts()}')
+print(f'Of those judgments, we have this much for each setting (aggregated):\n{judgments["Final_Setting"].value_counts()}')
+
+# Remove judges who see the story more than once
+# Step 1: Extract base story name
+judgments['base_room_name'] = judgments['Room name'].str.extract('(.*)\d+$', expand=False).fillna(judgments['Room name'])
+# Step 2: Filter to keep only the first occurrence
+judgments = judgments.sort_values(by='base_room_name').groupby(['Participant', 'base_room_name']).first().reset_index()
+
+print(f'1. We then filter to judgments where the judge has only seen a story once, and now we have this much for each setting (aggregated):\n{judgments["Final_Setting"].value_counts()}')
+
+
+judgments = judgments[judgments['Untimed annotator context bins'].isin(['2', '3', '4'])]
+
+print(f'2. We then filter to judgments which require more than a sentence or two, and now we have this much for each setting (aggregated):\n{judgments["Final_Setting"].value_counts()}')
+
+
+# Filter to online judges only
+judgments_online = judgments[judgments["Role"] == "Judge"]
+print(f'We\'ll make a copy of the online judgments only leaving us with the following judgments:\n{judgments_online["Setting"].value_counts()}')
+```
+
+## Trying to balance the data
+
+1.  Balancing honest & dishonest consultancies
+2.  Sampling to 1 debate per question
+3.  Question weights
+
+```{python balance consultancy}
+# QUESTION WEIGHTS
+# 1. Calculate the frequency of each question in the dataset
+initial_question_frequency = judgments_online.groupby(['Article ID', 'Question','Final_Setting']).size()
+# 2. Invert the frequency to get the weight for each question
+initial_question_weights = 1 / initial_question_frequency
+# 3. Normalize the weights
+initial_question_weights = initial_question_weights / initial_question_weights.sum() * len(initial_question_weights)
+# 4. Assign the calculated weights to a new column in the judgments_online dataframe
+judgments_online['weight_question'] = judgments_online.set_index(['Article ID', 'Question', 'Final_Setting']).index.map(initial_question_weights).values
+print('We rebalance the dishonest & honest data, taking the ones on different questions first, then the same questions if needed')
+def balance_consultancies(df, setting_column, sample_setting):
+    """
+    Strictly match by weights, sample distinct questions, remove them after sampling,
+    then use common questions if needed to reach min_count, ensuring equal counts.
+    This version fixes the issue with merging columns.
+    """
+    consult_df = df[df['Setting'].str.contains(sample_setting, na=False)]
+    honest_df = consult_df[consult_df[setting_column].str.contains('Honest')]
+    dishonest_df = consult_df[consult_df[setting_column].str.contains('Dishonest')]
+    min_count = min(len(honest_df), len(dishonest_df))
+    sample_column_name = f'{sample_setting} Sample'
+    # Separate into distinct and common questions
+    # First, let's extract the combinations of 'Article ID' and 'Question' for both honest and dishonest dataframes
+    honest_combinations = set(honest_df[['Article ID', 'Question']].itertuples(index=False, name=None))
+    dishonest_combinations = set(dishonest_df[['Article ID', 'Question']].itertuples(index=False, name=None))
+    # Identifying the common and distinct combinations
+    common_combinations = honest_combinations.intersection(dishonest_combinations)
+    distinct_honest_combinations = honest_combinations - common_combinations
+    distinct_dishonest_combinations = dishonest_combinations - common_combinations
+    # Filtering the original dataframes based on these combinations to get distinct and common dataframes
+    common_honest_df = honest_df[honest_df.set_index(['Article ID', 'Question']).index.isin(common_combinations)]
+    common_dishonest_df = dishonest_df[dishonest_df.set_index(['Article ID', 'Question']).index.isin(common_combinations)]
+    distinct_honest_df = honest_df[honest_df.set_index(['Article ID', 'Question']).index.isin(distinct_honest_combinations)]
+    distinct_dishonest_df = dishonest_df[dishonest_df.set_index(['Article ID', 'Question']).index.isin(distinct_dishonest_combinations)]
+    # Strictly match by weights and sample from distinct questions
+    for weight in sorted(distinct_honest_df['weight_question'].unique(), reverse=True):
+        if weight in distinct_dishonest_df['weight_question'].unique():
+            honest_subset = distinct_honest_df[distinct_honest_df['weight_question'] == weight]
+            dishonest_subset = distinct_dishonest_df[distinct_dishonest_df['weight_question'] == weight]
+            sample_size = min(min_count, len(honest_subset), len(dishonest_subset))
+            honest_sample = honest_subset.sample(sample_size, replace=False)
+            dishonest_sample = dishonest_subset.sample(sample_size, replace=False)
+            df.loc[honest_sample.index, sample_column_name] = True
+            df.loc[dishonest_sample.index, sample_column_name] = True
+            ## Remove sampled rows to prevent them from being selected again
+            # Find indices that are present in both distinct_honest_df and honest_sample
+            indices_to_drop_honest = np.intersect1d(distinct_honest_df.index, honest_subset.index)
+            indices_to_drop_dishonest = np.intersect1d(distinct_dishonest_df.index, dishonest_subset.index)
+            # Drop those indices from distinct_honest_df and distinct_dishonest_df
+            distinct_honest_df = distinct_honest_df.drop(indices_to_drop_honest)
+            distinct_dishonest_df = distinct_dishonest_df.drop(indices_to_drop_dishonest)
+    # If minimum count isn't reached, sample from the common questions
+    remaining_needed = (min_count*2) - df[sample_column_name].sum()
+    for weight in sorted(common_honest_df['weight_question'].unique(), reverse=True):
+        if remaining_needed <= 0:  # Add this condition to prevent negative sample size
+          break
+        if weight in common_dishonest_df['weight_question'].unique():
+          honest_subset = common_honest_df[common_honest_df['weight_question'] == weight]
+          dishonest_subset = common_dishonest_df[common_dishonest_df['weight_question'] == weight]
+          sample_size = min(remaining_needed, len(honest_subset), len(dishonest_subset))
+          honest_sample = honest_subset.sample(sample_size, replace=False)
+          dishonest_sample = dishonest_subset.sample(sample_size, replace=False)
+          df.loc[honest_sample.index, sample_column_name] = True
+          df.loc[dishonest_sample.index, sample_column_name] = True
+          ## Remove sampled rows to prevent them from being selected again
+          # Find indices that are present in both distinct_honest_df and honest_sample
+          indices_to_drop_honest = np.intersect1d(common_honest_df.index, honest_sample.index)
+          indices_to_drop_dishonest = np.intersect1d(common_dishonest_df.index, dishonest_sample.index)
+          # Drop those indices from distinct_honest_df and distinct_dishonest_df
+          common_honest_df = common_honest_df.drop(indices_to_drop_honest)
+          common_dishonest_df = common_dishonest_df.drop(indices_to_drop_dishonest)
+          remaining_needed = (min_count*2) - df[sample_column_name].sum()
+    # Concatenate and return the results
+    return df
+
+# Initially, create the two new columns
+judgments_online['AI Consultancy Sample'] = False
+judgments_online['Human Consultancy Sample'] = False
+
+judgments_online = balance_consultancies(judgments_online, 'Setting', 'Human Consultancy')
+judgments_online = balance_consultancies(judgments_online, 'Setting', 'AI Consultancy')
+
+
+
+for col in judgments_online.columns:
+    if 'Sample' in col:
+        print(f"Value counts for {col}:")
+        print(judgments_online[col].value_counts())
+        print("\n")
+
+print('Now the weights are the same:')
+print(judgments_online[judgments_online['Human Consultancy Sample'] == True | judgments_online['Setting'].str.contains('Dishonest')]['weight_question'].sum())
+print(judgments_online[judgments_online['Human Consultancy Sample'] == True | judgments_online['Setting'].str.contains('Honest')]['weight_question'].sum())
+
+print(judgments_online[judgments_online['AI Consultancy Sample'] == True | judgments_online['Setting'].str.contains('Dishonest')]['weight_question'].sum())
+print(judgments_online[judgments_online['AI Consultancy Sample'] == True | judgments_online['Setting'].str.contains('Honest')]['weight_question'].sum())
+```
+
+```{python balance debates}
+def create_sample_column(data_frame, setting_column, sample_setting, debate_columns):
+    # Split the sample setting to get the AI/Human identifier
+    setting_type, _ = sample_setting.split(' ', 1)
+    # Get the unique debate combinations within the specified setting
+    unique_debates = data_frame[data_frame[setting_column] == sample_setting].groupby(debate_columns).apply(lambda x: x.sample(1))
+    # Define the consultancy conditions
+    consultancy_conditions = [f'{setting_type} Consultancy Honest', f'{setting_type} Consultancy Dishonest']
+    # Calculate the count of consultancies based on specified conditions
+    min_count = min(
+        len(data_frame[data_frame[setting_column].str.contains(condition)])
+        for condition in consultancy_conditions) * 2
+    sample_column_name = f'{sample_setting} Sample'
+    remaining_needed = (min_count) - data_frame[sample_column_name].sum()
+    for weight in sorted(unique_debates['weight_question'].unique()):
+      if remaining_needed <= 0:  # Add this condition to prevent negative sample size
+          break
+      else:
+        sample_subset = unique_debates[unique_debates['weight_question'] == weight]
+        sample_size = min(remaining_needed, len(sample_subset))
+        sampled_debates = sample_subset.sample(n=sample_size)
+        data_frame.loc[sampled_debates.index.get_level_values(2), sample_column_name] = True
+        remaining_needed = (min_count) - data_frame[sample_column_name].sum()
+    return data_frame
+  
+judgments_online['AI Debate Sample'] = False
+judgments_online['Human Debate Sample'] = False
+
+# Define the columns that define a debate
+debate_columns = ['Question', 'Article ID']
+
+# Create samples for Human Debate
+judgments_online = create_sample_column(judgments_online, 'Setting', 'Human Debate', debate_columns)
+
+# Create samples for AI Debate (replace 'AIDebate' with the actual setting name)
+judgments_online = create_sample_column(judgments_online, 'Setting', 'AI Debate', debate_columns)
+
+# Print value counts for the sample columns
+for setting in ['Human Debate', 'AI Debate']:
+    sample_column_name = f'{setting} Sample'
+    print(judgments_online[sample_column_name].value_counts())
+```
+
+```{python final question weights}
+# 1. Create the 'Sample' column
+sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
+consultancy_sample_columns = [col for col in judgments_online.columns if 'Consultancy Sample' in col]
+
+judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
+# Mask for rows where any 'Consultancy Sample' column is True
+consultancy_mask = judgments_online[consultancy_sample_columns].any(axis=1)
+consultancy_mask.value_counts()
+# Mask for rows where 'Final_Setting' is not consultancy
+non_consultancy_mask = ~judgments_online['Final_Setting'].str.contains('Consultancy', case=False, na=False)
+non_consultancy_mask.value_counts()
+
+# Combine the masks
+combined_mask = consultancy_mask | non_consultancy_mask
+combined_mask.value_counts()
+# Subset the DataFrame using the combined mask
+#judgments_online = judgments_online[combined_mask]
+
+print(f'Finally, the number of counts per question, as shown below:\n{judgments_online[judgments_online["Sample"] == True].groupby(["Article ID", "Question"]).size().value_counts()}\nmeans we still have questions that appear more than once')
+print(f'PS, this is how it was before all the previous  preprocessing:\n{judgments.groupby(["Article ID", "Question"]).size().value_counts()}')
+
+# Filter the dataset to include only sampled rows
+sampled_data = judgments_online[judgments_online['Sample']]
+# 2. Calculate the frequency of each question in the sampled dataset
+question_frequency_sampled = judgments_online.groupby(['Article ID', 'Question','Final_Setting']).size()
+# 3. Invert the frequency to get the weight for each question
+question_weights_sampled = 1 / question_frequency_sampled
+# 4. Normalize the weights
+question_weights_sampled = question_weights_sampled / question_weights_sampled.sum() * len(question_weights_sampled)
+# Create a mask for rows where Sample is TRUE
+mask = judgments_online['Sample'] == True
+
+# Apply the operation only to rows where the mask is true
+judgments_online.loc[mask, 'sampled_weight_question'] = (
+    judgments_online[mask].set_index(['Article ID', 'Question','Final_Setting'])
+    .index.map(question_weights_sampled)
+    .fillna(0)
+    .values
+)
+judgments_online.loc[~mask, 'sampled_weight_question'] = 0
+
+
+# QUESTION WEIGHTS
+# 1. Calculate the frequency of each question in the dataset
+initial_question_frequency = judgments_online.groupby(['Article ID', 'Question']).size()
+# 2. Invert the frequency to get the weight for each question
+initial_question_weights = 1 / initial_question_frequency
+# 3. Normalize the weights
+initial_question_weights = initial_question_weights / initial_question_weights.sum() * len(initial_question_weights)
+# 4. Assign the calculated weights to a new column in the judgments_online dataframe
+judgments_online['weight_question'] = judgments_online.set_index(['Article ID', 'Question']).index.map(initial_question_weights).values
+print('We rebalance the dishonest & honest data, taking the ones on different questions first, then the same questions if needed')
+
+judgments_online_final = judgments_online
+print(judgments_online_final['Setting'].value_counts())
+
+for setting in judgments_online_final['Final_Setting'].unique():
+    total_weight = judgments_online_final[judgments_online_final['Final_Setting'].str.contains(setting)]['weight_question'].sum()
+    print(f"Total weight for '{setting}': {total_weight}")
+
+for setting in judgments_online_final['Final_Setting'].unique():
+    total_weight = judgments_online_final[judgments_online_final['Final_Setting'].str.contains(setting) & judgments_online_final['Sample']]['sampled_weight_question'].sum()
+    print(f"Total weight for '{setting}': {total_weight}")
+
+```
+
+So the weights of honest and honest are now equal, and we account for the different question counts. But we don't balance for different 4 final setting counts?
+
+```{r R pre}
+#write.csv(py$judgments_online, '/Users/bila/scratch/r-scripts/debate/judgments_online.csv')
+judgments_online <- py$judgments_online_final
+judgments <- py$judgments
+# Convert the Accuracy column to a factor for better plotting
+judgments_online$Final_Accuracy_char <- as.logical.factor(as.character(judgments_online$Final_Accuracy))
+judgments_online$Participant <- as.factor(judgments_online$Participant)
+judgments_online$Setting <- as.factor(judgments_online$Setting)
+
+```
+
+# Results
+
+## Accuracy
+
+### Difference in proportions
+
+If we want to draw conclusions about the differences in proportions of the correct answer being chosen (accuracy) for our 4 settings using tests that assume normality, we can rely on the Central Limit Theorem: *"that if the sample size is sufficiently large then the sampling distribution will be approximately normally distributed".*
+
+More precisely, the conditions for CLT to hold true for the sampling distribution of proportions:
+
+1.  **Random Sampling:** The samples are selected randomly from the population =\> possibly not true because we had to unequally schedule judges, questions, etc. We try to balance this?
+2.  **Independence:** The samples are independent of each other =\> true, possibly not true if judges improve? Because then after each judgment the probability a judge gets it correct the next time becomes higher
+3.  **Sample Size:** Rule of thumb for sample proportions is that both $n\hat{p}$ and $n(1 - \hat{p})$ are at least 10 =\> we do okay on this front, though 10 is somewhat arbitrary
+
+Play around with the sliders to see the effect of the proportion of success (accuracy) and sample size on the sampling distribution of proportions.
+
+```{r binom, eval=FALSE, include=FALSE}
+sliderInput(
+    "p", "True Proportion of Success",
+    0, 1, value = 0.95, step = 0.01
+  )
+sliderInput(
+    "sample_size", "Sample Size",
+    0, 1000, value = 30, step = 5
+  )
+sliderInput(
+    "num_samples", "Number of Samples",
+    0, 1000, value = 1000, step = 5
+  )
+```
+
+```{r binom_plot, eval=FALSE, include=FALSE}
+renderPlot({
+    sample_props <- replicate(input$num_samples, {
+      sample_data <- rbinom(n = 1, size = input$sample_size, prob = input$p)
+      prop <- sample_data / input$sample_size
+      prop
+    })
+    
+    hist(sample_props, main = "Sampling Distribution of Proportions",
+         xlab = "Proportion", ylab = "Frequency")
+    
+    # Add a normal curve to the plot
+    curve(dnorm(x, mean = input$p, sd = sqrt(input$p * (1 - input$p) / input$sample_size)),
+          col = "blue", lwd = 2, add = TRUE)
+  })
+```
+
+```{r weighted chi}
+acc_diff_test <- function(design, Setting){
+  print(design)
+  freq_table <- svytable(~Final_Setting+Final_Accuracy, design)
+  chisq_result <- svychisq(~Final_Setting+Final_Accuracy, design, statistic = "Chisq")
+  print(chisq_result)
+  pairwise_result <- pairwise.prop.test(chisq_result$observed, p.adjust.method="bonferroni", alternative="two.sided")
+  print(pairwise_result)
+}
+
+print("Raw")
+acc_diff_test(svydesign(ids = ~1, data = judgments))
+print("Sample")
+acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, judgments_online['Sample']==TRUE)))
+print("Sample, weighted")
+acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, judgments_online['Sample']==TRUE), weights = ~weight_question))
+
+
+```
+
+
+### Logistic regression
+
+```{r}
+#judgments_online$Final_Setting <- relevel(judgments_online$Final_Setting, ref = "Human Debate")
+model1 <- glm(Final_Accuracy ~ relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments_online)
+
+summary(model1)
+table(model1$fitted.values > 0.5) 
+table(judgments_online$Final_Accuracy)
+
+model2 <- glm(Final_Accuracy ~ Participant + relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments_online)
+
+summary(model2)
+```
+
+### LMER
+
+```{r lmer}
+random.intercept.model = lmer(`Final probability correct` ~ (1|Participant) + (1|Final_Setting), 
+                              data = judgments, REML = TRUE)
+judgments$random.intercept.preds = predict(random.intercept.model)
+summary(random.intercept.model)
+ranef(random.intercept.model)
+ranova(random.intercept.model)
+
+random.intercept.model = lmer(`Final probability correct` ~ (1|Final_Setting), 
+                              data = judgments, REML = TRUE)
+judgments$random.intercept.preds = predict(random.intercept.model)
+summary(random.intercept.model)
+ranef(random.intercept.model)
+ranova(random.intercept.model)
+```
+
+### BRMS
+
+```{r brms, out.width = "100%", dpi = 300}
+#brm1 <- brm(data = judgments_online,
+#             formula = as.numeric(Final_Accuracy) | trials(2) ~ 1 + (1 | Final_Setting),
+#             family = binomial("identity"),
+#             iter = 2000, warmup = 1000, chains = 4, cores = 4,
+#             control = list(adapt_delta = .975, max_treedepth = 20),
+#             seed = 190831)
+#plot(brm1)
+```
+
+## Efficiency
+
+### Quotes %, caveats
+
+```{python TODO}
+import pandas as pd
+import re
+
+# Load summaries that can be downloaded from the interface
+debates = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/debates.csv", keep_default_na=True)
+turns = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/turns.csv", keep_default_na=True)
+
+# Only include debates within a given period
+debates["Start time"] = pd.to_datetime(debates["Start time"], unit="ms")
+debates["End time"] = pd.to_datetime(debates["End time"], unit="ms")
+debates["Last modified time"] = pd.to_datetime(debates["Last modified time"], unit="ms")
+debates = debates[
+    (debates["Start time"] > pd.to_datetime("10/02/23", format="%d/%m/%y")) &
+    (debates["End time"] < pd.to_datetime("21/05/24", format="%d/%m/%y"))
+]
+### for filtering to when we had AI debates: 16/07/23
+# Filter sessions & turns to only the selected debates
+turns = turns.merge(debates[["Room name"]], how="inner", on="Room name")
+print(f'We have {len(debates)} debates when filtering out the initial pilots last fall')
+
+#Secondary analysis -- add comment
+# Create a new column with the bin labels
+debates['Untimed annotator context bins'] = pd.cut(debates['Untimed annotator context'], bins=[-0.999, 1.001, 2.001, 3.001, 4.001], labels=['1', '2', '3', '4'])
+debates['Speed annotator accuracy bins'] = pd.cut(debates['Speed annotator accuracy'], bins=[-0.999, 0.001, 0.201, 0.401], labels=['0', '0.2', '0.4'])
+
+debates['Final_Accuracy'] = debates.apply(lambda row: row['Final probability correct'] > 0.5, axis=1)
+
+print(f'Average accuracy per context 4 to 1:\n{debates[["Untimed annotator context bins","Final_Accuracy"]].groupby(["Untimed annotator context bins"]).describe()}')
+
+print(f'Average accuracy per speed annotator accuracy:\n{debates[["Speed annotator accuracy bins","Final_Accuracy"]].groupby(["Speed annotator accuracy bins"]).describe()}')
+
+
+# Determine settings
+def setups(row):
+    if 'GPT-4' in (row['Honest debater'], row['Dishonest debater']):
+        if row['Is single debater']:
+            return "AI Consultancy " + ("Honest" if row['Has honest debater'] else "Dishonest")
+        else:
+            return "AI Debate"
+    else:
+        if row['Is single debater']:
+            return "Human Consultancy " + ("Honest" if row['Has honest debater'] else "Dishonest")
+        else:
+            return "Human Debate"
+
+debates['Setting'] = debates.apply(setups, axis=1)
+debates['Final_Setting'] = debates['Setting'].str.replace(' Honest', '').str.replace(' Dishonest', '')
+
+characters = turns.merge(
+        debates[["Room name", "Question", "Story length",
+                 "Untimed annotator context bins",
+                 "Setting", "Final_Setting",
+                 "Is offline"]],
+        how="left",
+        on="Room name",
+    )
+
+
+
+# Filtering for specific roles
+characters = characters[characters['Role (honest/dishonest)'].isin(['Honest debater', 'Dishonest debater'])]
+
+# Extracting the spans
+def extract_spans(span_str):
+    """Extract numerical spans from the given string."""
+    if pd.isna(span_str):
+        return []
+    spans = re.findall(r'<<(\d+)-(\d+)>>', span_str)
+    return [(int(start), int(end)) for start, end in spans]
+
+# Merging overlapping spans
+def merge_overlapping_spans(span_str):
+    if not isinstance(span_str, str):
+        return span_str
+    spans = extract_spans(span_str)
+    if not spans:
+        return span_str
+    spans.sort(key=lambda x: x[0])
+    merged = [spans[0]]
+    for current in spans:
+        previous = merged[-1]
+        if current[0] <= previous[1]:
+            upper_bound = max(previous[1], current[1])
+            merged[-1] = (previous[0], upper_bound)
+        else:
+            merged.append(current)
+    return ' '.join(f'<<{start}-{end}>>' for start, end in merged)
+
+# Aggregating function to concatenate quote spans
+def custom_join(series):
+    return ' '.join(filter(lambda x: isinstance(x, str), series))
+
+# Identify questions with more than one setting and filter out the characters dataframe
+questions_with_multi_settings = characters.groupby("Question").filter(lambda x: len(x["Setting"].unique()) > 1)["Question"].unique()
+filtered_characters = characters[characters["Question"].isin(questions_with_multi_settings)]
+
+# Aggregating data
+aggregates = {
+    'Quote length': 'sum',
+    'Story length': 'mean',
+    'Num previous judging rounds': 'max',
+    'Participant quote span': custom_join
+}
+# Grouping by 'Room name' and aggregating
+characters_agg_by_room = filtered_characters.groupby('Room name').agg(aggregates).reset_index()
+
+# Merging the aggregated results with the original data to reintroduce the desired columns
+characters_agg = characters_agg_by_room.merge(
+    filtered_characters[['Room name', 'Setting', 'Final_Setting', 'Question', 'Untimed annotator context bins']].drop_duplicates(),
+    on='Room name'
+)
+
+# Merge overlapping spans after the aggregation
+characters_agg["merged_quote_spans"] = characters_agg["Participant quote span"].apply(merge_overlapping_spans)
+
+# Functions to compute and compare spans across settings
+def extract_numbers_from_span(span_str):
+    spans = extract_spans(span_str)
+    numbers = set()
+    for start, end in spans:
+        numbers.update(range(int(start), int(end)+1))
+    return numbers
+
+def quote_length(span_str):
+  spans = extract_spans(span_str)
+  numbers = set()
+  for start, end in spans:
+    numbers.update(range(int(start), int(end)))
+    return numbers
+
+characters_agg["quote_length"] = characters_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
+#characters_agg["merged_quote_length"] = characters_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
+#print(characters_agg["merged_quote_length"][1])
+#print((characters_agg["merged_quote_length"]==characters_agg["quote_length"]).value_counts())
+
+def convert_to_span_format(numbers):
+    sorted_numbers = sorted(list(numbers))
+    spans = []
+    if sorted_numbers:
+        start = sorted_numbers[0]
+        end = sorted_numbers[0]
+        for num in sorted_numbers[1:]:
+            if num == end + 1:
+                end = num
+            else:
+                spans.append((start, end))
+                start = end = num
+        spans.append((start, end))
+    return ' '.join(f'<<{start}-{end}>>' for start, end in spans)
+
+def compute_span_differences(dataframe):
+    differences = {}
+    for question, group in dataframe.groupby("Question"):
+        settings = group["Setting"].unique()
+        if len(settings) > 1:
+            for i in range(len(settings)):
+                for j in range(i+1, len(settings)):
+                    setting_1 = settings[i]
+                    setting_2 = settings[j]
+                    span_str_1 = group[group["Setting"] == setting_1]["merged_quote_spans"].values[0]
+                    span_str_2 = group[group["Setting"] == setting_2]["merged_quote_spans"].values[0]
+                    numbers_1 = extract_numbers_from_span(span_str_1)
+                    numbers_2 = extract_numbers_from_span(span_str_2)
+                    diff_1 = numbers_1 - numbers_2
+                    diff_2 = numbers_2 - numbers_1
+                    key = (question, setting_1, setting_2)
+                    value = (convert_to_span_format(diff_1), convert_to_span_format(diff_2))
+                    differences[key] = value
+    return differences
+
+span_differences_all = compute_span_differences(characters_agg)
+
+print(span_differences_all.keys())
+for span in span_differences_all[('Why were Jorgenson and Ganti not put to death?', 'Human Consultancy Dishonest', 'Human Consultancy Honest')]:
+  print(len(quote_length(span)))
+
+```
+
+```{r, out.width = "100%", dpi = 300}
+characters<- py$characters_agg
+summary(characters)
+ggplot(characters) +
+  geom_violin(aes(x = Final_Setting, y = quote_length)) +
+  labs(y = "Total Quote Length")+
+  theme_minimal()
+ggplot(characters) +
+  geom_boxplot(aes(x = Final_Setting, y = `Quote length`)) +
+  labs(y = "Total Quote Length")+
+  theme_minimal()
+pairwise.t.test(characters$quote_length, characters$Final_Setting)
+```
+
+```{r TODO use py logic, out.width = "100%", dpi = 300}
+ggplot(characters) +
+  geom_boxplot(aes(x = Final_Setting, y = `Num previous judging rounds`)) +
+  labs(y = 'Max Judging Rounds') +
+  theme_minimal() 
+
+pairwise.t.test(characters$`Num previous judging rounds`, characters$Final_Setting)
+```
+
+### Length of debates, stratified
+
+```{python strat}
+
+```
+
+### Time (offline judging..?)
+
+```{python TODO offline judging}
+# Convert to datetime
+judgments["Offline judging start time"] = pd.to_datetime(judgments["Offline judging start time"], unit="ms")
+judgments["Offline judging end time"] = pd.to_datetime(judgments["Offline judging end time"], unit="ms")
+
+# Calculate offline judging time in minutes
+judgments["Offline judging time"] = (judgments["Offline judging end time"] - judgments["Offline judging start time"]).dt.total_seconds() / 60
+
+
+print(f"Number of offline judgments on consultancies:\n{judgments[judgments['Setting'].str.contains('Consultancy')]['Offline judging time'].dropna().describe()}\nOnly 13...")
+
+# Filter out rows with NaT values
+valid_judging_time = judgments["Offline judging time"].dropna()
+
+# Calculate summary statistics
+summary_stats = valid_judging_time.describe()
+print(summary_stats)
+
+
+# Filter judgments with offline judging time above 65 minutes
+filtered_judgments = judgments[(judgments["Offline judging time"] < 65) & (judgments["Untimed annotator context"] > 0)]
+
+# Print filtered judgments
+# print("Filtered judgments with offline judging time above 65 minutes:")
+print(filtered_judgments['Offline judging time'].describe())
+
+# Create the histogram
+plt.hist(filtered_judgments['Offline judging time'], bins=10)
+
+# Set labels and title
+plt.xlabel("Offline Judging Time (minutes)")
+plt.ylabel("Frequency")
+plt.title("Histogram of Offline Judging Time")
+
+# Display the histogram
+plt.show()
+
+aggregates = {
+    'Final probability correct': 'mean',
+    'Untimed annotator context': 'mean'
+}
+filtered_judgments = filtered_judgments.groupby('Offline judging time').agg(aggregates).reset_index()
+
+
+```
+
+# Analysis
+
+## Question Difficulty
+
+confounder rounds, quotes
+
+```{r Accuracy by Context Graph, out.width = "100%", dpi = 300}
+judgments$`Untimed annotator context bins` <- as.factor(judgments$`Untimed annotator context bins`)
+
+bootstrap_mean <- function(data, indices) {
+  return(mean(data[indices], na.rm = TRUE))
+}
+
+judgments %>%
+  group_by(`Untimed annotator context bins`, Setting) %>%
+  do({
+    boot_result <- boot(data = .$Final_Accuracy, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025),
+      upper_ci = quantile(boot_result$t, 0.975)
+    )
+  }) %>%
+  ggplot(aes(x = `Untimed annotator context bins`, y = mean_accuracy, color = Setting, group = Setting)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = Setting, color = NULL), alpha = 0.25) +
+  labs(y = "Average Final Accuracy", x = "Untimed Annotator Context") +
+  theme_minimal() +
+  facet_wrap(~ Setting)
+```
+
+## Judge Skill
+
+### Judge "Experience"
+
+```{r, out.width = "100%", dpi = 300}
+judgments_online %>% 
+  group_by(Final_Setting, Participant) %>%
+  arrange(`End time`) %>%
+  mutate(count=row_number()) %>% 
+  group_by(Final_Setting, count) %>%
+  do({
+    boot_result <- boot(data = .$Final_Accuracy, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = count, y = mean_accuracy, color = Final_Setting, group = Final_Setting)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = Final_Setting, color = NULL), alpha = 0.25) +
+  labs(y = "Average Final Accuracy", x = "Judging Counts") +
+  theme_minimal() +
+  facet_wrap(~ Final_Setting)
+
+subset(judgments_online, judgments_online['Setting'] == 'Human Debate') %>% 
+  group_by(`Untimed annotator context bins`, Participant) %>%
+  arrange(`End time`) %>%
+  mutate(count=row_number()) %>% 
+  group_by(`Untimed annotator context bins`, count) %>%
+  do({
+    boot_result <- boot(data = .$Final_Accuracy, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = count, y = mean_accuracy, color = `Untimed annotator context bins`, group = `Untimed annotator context bins`)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = `Untimed annotator context bins`, color = NULL), alpha = 0.25) +
+  labs(y = "Average Final Accuracy", x = "Judging Counts") +
+  theme_minimal() +
+  facet_wrap(~ `Untimed annotator context bins`)
+```
+
+### Calibration
+
+S: (1) debaters didnt learn calibration -\> calibration over time? S: (2) dishonest debater tricks
+
+```{python calibration, out.width = "100%", dpi = 300}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.calibration import calibration_curve
+
+def calibration_plot(df, setting_name, ax=None):
+    df['outcome'] = pd.Series(df['Final probability correct'] > 0.5, dtype=int)
+    df['confidence'] = df['Final probability correct'].apply(lambda x: x if x > 0.5 else 1 - x)
+    df['bins'] = pd.cut(df['confidence'], [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99])
+    # Group by bins and calculate the mean outcome
+    df_grouped = df.groupby('bins')['outcome'].mean().reset_index()
+    # Compute standard error in each bin
+    std_error = df.groupby('bins')['outcome'].apply(lambda x: x.std() / np.sqrt(len(x)) if len(x) > 1 else 0)
+    df_grouped['std_error'] = df['bins'].cat.categories.map(std_error)
+    if ax is None:
+        plt.rcParams.update({'font.size': 16})
+        fig, ax = plt.subplots(figsize=(8, 6))
+    # Plot the calibration curve with error bars
+    ax.plot(df_grouped['bins'].apply(lambda x: x.mid), df_grouped['outcome'], marker='o', linewidth=2, label='Calibration Curve')
+    ax.errorbar(df_grouped['bins'].apply(lambda x: x.mid), df_grouped['outcome'], yerr=df_grouped['std_error'], fmt='o', capsize=5, linewidth=2, label='Error Bars')
+    ax.set_xlabel('Final judge probability')
+    ax.set_ylabel('Accuracy')
+    ax.set_title(f'Judge calibration for {setting_name}')
+    ax.plot([0.5, 1], [0.5, 1], linestyle='--', color='gray', label='Perfect Calibration')
+    ax.grid(True)
+    ax.legend()
+    # Calculate ECE
+    actual_labels = df['outcome'].values
+    predicted_probs = df['Final probability correct'].values
+    prob_true, prob_pred = calibration_curve(actual_labels, predicted_probs, n_bins=10)
+    ece = np.mean(np.abs(prob_pred - prob_true) * (prob_true.size / len(actual_labels)))
+    # Print ECE
+    print(f"Expected Calibration Error (ECE) for {setting_name}: {ece:.4f}")
+    plt.show()
+    plt.rcParams.update({'font.size': plt.rcParamsDefault['font.size']})
+
+# Loop through each unique setting and create a calibration plot
+for setting in judgments['Final_Setting'].unique():
+    setting_df = judgments[judgments['Final_Setting'] == setting].copy()
+    calibration_plot(setting_df, setting)
+
+```
+
+### Judge Involvement
+
+### Judge Mistakes
+
+## Debater Skill
+
+```{r}
+random.intercept.model = lmer(`Final probability correct` ~  (1|Final_Setting), 
+                              data = judgments, REML = TRUE)
+
+judgments$random.intercept.preds = predict(random.intercept.model)
+
+colnames(judgments)
+dishonest <- judgments[!is.na(judgments$`Dishonest debater`), ]
+model3 <- glm(Final_Accuracy ~ relevel(factor(`Dishonest debater`), 'Shlomo Kofman') + relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments[!is.na(judgments$`Dishonest debater`), ])
+summary(model3)
+
+result <- judgments_online %>%
+  group_by(`Dishonest debater`) %>%
+  summarize(
+    Win_Rate = sum(Final_Accuracy == "FALSE") / n()
+  ) %>%
+  ungroup() %>%
+  arrange(desc(Win_Rate))
+
+result
+
+result1 <- judgments_online %>%
+  group_by(`Honest debater`) %>%
+  summarize(
+    Win_Rate = sum(Final_Accuracy == "TRUE") / n()
+  ) %>%
+  ungroup() %>%
+  arrange(desc(Win_Rate))
+
+result1
+
+
+
+# Filter for high win rate debaters
+high_win_rate_debaters <- result1 %>%
+  filter(Win_Rate > 0.90)  # Set the threshold for high win rate
+
+# Filter original data for debates with 'Debate' in Final_Setting
+filtered_data <- judgments_online %>%
+  filter(grepl("Debate", Final_Setting)) 
+
+# Find cases where high win rate debaters lost
+cases_high_win_rate_lost <- filtered_data %>%
+  filter(`Honest debater` %in% high_win_rate_debaters$`Honest debater` & Final_Accuracy != "TRUE")
+
+cases_high_win_rate_lost
+
+
+
+
+# Filter for high win rate debaters
+high_win_rate_debaters <- result %>%
+  filter(Win_Rate > 0.20)  # Set the threshold for high win rate
+
+# Filter original data for debates with 'Debate' in Final_Setting
+filtered_data <- judgments_online %>%
+  filter(grepl("Debate", Final_Setting)) 
+
+# Find cases where high win rate debaters lost
+cases_high_win_rate_lost <- filtered_data %>%
+  filter(`Dishonest debater` %in% high_win_rate_debaters$`Dishonest debater` & Final_Accuracy != "FALSE")
+
+cases_high_win_rate_lost
+
+
+# Fit the random intercept model and only remove missing values for 'Dishonest debater'
+random_intercept_model <- lmer(`Final probability correct` ~ (1|`Dishonest debater`), 
+                                data = dishonest, 
+                                REML = TRUE)
+
+# Summary of the model
+summary(random_intercept_model)
+dishonest$random.intercept.preds = predict(random_intercept_model)
+plot(dishonest$random.intercept.preds, dishonest$`Final probability correct`)
+
+```
+
+### Debater "Experience", ratings - how many wins?
+
+### AI vs Humans
+
+### Old vs New
+
+
+
+
+
+
+### possibly unnessary
+Finally, these are how many we get correct in each setting
+
+```{r quick ori acc stats, out.width = "100%", dpi = 300}
+judgments_online <- py$judgments_online
+table(judgments_online$Final_Accuracy, judgments_online$Final_Setting)
+table(judgments_online$Final_Accuracy, judgments_online$Setting)
+
+ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("TRUE" = "green", "FALSE" = "red")) +
+  labs(title = "Judgments by Setting, overall", x = "Setting", y = "Proportion", fill = "Final_Accuracy") +
+  theme_minimal() +
+  theme(axis.text.x = element_text())
+```
+
+Sneak peak of accuracy differences between judges, but we won't get to that again until models
+
+```{r quick ori stats cont, out.width = "100%", dpi = 300}
+ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("TRUE" = "green", "FALSE" = "red")) +
+  labs(title = "Judgments by Setting, per judge", x = "Setting", y = "Proportion", fill = "Final_Accuracy") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(),#angle = 90, hjust = 1),
+        axis.text.y = element_blank(),
+        strip.text.y.right = element_text(angle = 0)) +
+  facet_grid(rows = "Participant")
+```
+
+
