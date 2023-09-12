@@ -8,8 +8,6 @@ output:
     toc_depth: 3
     number_sections: true
     toc_float: true
-site: "site"
-#runtime: shiny
 ---
 >Notes:  
 - Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python    
@@ -22,13 +20,13 @@ knitr::opts_chunk$set(class.source = "foldable")
 options(scipen = 999)
 library(reticulate)
 reticulate::use_virtualenv("/Users/bila/git/for-debate/debate/.venv")
-library(ggplot2)
-library(dplyr)
-library(survey)
-library(lme4)
-library(lmerTest)
-library(brms)
-library(boot)
+library(ggplot2) #graphs
+library(dplyr) #data manipulation
+library(survey) #weighted chi
+library(lme4) #linear mixed models
+library(lmerTest) #tests for the above
+library(brms) #bayesian regression models
+library(boot) #bootstrap resampling for confidence intervals
 ```
 
 # Preprocessing
@@ -367,48 +365,6 @@ judgments_online$Setting <- as.factor(judgments_online$Setting)
 
 ### Difference in proportions
 
-If we want to draw conclusions about the differences in proportions of the correct answer being chosen (accuracy) for our 4 settings using tests that assume normality, we can rely on the Central Limit Theorem: *"that if the sample size is sufficiently large then the sampling distribution will be approximately normally distributed".*
-
-More precisely, the conditions for CLT to hold true for the sampling distribution of proportions:
-
-1.  **Random Sampling:** The samples are selected randomly from the population =\> possibly not true because we had to unequally schedule judges, questions, etc. We try to balance this?
-2.  **Independence:** The samples are independent of each other =\> true, possibly not true if judges improve? Because then after each judgment the probability a judge gets it correct the next time becomes higher
-3.  **Sample Size:** Rule of thumb for sample proportions is that both $n\hat{p}$ and $n(1 - \hat{p})$ are at least 10 =\> we do okay on this front, though 10 is somewhat arbitrary
-
-Play around with the sliders to see the effect of the proportion of success (accuracy) and sample size on the sampling distribution of proportions.
-
-```{r binom, eval=FALSE, include=FALSE}
-sliderInput(
-    "p", "True Proportion of Success",
-    0, 1, value = 0.95, step = 0.01
-  )
-sliderInput(
-    "sample_size", "Sample Size",
-    0, 1000, value = 30, step = 5
-  )
-sliderInput(
-    "num_samples", "Number of Samples",
-    0, 1000, value = 1000, step = 5
-  )
-```
-
-```{r binom_plot, eval=FALSE, include=FALSE}
-renderPlot({
-    sample_props <- replicate(input$num_samples, {
-      sample_data <- rbinom(n = 1, size = input$sample_size, prob = input$p)
-      prop <- sample_data / input$sample_size
-      prop
-    })
-    
-    hist(sample_props, main = "Sampling Distribution of Proportions",
-         xlab = "Proportion", ylab = "Frequency")
-    
-    # Add a normal curve to the plot
-    curve(dnorm(x, mean = input$p, sd = sqrt(input$p * (1 - input$p) / input$sample_size)),
-          col = "blue", lwd = 2, add = TRUE)
-  })
-```
-
 ```{r weighted chi}
 acc_diff_test <- function(design, Setting){
   print(design)
@@ -425,8 +381,6 @@ print("Sample")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, judgments_online['Sample']==TRUE)))
 print("Sample, weighted")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, judgments_online['Sample']==TRUE), weights = ~weight_question))
-
-
 ```
 
 
