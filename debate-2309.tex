@@ -5,16 +5,19 @@
 \documentclass[
 ]{article}
 \usepackage{amsmath,amssymb}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -45,13 +48,13 @@
 \newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
 \newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
 \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
 \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
 \newcommand{\BuiltInTok}[1]{#1}
 \newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
 \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
 \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
 \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
 \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
@@ -59,7 +62,7 @@
 \newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
 \newcommand{\ExtensionTok}[1]{#1}
 \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
 \newcommand{\ImportTok}[1]{#1}
 \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
@@ -68,7 +71,7 @@
 \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
 \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
 \newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
 \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
@@ -106,7 +109,7 @@
 \fi
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
+\urlstyle{same}
 \hypersetup{
   pdftitle={Results},
   hidelinks,
@@ -125,19 +128,16 @@ Notes:\\
 code. Hit show to see code. I switch between R and Python\\
 - Some of this won't make it to the paper. You can probably skip
 preprocessing unless you want to check certain things, example: did we
-make sure to remove judgments based on X condition. To find bits that I
-think will be in the paper search {[}insight{]}\\
-- If you want to clarify/comment anything do so at
+make sure to remove judgments based on X condition - If you want to
+clarify/comment anything do so at
 \url{https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd})
 or message me elsewhere
 \end{quote}
 
-\hypertarget{preprocessing}{%
-\section{Preprocessing}\label{preprocessing}}
+\section{Preprocessing}\label{preprocessing}
 
-\hypertarget{importing-filtering-and-adding-columns}{%
 \subsection{Importing, filtering, and adding
-columns}\label{importing-filtering-and-adding-columns}}
+columns}\label{importing-filtering-and-adding-columns}
 
 We have 3 sets of data from the interface:
 
@@ -207,6 +207,8 @@ We have 3 sets of data from the interface:
 ## 2                                      0.711382          246
 ## 3                                      0.702857          175
 ## 4                                      0.632653           98
+## 
+## <string>:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 \end{verbatim}
 
 \begin{Shaded}
@@ -223,6 +225,8 @@ We have 3 sets of data from the interface:
 ## 0.2                                   0.697509          281
 ## 0.4                                   0.694118          170
 ## Hm, this seems less likely to be a good indicator of question difficulty
+## 
+## <string>:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 \end{verbatim}
 
 \begin{Shaded}
@@ -248,9 +252,8 @@ We have 3 sets of data from the interface:
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{merging-filtering-for-judgments}{%
 \subsection{Merging, filtering for
-judgments}\label{merging-filtering-for-judgments}}
+judgments}\label{merging-filtering-for-judgments}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -272,11 +275,12 @@ judgments}\label{merging-filtering-for-judgments}}
 
 \begin{verbatim}
 ## After merging debates with sessions, we have the following participant counts for those debates:
+## Role
 ## Judge            549
 ## Debater B        487
 ## Debater A        458
 ## Offline Judge    223
-## Name: Role, dtype: int64
+## Name: count, dtype: int64
 \end{verbatim}
 
 \begin{Shaded}
@@ -291,9 +295,10 @@ judgments}\label{merging-filtering-for-judgments}}
 
 \begin{verbatim}
 ## After filtering to judges that have finalized their judgment, we have the following judgments per role:
+## Role
 ## Judge            508
 ## Offline Judge    214
-## Name: Role, dtype: int64
+## Name: count, dtype: int64
 ## for a total of 722 judgments.
 \end{verbatim}
 
@@ -307,13 +312,14 @@ judgments}\label{merging-filtering-for-judgments}}
 
 \begin{verbatim}
 ## Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):
+## Setting
 ## Human Debate                   413
 ## AI Debate                       92
 ## Human Consultancy Dishonest     68
 ## AI Consultancy Honest           56
 ## Human Consultancy Honest        53
 ## AI Consultancy Dishonest        40
-## Name: Setting, dtype: int64
+## Name: count, dtype: int64
 \end{verbatim}
 
 \begin{Shaded}
@@ -397,6 +403,15 @@ judgments}\label{merging-filtering-for-judgments}}
 \NormalTok{    Context\_Count}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\StringTok{\textquotesingle{}size\textquotesingle{}}\NormalTok{),}
 \NormalTok{    Proportion\_Context}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x) }\OperatorTok{/}\NormalTok{ total\_counts\_for\_setting[x.mode()])}
 \NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## <string>:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Are the difficult questions equally enough distributed amongst settings?:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{result}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
@@ -471,9 +486,8 @@ So question difficulty isn't perfectly balanced\ldots{} but
 consultancies have a different relationship with question difficulty
 anyway? \textbf{need a second opinion}
 
-\hypertarget{trying-to-balance-the-data}{%
 \subsection{Trying to balance the
-data}\label{trying-to-balance-the-data}}
+data}\label{trying-to-balance-the-data}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -484,9 +498,8 @@ data}\label{trying-to-balance-the-data}}
   Question weights
 \end{enumerate}
 
-\hypertarget{balancing-honest-dishonest-consultancies}{%
 \subsubsection{Balancing honest \& dishonest
-consultancies}\label{balancing-honest-dishonest-consultancies}}
+consultancies}\label{balancing-honest-dishonest-consultancies}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -609,8 +622,7 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{balance-debates}{%
-\subsubsection{Balance debates}\label{balance-debates}}
+\subsubsection{Balance debates}\label{balance-debates}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -656,11 +668,10 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 ##                    False      25
 ## Human Debate       True      107
 ##                    False      48
-## Name: Sample, dtype: int64
+## Name: count, dtype: int64
 \end{verbatim}
 
-\hypertarget{question-weights}{%
-\subsubsection{Question weights}\label{question-weights}}
+\subsubsection{Question weights}\label{question-weights}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -774,8 +785,8 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 ## Total sampled_consultancies_all_debates_weights for Human Debate: 82.48
 ## Total sampled_consultancies_all_debates_weights for AI Debate: 66.52
 ## Total sampled_consultancies_all_debates_weights for Human Consultancy Honest: 16.52
-## Total sampled_consultancies_all_debates_weights for AI Consultancy Honest: 36.42
 ## Total sampled_consultancies_all_debates_weights for Human Consultancy Dishonest: 16.00
+## Total sampled_consultancies_all_debates_weights for AI Consultancy Honest: 36.42
 \end{verbatim}
 
 \begin{Shaded}
@@ -789,8 +800,8 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Debate: 107.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Debate: 75.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Honest: 30.50
-## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Honest: 38.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Dishonest: 30.50
+## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Honest: 38.00
 \end{verbatim}
 
 \begin{Shaded}
@@ -804,8 +815,8 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 ## Total sampled_consultancies_all_debates_weights_setting for Human Debate: 107.00
 ## Total sampled_consultancies_all_debates_weights_setting for AI Debate: 75.00
 ## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Honest: 41.00
-## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Honest: 38.00
 ## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Dishonest: 41.00
+## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Honest: 38.00
 \end{verbatim}
 
 \begin{Shaded}
@@ -831,8 +842,7 @@ consultancies}\label{balancing-honest-dishonest-consultancies}}
 Note: we are not balancing \emph{between settings}, and some of the
 counts of the debate settings are on the same questions
 
-\hypertarget{load-into-r-environment}{%
-\subsection{Load into R environment}\label{load-into-r-environment}}
+\subsection{Load into R environment}\label{load-into-r-environment}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -911,17 +921,17 @@ counts of the debate settings are on the same questions
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_debates\_weights\_grouped\_setting)}
+\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ##                    
-##                       0 0.5   1
-##   AI Consultancy     17   0  76
-##   AI Debate          12   0  75
-##   Human Consultancy  25  42  40
-##   Human Debate       48   0 107
+##                      0 0.5  1
+##   AI Consultancy    17   0 76
+##   AI Debate          0  24 63
+##   Human Consultancy 25  42 40
+##   Human Debate       0  96 59
 \end{verbatim}
 
 \begin{Shaded}
@@ -939,26 +949,24 @@ counts of the debate settings are on the same questions
 ##   Human Debate      48   1    9                15  20 62
 \end{verbatim}
 
-\hypertarget{results}{%
-\section{Results}\label{results}}
+\section{Results}\label{results}
 
-\hypertarget{accuracy}{%
-\subsection{Accuracy}\label{accuracy}}
+\subsection{Accuracy}\label{accuracy}
 
-\hypertarget{difference-in-proportions}{%
 \subsubsection{Difference in
-proportions}\label{difference-in-proportions}}
+proportions}\label{difference-in-proportions}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{acc\_diff\_test }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(design, Setting)\{}
   \FunctionTok{print}\NormalTok{(design)}
 \NormalTok{  freq\_table }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, design)}
-  \FunctionTok{print}\NormalTok{(freq\_table)}
 \NormalTok{  chisq\_result }\OtherTok{\textless{}{-}} \FunctionTok{svychisq}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, design, }\AttributeTok{statistic =} \StringTok{"Chisq"}\NormalTok{)}
   \FunctionTok{print}\NormalTok{(chisq\_result)}
 \NormalTok{  pairwise\_result }\OtherTok{\textless{}{-}} \FunctionTok{pairwise.prop.test}\NormalTok{(freq\_table, }\AttributeTok{p.adjust.method=}\StringTok{"none"}\NormalTok{, }\AttributeTok{alternative=}\StringTok{"two.sided"}\NormalTok{)}
   \FunctionTok{print}\NormalTok{(pairwise\_result)}
+\NormalTok{  freq\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(freq\_table, }\AttributeTok{Accuracy =}\NormalTok{ (freq\_table[,}\DecValTok{2}\NormalTok{] }\SpecialCharTok{/}\NormalTok{ (freq\_table[,}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{freq\_table[,}\DecValTok{2}\NormalTok{]))}\SpecialCharTok{*}\DecValTok{100}\NormalTok{)}
+  \FunctionTok{print}\NormalTok{(freq\_table)}
 \NormalTok{\}}
 
 \FunctionTok{print}\NormalTok{(}\StringTok{"Really raw"}\NormalTok{)}
@@ -982,13 +990,7 @@ proportions}\label{difference-in-proportions}}
 
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
-## svydesign(ids = ~1, data = judgments)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy       19   77
-##   AI Debate            20   72
-##   Human Consultancy    34   87
-##   Human Debate         50  327
+## print(design)
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
@@ -1005,7 +1007,12 @@ proportions}\label{difference-in-proportions}}
 ## Human Consultancy 0.20924        0.36922   -                
 ## Human Debate      0.14538        0.05977   0.00026          
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       19   77 80.20833
+## AI Debate            20   72 78.26087
+## Human Consultancy    34   87 71.90083
+## Human Debate         50  327 86.73740
 \end{verbatim}
 
 \begin{Shaded}
@@ -1032,12 +1039,6 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
 ## print(design)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy       18   75
-##   AI Debate            19   68
-##   Human Consultancy    32   75
-##   Human Debate         25  130
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
@@ -1054,7 +1055,12 @@ proportions}\label{difference-in-proportions}}
 ## Human Consultancy 0.120          0.269     -                
 ## Human Debate      0.634          0.352     0.012            
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       18   75 80.64516
+## AI Debate            19   68 78.16092
+## Human Consultancy    32   75 70.09346
+## Human Debate         25  130 83.87097
 \end{verbatim}
 
 \begin{Shaded}
@@ -1082,17 +1088,11 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
 ## print(design)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy       15   61
-##   AI Debate            19   68
-##   Human Consultancy    24   58
-##   Human Debate         25  130
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
 ## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 5.7412, df = 3, p-value = 0.1257
+## X-squared = 5.9826, df = 3, p-value = 0.1132
 ## 
 ## 
 ##  Pairwise comparisons using Pairwise comparison of proportions 
@@ -1100,11 +1100,16 @@ proportions}\label{difference-in-proportions}}
 ## data:  freq_table 
 ## 
 ##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         0.892          -         -                
-## Human Consultancy 0.229          0.352     -                
-## Human Debate      0.620          0.352     0.027            
+## AI Debate         0.729          -         -                
+## Human Consultancy 0.159          0.352     -                
+## Human Debate      0.803          0.352     0.027            
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       14   62 81.57895
+## AI Debate            19   68 78.16092
+## Human Consultancy    24   58 70.73171
+## Human Debate         25  130 83.87097
 \end{verbatim}
 
 \begin{Shaded}
@@ -1126,17 +1131,11 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
 ## print(design)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy     15.0 61.0
-##   AI Debate          15.5 59.5
-##   Human Consultancy  16.0 45.0
-##   Human Debate       16.5 90.5
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
 ## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 3.6629, df = 3, p-value = 0.3338
+## X-squared = 3.7897, df = 3, p-value = 0.3186
 ## 
 ## 
 ##  Pairwise comparisons using Pairwise comparison of proportions 
@@ -1144,11 +1143,49 @@ proportions}\label{difference-in-proportions}}
 ## data:  freq_table 
 ## 
 ##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         1.00           -         -                
-## Human Consultancy 0.49           0.58      -                
-## Human Debate      0.57           0.47      0.13             
+## AI Debate         0.89           -         -                
+## Human Consultancy 0.37           0.58      -                
+## Human Debate      0.74           0.47      0.13             
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy     14.0 62.0 81.57895
+## AI Debate          15.5 59.5 79.33333
+## Human Consultancy  16.0 45.0 73.77049
+## Human Debate       16.5 90.5 84.57944
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{acc\_diff\_test}\NormalTok{(}\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Independent Sampling design (with replacement)
+## print(design)
+## 
+##  Pearson's X^2: Rao & Scott adjustment
+## 
+## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
+## X-squared = 7.6386, df = 3, p-value = 0.09546
+## 
+## 
+##  Pairwise comparisons using Pairwise comparison of proportions 
+## 
+## data:  freq_table 
+## 
+##                   AI Consultancy AI Debate Human Consultancy
+## AI Debate         1.000          -         -                
+## Human Consultancy 0.409          0.446     -                
+## Human Debate      0.335          0.286     0.059            
+## 
+## P value adjustment method: none 
+##                       FALSE     TRUE Accuracy
+## AI Consultancy    13.200000 51.28333 79.52959
+## AI Debate         14.016667 52.50000 78.92759
+## Human Consultancy  9.866667 22.65000 69.65659
+## Human Debate      10.850000 71.63333 86.84583
 \end{verbatim}
 
 \begin{Shaded}
@@ -1170,17 +1207,11 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
 ## print(design)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy       15   61
-##   AI Debate            15   60
-##   Human Consultancy    16   45
-##   Human Debate         16   91
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
 ## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 3.4008, df = 3, p-value = 0.3378
+## X-squared = 3.4707, df = 3, p-value = 0.3286
 ## 
 ## 
 ##  Pairwise comparisons using Pairwise comparison of proportions 
@@ -1188,11 +1219,16 @@ proportions}\label{difference-in-proportions}}
 ## data:  freq_table 
 ## 
 ##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         1.00           -         -                
-## Human Consultancy 0.49           0.51      -                
-## Human Debate      0.52           0.49      0.11             
+## AI Debate         0.97           -         -                
+## Human Consultancy 0.37           0.51      -                
+## Human Debate      0.67           0.49      0.11             
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       14   62 81.57895
+## AI Debate            15   60 80.00000
+## Human Consultancy    16   45 73.77049
+## Human Debate         16   91 85.04673
 \end{verbatim}
 
 \begin{Shaded}
@@ -1204,17 +1240,11 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ## Independent Sampling design (with replacement)
 ## print(design)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy       15   61
-##   AI Debate            15   60
-##   Human Consultancy    16   45
-##   Human Debate         16   91
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
 ## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 4.421, df = 3, p-value = 0.3375
+## X-squared = 4.5119, df = 3, p-value = 0.3283
 ## 
 ## 
 ##  Pairwise comparisons using Pairwise comparison of proportions 
@@ -1222,11 +1252,16 @@ proportions}\label{difference-in-proportions}}
 ## data:  freq_table 
 ## 
 ##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         1.00           -         -                
-## Human Consultancy 0.49           0.51      -                
-## Human Debate      0.52           0.49      0.11             
+## AI Debate         0.97           -         -                
+## Human Consultancy 0.37           0.51      -                
+## Human Debate      0.67           0.49      0.11             
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       14   62 81.57895
+## AI Debate            15   60 80.00000
+## Human Consultancy    16   45 73.77049
+## Human Debate         16   91 85.04673
 \end{verbatim}
 
 \begin{Shaded}
@@ -1241,10 +1276,6 @@ proportions}\label{difference-in-proportions}}
 ## svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == 
 ##     TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", 
 ##     Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   Human Consultancy  16.0 45.0
-##   Human Debate       16.5 90.5
 ## 
 ##  Pearson's X^2: Rao & Scott adjustment
 ## 
@@ -1259,7 +1290,10 @@ proportions}\label{difference-in-proportions}}
 ##              Human Consultancy
 ## Human Debate 0.13             
 ## 
-## P value adjustment method: none
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## Human Consultancy  16.0 45.0 73.77049
+## Human Debate       16.5 90.5 84.57944
 \end{verbatim}
 
 \begin{Shaded}
@@ -1275,7 +1309,7 @@ proportions}\label{difference-in-proportions}}
 \begin{verbatim}
 ##                    Final_Accuracy
 ## Final_Setting       FALSE TRUE
-##   AI Consultancy     15.0 61.0
+##   AI Consultancy     14.0 62.0
 ##   AI Debate          15.5 59.5
 ##   Human Consultancy  16.0 45.0
 ##   Human Debate       16.5 90.5
@@ -1313,12 +1347,12 @@ proportions}\label{difference-in-proportions}}
 
 \begin{verbatim}
 ##                   FALSE TRUE Accuracy difference_with_debate ci_lowers
-## AI Consultancy     15.0 61.0 80.26316              -4.316281 -8.073724
+## AI Consultancy     14.0 62.0 81.57895              -3.000492 -9.205452
 ## AI Debate          15.5 59.5 79.33333              -5.246106 -7.324725
 ## Human Consultancy  16.0 45.0 73.77049             -10.808947 -3.465654
 ## Human Debate       16.5 90.5 84.57944               0.000000 -9.677288
 ##                   ci_uppers  p_values
-## AI Consultancy    16.706287 0.5730868
+## AI Consultancy    15.206436 0.7372949
 ## AI Debate         17.816936 0.4731832
 ## Human Consultancy 25.083549 0.1329563
 ## Human Debate       9.677288 1.0000000
@@ -1341,7 +1375,7 @@ proportions}\label{difference-in-proportions}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1484}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1484}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0625}}@{}}
-\toprule()
+\toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 \# Incorrect (weighted)
@@ -1358,13 +1392,14 @@ Difference
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 p-value
 \end{minipage} \\
-\midrule()
+\midrule\noalign{}
 \endhead
-AI Consultancy & 15.0 & 61.0 & 80.3 & -4.3 & -8.1 & 16.7 & 0.573 \\
+\bottomrule\noalign{}
+\endlastfoot
+AI Consultancy & 14.0 & 62.0 & 81.6 & -3.0 & -9.2 & 15.2 & 0.737 \\
 AI Debate & 15.5 & 59.5 & 79.3 & -5.2 & -7.3 & 17.8 & 0.473 \\
 Human Consultancy & 16.0 & 45.0 & 73.8 & -10.8 & -3.5 & 25.1 & 0.133 \\
 Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
-\bottomrule()
 \end{longtable}
 
 \begin{Shaded}
@@ -1459,7 +1494,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1377}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1377}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0580}}@{}}
-\toprule()
+\toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 \# Incorrect (weighted)
@@ -1476,14 +1511,15 @@ Difference
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 p-value
 \end{minipage} \\
-\midrule()
+\midrule\noalign{}
 \endhead
+\bottomrule\noalign{}
+\endlastfoot
 Human Consultancy Dishonest & 18.0 & 23.0 & 56.1 & -28.5 & 10.1 & 46.8 &
 0.001 \\
 Human Consultancy Honest & 6.0 & 35.0 & 85.4 & 0.8 & -14.4 & 12.8 &
 1.000 \\
 Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
-\bottomrule()
 \end{longtable}
 
 \begin{Shaded}
@@ -1521,8 +1557,304 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## 0.6965659 0.8684583
 \end{verbatim}
 
-\hypertarget{logistic-regression}{%
-\subsubsection{Logistic regression}\label{logistic-regression}}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{fpc }\OtherTok{\textless{}{-}}\NormalTok{ judgments\_online}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Final probability correct}\StringTok{\textasciigrave{}}
+\NormalTok{judgments\_online }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ fpc)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"fpc"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{debate-2309_files/figure-latex/final probability correct-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{judgments\_online }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{fpcmed =} \FunctionTok{median}\NormalTok{(fpc),}
+                                                           \AttributeTok{fpcmean =} \FunctionTok{mean}\NormalTok{(Final\_Accuracy)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ fpcmean)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"acc"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{debate-2309_files/figure-latex/final probability correct-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{consultancy\_design }\OtherTok{\textless{}{-}} \FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
+
+
+
+\NormalTok{human\_consultancy\_design }\OtherTok{\textless{}{-}} \FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"AI"}\NormalTok{, Final\_Setting)), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
+
+
+\FunctionTok{svyranktest}\NormalTok{(fpc}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting, human\_consultancy\_design)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Design-based KruskalWallis test
+## 
+## data:  fpc ~ Final_Setting
+## t = 2.4508, df = 235, p-value = 0.01499
+## alternative hypothesis: true difference in mean rank score is not equal to 0
+## sample estimates:
+## difference in mean rank score 
+##                     0.0969166
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{judgments\_online }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{fpcmed =} \FunctionTok{median}\NormalTok{(fpc),}
+                                                           \AttributeTok{fpcmean =} \FunctionTok{mean}\NormalTok{(fpc))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 4 x 3
+##   Final_Setting     fpcmed fpcmean
+##   <chr>              <dbl>   <dbl>
+## 1 AI Consultancy      0.96   0.764
+## 2 AI Debate           0.99   0.754
+## 3 Human Consultancy   0.87   0.672
+## 4 Human Debate        0.95   0.792
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{svyranktest}\NormalTok{(fpc}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting, consultancy\_design, }\AttributeTok{test =} \StringTok{"median"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Design-based median test
+## 
+## data:  fpc ~ Final_Setting
+## df = 3, Chisq = 13.969, p-value = 0.003272
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{svyranktest}\NormalTok{(fpc}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting, consultancy\_design, }\AttributeTok{test =} \StringTok{"wilcoxon"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Design-based KruskalWallis test
+## 
+## data:  fpc ~ Final_Setting
+## df = 3, Chisq = 12.446, p-value = 0.006514
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{svyranktest}\NormalTok{(fpc}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting, consultancy\_design, }\AttributeTok{test =} \StringTok{"vanderWaerden"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Design-based vanderWaerden test
+## 
+## data:  fpc ~ Final_Setting
+## df = 3, Chisq = 9.8037, p-value = 0.02133
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{weighted\_mannwhitney}\NormalTok{(fpc }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Final\_Setting }\SpecialCharTok{+}\NormalTok{ sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, judgments\_online)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in summary.glm(glm.object): observations with zero weight not used for
+## calculating dispersion
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## # Weighted Kruskal-Wallis test
+## 
+##   comparison of fpc by Final_Setting
+##   Chisq=3.00  df=12  p-value=0.006
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{data}\NormalTok{(efc)}
+\FunctionTok{str}\NormalTok{(efc)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    908 obs. of  26 variables:
+##  $ c12hour : num  16 148 70 168 168 16 161 110 28 40 ...
+##   ..- attr(*, "label")= chr "average number of hours of care per week"
+##  $ e15relat: num  2 2 1 1 2 2 1 4 2 2 ...
+##   ..- attr(*, "label")= chr "relationship to elder"
+##   ..- attr(*, "labels")= Named num [1:8] 1 2 3 4 5 6 7 8
+##   .. ..- attr(*, "names")= chr [1:8] "spouse/partner" "child" "sibling" "daughter or son -in-law" ...
+##  $ e16sex  : num  2 2 2 2 2 2 1 2 2 2 ...
+##   ..- attr(*, "label")= chr "elder's gender"
+##   ..- attr(*, "labels")= Named num [1:2] 1 2
+##   .. ..- attr(*, "names")= chr [1:2] "male" "female"
+##  $ e17age  : num  83 88 82 67 84 85 74 87 79 83 ...
+##   ..- attr(*, "label")= chr "elder' age"
+##  $ e42dep  : num  3 3 3 4 4 4 4 4 4 4 ...
+##   ..- attr(*, "label")= chr "elder's dependency"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "independent" "slightly dependent" "moderately dependent" "severely dependent"
+##  $ c82cop1 : num  3 3 2 4 3 2 4 3 3 3 ...
+##   ..- attr(*, "label")= chr "do you feel you cope well as caregiver?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "never" "sometimes" "often" "always"
+##  $ c83cop2 : num  2 3 2 1 2 2 2 2 2 2 ...
+##   ..- attr(*, "label")= chr "do you find caregiving too demanding?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c84cop3 : num  2 3 1 3 1 3 4 2 3 1 ...
+##   ..- attr(*, "label")= chr "does caregiving cause difficulties in your relationship with your friends?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c85cop4 : num  2 3 4 1 2 3 1 1 2 2 ...
+##   ..- attr(*, "label")= chr "does caregiving have negative effect on your physical health?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c86cop5 : num  1 4 1 1 2 3 1 1 2 1 ...
+##   ..- attr(*, "label")= chr "does caregiving cause difficulties in your relationship with your family?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c87cop6 : num  1 1 1 1 2 2 2 1 1 1 ...
+##   ..- attr(*, "label")= chr "does caregiving cause financial difficulties?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c88cop7 : num  2 3 1 1 1 2 4 2 3 1 ...
+##   ..- attr(*, "label")= chr "do you feel trapped in your role as caregiver?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "Never" "Sometimes" "Often" "Always"
+##  $ c89cop8 : num  3 2 4 2 4 1 1 3 1 1 ...
+##   ..- attr(*, "label")= chr "do you feel supported by friends/neighbours?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "never" "sometimes" "often" "always"
+##  $ c90cop9 : num  3 2 3 4 4 1 4 3 3 3 ...
+##   ..- attr(*, "label")= chr "do you feel caregiving worthwhile?"
+##   ..- attr(*, "labels")= Named num [1:4] 1 2 3 4
+##   .. ..- attr(*, "names")= chr [1:4] "never" "sometimes" "often" "always"
+##  $ c160age : num  56 54 80 69 47 56 61 67 59 49 ...
+##   ..- attr(*, "label")= chr "carer' age"
+##  $ c161sex : num  2 2 1 1 2 1 2 2 2 2 ...
+##   ..- attr(*, "label")= chr "carer's gender"
+##   ..- attr(*, "labels")= Named num [1:2] 1 2
+##   .. ..- attr(*, "names")= chr [1:2] "Male" "Female"
+##  $ c172code: num  2 2 1 2 2 2 2 2 NA 2 ...
+##   ..- attr(*, "label")= chr "carer's level of education"
+##   ..- attr(*, "labels")= Named num [1:3] 1 2 3
+##   .. ..- attr(*, "names")= chr [1:3] "low level of education" "intermediate level of education" "high level of education"
+##  $ c175empl: num  1 1 0 0 0 1 0 0 0 0 ...
+##   ..- attr(*, "label")= chr "are you currently employed?"
+##   ..- attr(*, "labels")= Named num [1:2] 0 1
+##   .. ..- attr(*, "names")= chr [1:2] "no" "yes"
+##  $ barthtot: num  75 75 35 0 25 60 5 35 15 0 ...
+##   ..- attr(*, "label")= chr "Total score BARTHEL INDEX"
+##  $ neg_c_7 : num  12 20 11 10 12 19 15 11 15 10 ...
+##   ..- attr(*, "label")= chr "Negative impact with 7 items"
+##  $ pos_v_4 : num  12 11 13 15 15 9 13 14 13 13 ...
+##   ..- attr(*, "label")= chr "Positive value with 4 items"
+##  $ quol_5  : num  14 10 7 12 19 8 20 20 8 15 ...
+##   ..- attr(*, "label")= chr "Quality of life 5 items"
+##  $ resttotn: num  0 4 0 2 2 1 0 0 0 1 ...
+##   ..- attr(*, "label")= chr "Job restrictions"
+##  $ tot_sc_e: num  4 0 1 0 1 3 0 1 2 1 ...
+##   ..- attr(*, "label")= chr "Services for elderly"
+##  $ n4pstu  : num  0 0 2 3 2 2 3 1 3 3 ...
+##   ..- attr(*, "label")= chr "Care level"
+##   ..- attr(*, "labels")= Named chr [1:5] "0" "1" "2" "3" ...
+##   .. ..- attr(*, "names")= chr [1:5] "No Care Level" "Care Level 1" "Care Level 2" "Care Level 3" ...
+##  $ nur_pst : num  NA NA 2 3 2 2 3 1 3 3 ...
+##   ..- attr(*, "label")= chr "Care level"
+##   ..- attr(*, "labels")= Named chr [1:3] "1" "2" "3"
+##   .. ..- attr(*, "names")= chr [1:3] "Care Level 1" "Care Level 2" "Care Level 3/3+"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{efc}\SpecialCharTok{$}\NormalTok{weight }\OtherTok{\textless{}{-}} \FunctionTok{abs}\NormalTok{(}\FunctionTok{rnorm}\NormalTok{(}\FunctionTok{nrow}\NormalTok{(efc), }\DecValTok{1}\NormalTok{, .}\DecValTok{3}\NormalTok{))}
+\FunctionTok{weighted\_mannwhitney}\NormalTok{(c12hour }\SpecialCharTok{\textasciitilde{}}\NormalTok{ c161sex }\SpecialCharTok{+}\NormalTok{ weight, efc)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## # Weighted Mann-Whitney-U test
+## 
+##   comparison of c12hour by c161sex
+##   Chisq=2.47  df=899  p-value=0.014
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{weighted\_mannwhitney}\NormalTok{(fpc }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Final\_Setting }\SpecialCharTok{+}\NormalTok{ sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, judgments\_online)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in summary.glm(glm.object): observations with zero weight not used for
+## calculating dispersion
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## # Weighted Kruskal-Wallis test
+## 
+##   comparison of fpc by Final_Setting
+##   Chisq=3.00  df=12  p-value=0.006
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{wilcox.test}\NormalTok{(efc}\SpecialCharTok{$}\NormalTok{c12hour,efc}\SpecialCharTok{$}\NormalTok{c161sex)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  efc$c12hour and efc$c161sex
+## W = 812702, p-value < 0.00000000000000022
+## alternative hypothesis: true location shift is not equal to 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{fpcw }\OtherTok{\textless{}{-}}\NormalTok{ judgments\_online}\SpecialCharTok{$}\NormalTok{fpc }\SpecialCharTok{*}\NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting}
+\FunctionTok{wilcox.test}\NormalTok{(fpcw}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting, }\FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"AI"}\NormalTok{, Final\_Setting)), }\AttributeTok{conf.int=}\NormalTok{T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  fpcw by Final_Setting
+## W = 5837, p-value = 0.3003
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.09001393  0.01492054
+## sample estimates:
+## difference in location 
+##            -0.01505394
+\end{verbatim}
+
+\subsubsection{Logistic regression}\label{logistic-regression}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1538,10 +1870,6 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## Call:
 ## glm(formula = Final_Accuracy ~ relevel(factor(Final_Setting), 
 ##     "Human Debate"), family = "binomial", data = judgments_online)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -1.9103   0.5931   0.5931   0.7020   0.8430  
 ## 
 ## Coefficients:
 ##                                                                 Estimate
@@ -1619,10 +1947,6 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## glm(formula = Final_Accuracy ~ relevel(factor(Participant), "Aliyaah Toussaint") + 
 ##     relevel(factor(Final_Setting), "Human Debate"), family = "binomial", 
 ##     data = judgments_online)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.2162   0.4597   0.5617   0.7213   1.0602  
 ## 
 ## Coefficients:
 ##                                                                       Estimate
@@ -1752,8 +2076,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## Number of Fisher Scoring iterations: 14
 \end{verbatim}
 
-\hypertarget{lmer}{%
-\subsubsection{LMER}\label{lmer}}
+\subsubsection{LMER}\label{lmer}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1784,7 +2107,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## 
 ## Fixed effects:
 ##             Estimate Std. Error      df t value Pr(>|t|)    
-## (Intercept)  0.75723    0.02948 3.33320   25.68  0.00006 ***
+## (Intercept)  0.75723    0.02948 3.33321   25.68  0.00006 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
@@ -1798,10 +2121,10 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \begin{verbatim}
 ## $Final_Setting
 ##                    (Intercept)
-## AI Consultancy     0.002319437
-## AI Debate         -0.001131439
-## Human Consultancy -0.056960054
-## Human Debate       0.055772055
+## AI Consultancy     0.002319435
+## AI Debate         -0.001131440
+## Human Consultancy -0.056960042
+## Human Debate       0.055772047
 ## 
 ## with conditional variances for "Final_Setting"
 \end{verbatim}
@@ -1917,8 +2240,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
 
-\hypertarget{brms}{%
-\subsubsection{BRMS}\label{brms}}
+\subsubsection{BRMS}\label{brms}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1932,11 +2254,9 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{efficiency}{%
-\subsection{Efficiency}\label{efficiency}}
+\subsection{Efficiency}\label{efficiency}
 
-\hypertarget{quotes-caveats}{%
-\subsubsection{Quotes \%, caveats}\label{quotes-caveats}}
+\subsubsection{Quotes \%, caveats}\label{quotes-caveats}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2103,39 +2423,37 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \end{Shaded}
 
 \begin{verbatim}
-##                                              Settings  ...  Average_Span_Difference
-## 0    AI Consultancy Dishonest - AI Consultancy Honest  ...               137.416667
-## 1                AI Consultancy Dishonest - AI Debate  ...               141.500000
-## 2   AI Consultancy Dishonest - Human Consultancy D...  ...               169.833333
-## 3   AI Consultancy Dishonest - Human Consultancy H...  ...                96.384615
-## 4             AI Consultancy Dishonest - Human Debate  ...               129.153846
-## 5    AI Consultancy Honest - AI Consultancy Dishonest  ...               202.916667
-## 6                   AI Consultancy Honest - AI Debate  ...               189.750000
-## 7   AI Consultancy Honest - Human Consultancy Dish...  ...               211.333333
-## 8    AI Consultancy Honest - Human Consultancy Honest  ...               177.416667
-## 9                AI Consultancy Honest - Human Debate  ...               197.833333
-## 10               AI Debate - AI Consultancy Dishonest  ...                85.083333
-## 11                  AI Debate - AI Consultancy Honest  ...                65.500000
-## 12            AI Debate - Human Consultancy Dishonest  ...                94.500000
-## 13               AI Debate - Human Consultancy Honest  ...                78.000000
-## 14                           AI Debate - Human Debate  ...                88.062500
-## 15  Human Consultancy Dishonest - AI Consultancy D...  ...               340.166667
-## 16  Human Consultancy Dishonest - AI Consultancy H...  ...               315.000000
-## 17            Human Consultancy Dishonest - AI Debate  ...               404.750000
-## 18  Human Consultancy Dishonest - Human Consultanc...  ...               334.815789
-## 19         Human Consultancy Dishonest - Human Debate  ...               300.847826
-## 20  Human Consultancy Honest - AI Consultancy Dish...  ...               280.692308
-## 21   Human Consultancy Honest - AI Consultancy Honest  ...               293.333333
-## 22               Human Consultancy Honest - AI Debate  ...               299.083333
-## 23  Human Consultancy Honest - Human Consultancy D...  ...               272.763158
-## 24            Human Consultancy Honest - Human Debate  ...               255.380952
-## 25            Human Debate - AI Consultancy Dishonest  ...               179.153846
-## 26               Human Debate - AI Consultancy Honest  ...               201.250000
-## 27                           Human Debate - AI Debate  ...               188.625000
-## 28         Human Debate - Human Consultancy Dishonest  ...               163.956522
-## 29            Human Debate - Human Consultancy Honest  ...               147.880952
-## 
-## [30 rows x 3 columns]
+##                                              Settings  Count  Average_Span_Difference
+## 0    AI Consultancy Dishonest - AI Consultancy Honest     12               137.416667
+## 1                AI Consultancy Dishonest - AI Debate     12               141.500000
+## 2   AI Consultancy Dishonest - Human Consultancy D...     12               169.833333
+## 3   AI Consultancy Dishonest - Human Consultancy H...     13                96.384615
+## 4             AI Consultancy Dishonest - Human Debate     13               129.153846
+## 5    AI Consultancy Honest - AI Consultancy Dishonest     12               202.916667
+## 6                   AI Consultancy Honest - AI Debate     12               189.750000
+## 7   AI Consultancy Honest - Human Consultancy Dish...     12               211.333333
+## 8    AI Consultancy Honest - Human Consultancy Honest     12               177.416667
+## 9                AI Consultancy Honest - Human Debate     12               197.833333
+## 10               AI Debate - AI Consultancy Dishonest     12                85.083333
+## 11                  AI Debate - AI Consultancy Honest     12                65.500000
+## 12            AI Debate - Human Consultancy Dishonest     12                94.500000
+## 13               AI Debate - Human Consultancy Honest     12                78.000000
+## 14                           AI Debate - Human Debate     16                88.062500
+## 15  Human Consultancy Dishonest - AI Consultancy D...     12               340.166667
+## 16  Human Consultancy Dishonest - AI Consultancy H...     12               315.000000
+## 17            Human Consultancy Dishonest - AI Debate     12               404.750000
+## 18  Human Consultancy Dishonest - Human Consultanc...     38               334.815789
+## 19         Human Consultancy Dishonest - Human Debate     46               300.847826
+## 20  Human Consultancy Honest - AI Consultancy Dish...     13               280.692308
+## 21   Human Consultancy Honest - AI Consultancy Honest     12               293.333333
+## 22               Human Consultancy Honest - AI Debate     12               299.083333
+## 23  Human Consultancy Honest - Human Consultancy D...     38               272.763158
+## 24            Human Consultancy Honest - Human Debate     42               255.380952
+## 25            Human Debate - AI Consultancy Dishonest     13               179.153846
+## 26               Human Debate - AI Consultancy Honest     12               201.250000
+## 27                           Human Debate - AI Debate     16               188.625000
+## 28         Human Debate - Human Consultancy Dishonest     46               163.956522
+## 29            Human Debate - Human Consultancy Honest     42               147.880952
 \end{verbatim}
 
 \begin{Shaded}
@@ -2150,18 +2468,16 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \end{Shaded}
 
 \begin{verbatim}
-##                                          count        mean  ...     75%    max
-## Setting 2                   Acc_1 Acc_2                     ...               
-## Human Consultancy Dishonest False False    5.0  187.200000  ...  275.00  293.0
-##                                   True     8.0  149.625000  ...  236.25  275.0
-##                             True  False   16.0  148.687500  ...  182.00  358.0
-##                                   True    17.0  178.235294  ...  233.00  526.0
-## Human Consultancy Honest    False False    4.0  144.750000  ...  257.25  267.0
-##                                   True    12.0  122.416667  ...  164.75  325.0
-##                             True  False    4.0  197.000000  ...  224.25  273.0
-##                                   True    22.0  153.409091  ...  195.00  394.0
-## 
-## [8 rows x 8 columns]
+##                                          count        mean         std    min     25%    50%     75%    max
+## Setting 2                   Acc_1 Acc_2                                                                    
+## Human Consultancy Dishonest False False    5.0  187.200000   90.698401   92.0  131.00  145.0  275.00  293.0
+##                                   True     8.0  149.625000  100.637876   39.0   42.75  156.5  236.25  275.0
+##                             True  False   16.0  148.687500   81.308236   47.0   89.75  128.0  182.00  358.0
+##                                   True    17.0  178.235294  115.183294   57.0   92.00  161.0  233.00  526.0
+## Human Consultancy Honest    False False    4.0  144.750000  134.321443   14.0   36.50  149.0  257.25  267.0
+##                                   True    12.0  122.416667   95.625651   30.0   55.50   83.0  164.75  325.0
+##                             True  False    4.0  197.000000   63.050245  120.0  170.25  197.5  224.25  273.0
+##                                   True    22.0  153.409091   94.780277   30.0   75.00  130.0  195.00  394.0
 \end{verbatim}
 
 \begin{Shaded}
@@ -2210,18 +2526,16 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \end{Shaded}
 
 \begin{verbatim}
-##                                          count        mean  ...     75%    max
-## Setting 2                   Acc_1 Acc_2                     ...               
-## Human Consultancy Dishonest False False    5.0  187.200000  ...  275.00  293.0
-##                                   True     8.0  149.625000  ...  236.25  275.0
-##                             True  False   16.0  148.687500  ...  182.00  358.0
-##                                   True    16.0  156.500000  ...  220.25  289.0
-## Human Consultancy Honest    False False    4.0  144.750000  ...  257.25  267.0
-##                                   True    12.0  122.416667  ...  164.75  325.0
-##                             True  False    4.0  197.000000  ...  224.25  273.0
-##                                   True    22.0  153.409091  ...  195.00  394.0
-## 
-## [8 rows x 8 columns]
+##                                          count        mean         std    min     25%    50%     75%    max
+## Setting 2                   Acc_1 Acc_2                                                                    
+## Human Consultancy Dishonest False False    5.0  187.200000   90.698401   92.0  131.00  145.0  275.00  293.0
+##                                   True     8.0  149.625000  100.637876   39.0   42.75  156.5  236.25  275.0
+##                             True  False   16.0  148.687500   81.308236   47.0   89.75  128.0  182.00  358.0
+##                                   True    16.0  156.500000   74.733304   57.0   91.25  143.0  220.25  289.0
+## Human Consultancy Honest    False False    4.0  144.750000  134.321443   14.0   36.50  149.0  257.25  267.0
+##                                   True    12.0  122.416667   95.625651   30.0   55.50   83.0  164.75  325.0
+##                             True  False    4.0  197.000000   63.050245  120.0  170.25  197.5  224.25  273.0
+##                                   True    22.0  153.409091   94.780277   30.0   75.00  130.0  195.00  394.0
 \end{verbatim}
 
 \begin{Shaded}
@@ -2237,6 +2551,14 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\NormalTok{filtered\_outliers }\OtherTok{\textless{}{-}}\NormalTok{ characters }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Q1 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.25}\NormalTok{),}
+         \AttributeTok{Q3 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.75}\NormalTok{),}
+         \AttributeTok{IQR =}\NormalTok{ Q3 }\SpecialCharTok{{-}}\NormalTok{ Q1,}
+         \AttributeTok{lower\_bound =}\NormalTok{ Q1 }\SpecialCharTok{{-}} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR,}
+         \AttributeTok{upper\_bound =}\NormalTok{ Q3 }\SpecialCharTok{+} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR)}
+
 \FunctionTok{ggplot}\NormalTok{(characters) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Quote length}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length (characters)"}\NormalTok{)}\SpecialCharTok{+}
@@ -2255,17 +2577,29 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
          \AttributeTok{IQR =}\NormalTok{ Q3 }\SpecialCharTok{{-}}\NormalTok{ Q1,}
          \AttributeTok{lower\_bound =}\NormalTok{ Q1 }\SpecialCharTok{{-}} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR,}
          \AttributeTok{upper\_bound =}\NormalTok{ Q3 }\SpecialCharTok{+} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(quote\_length }\SpecialCharTok{\textgreater{}=}\NormalTok{ lower\_bound }\SpecialCharTok{\&}\NormalTok{ quote\_length }\SpecialCharTok{\textless{}=}\NormalTok{ upper\_bound) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{Q1, }\SpecialCharTok{{-}}\NormalTok{Q3, }\SpecialCharTok{{-}}\NormalTok{IQR, }\SpecialCharTok{{-}}\NormalTok{lower\_bound, }\SpecialCharTok{{-}}\NormalTok{upper\_bound)}
+  \FunctionTok{filter}\NormalTok{(quote\_length }\SpecialCharTok{\textgreater{}} \DecValTok{0} \SpecialCharTok{\&}\NormalTok{ quote\_length }\SpecialCharTok{\textless{}} \DecValTok{750}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{Q1, }\SpecialCharTok{{-}}\NormalTok{Q3, }\SpecialCharTok{{-}}\NormalTok{IQR, }\SpecialCharTok{{-}}\NormalTok{lower\_bound, }\SpecialCharTok{{-}}\NormalTok{upper\_bound) }
 \NormalTok{filtered }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ quote\_length), }\AttributeTok{outlier.shape =} \ConstantTok{NA}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ quote\_length)) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length in a Debate/Consultancy (unique tokens)"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{()}
 \end{Highlighting}
 \end{Shaded}
 
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/quote_length graph-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ quote\_length)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length in a Debate/Consultancy (unique tokens)"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/quote_length graph-4}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2279,12 +2613,44 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## 
 ## data:  filtered$quote_length and filtered$Final_Setting 
 ## 
-##                   AI Consultancy  AI Debate       Human Consultancy
-## AI Debate         0.1580          -               -                
-## Human Consultancy 0.0000005872140 0.0000000000002 -                
-## Human Debate      0.3784          0.0045          0.0000000000367  
+##                   AI Consultancy AI Debate      Human Consultancy
+## AI Debate         0.04290        -              -                
+## Human Consultancy 0.00017        0.000000000018 -                
+## Human Debate      0.80222        0.00443        0.000000019213   
 ## 
 ## P value adjustment method: holm
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{filtered }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{avground =} \FunctionTok{median}\NormalTok{(quote\_length))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 4 x 2
+##   Final_Setting     avground
+##   <chr>                <dbl>
+## 1 AI Consultancy        160 
+## 2 AI Debate             118.
+## 3 Human Consultancy     296 
+## 4 Human Debate          181
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{avground =} \FunctionTok{median}\NormalTok{(quote\_length))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 4 x 2
+##   Final_Setting     avground
+##   <chr>                <dbl>
+## 1 AI Consultancy        160 
+## 2 AI Debate             118.
+## 3 Human Consultancy     309 
+## 4 Human Debate          181
 \end{verbatim}
 
 \begin{Shaded}
@@ -2345,6 +2711,18 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Rounds"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/rounds graph-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \FunctionTok{pairwise.t.test}\NormalTok{(filtered}\SpecialCharTok{$}\NormalTok{quote\_length, filtered}\SpecialCharTok{$}\NormalTok{Final\_Setting)}
 \end{Highlighting}
 \end{Shaded}
@@ -2379,9 +2757,8 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## 4 Human Debate          2.52
 \end{verbatim}
 
-\hypertarget{length-of-debates-stratified}{%
 \subsubsection{Length of debates,
-stratified}\label{length-of-debates-stratified}}
+stratified}\label{length-of-debates-stratified}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2428,18 +2805,18 @@ stratified}\label{length-of-debates-stratified}}
 \end{Shaded}
 
 \begin{verbatim}
-##                            Room name  ...  Final_Accuracy
-## 0                         ambition-8  ...            True
-## 1                         ambition-8  ...            True
-## 2                         ambition-8  ...            True
-## 3                         ambition-8  ...            True
-## 4                         ambition-8  ...            True
-## ...                              ...  ...             ...
-## 6013                   break-a-leg-3  ...            True
-## 6014                   break-a-leg-3  ...            True
-## 6015  the-absurdity-of-family-love-2  ...            True
-## 6016  the-absurdity-of-family-love-2  ...            True
-## 6017  the-absurdity-of-family-love-2  ...            True
+##                            Room name  Room start time  ...                      Setting Final_Accuracy
+## 0                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
+## 1                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
+## 2                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
+## 3                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
+## 4                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
+## ...                              ...              ...  ...                          ...            ...
+## 6013                   break-a-leg-3    1682110823449  ...                 Human Debate           True
+## 6014                   break-a-leg-3    1682110823449  ...                 Human Debate           True
+## 6015  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
+## 6016  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
+## 6017  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
 ## 
 ## [5875 rows x 27 columns]
 \end{verbatim}
@@ -2508,20 +2885,20 @@ stratified}\label{length-of-debates-stratified}}
     \AttributeTok{upper\_ci =} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}} \SpecialCharTok{+} \FloatTok{1.96} \SpecialCharTok{*}\NormalTok{ se}
 \NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{col =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lower\_ci, }\AttributeTok{ymax =}\NormalTok{ upper\_ci, }\AttributeTok{fill =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{group =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{), }\AttributeTok{alpha =} \FloatTok{0.15}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Average Probability Correct Each Round, }\SpecialCharTok{\textbackslash{}n}\StringTok{stratified by Max Round Binned"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Round"}\NormalTok{, }
+       \AttributeTok{y =} \StringTok{"Average Intermediate Probability Correct"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lower\_ci, }\AttributeTok{ymax =}\NormalTok{ upper\_ci, }\AttributeTok{fill =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{group =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{), }\AttributeTok{alpha =} \FloatTok{0.25}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Average Probability Correct by Num of Previous Judging Rounds"}\NormalTok{,}
-       \AttributeTok{x =} \StringTok{"Num Previous Judging Rounds"}\NormalTok{, }
-       \AttributeTok{y =} \StringTok{"Average Probability Correct"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Setting) }\SpecialCharTok{+}
   \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{)}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## `summarise()` has grouped output by 'Setting', 'Num previous judging rounds'.
-## You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'Setting', 'Num previous judging rounds'. You can override using the `.groups`
+## argument.
 \end{verbatim}
 
 \includegraphics{debate-2309_files/figure-latex/strat ggplot-13.pdf}
@@ -2544,8 +2921,8 @@ stratified}\label{length-of-debates-stratified}}
 \end{Shaded}
 
 \begin{verbatim}
-## `summarise()` has grouped output by 'Setting', 'Num previous judging rounds'.
-## You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'Setting', 'Num previous judging rounds'. You can override using the `.groups`
+## argument.
 \end{verbatim}
 
 \begin{verbatim}
@@ -2554,8 +2931,7 @@ stratified}\label{length-of-debates-stratified}}
 
 \includegraphics{debate-2309_files/figure-latex/strat ggplot-14.pdf}
 
-\hypertarget{time-offline-judging..}{%
-\subsubsection{Time (offline judging..?)}\label{time-offline-judging..}}
+\subsubsection{Time (offline judging..?)}\label{time-offline-judging..}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2659,11 +3035,9 @@ stratified}\label{length-of-debates-stratified}}
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{analysis}{%
-\section{Analysis}\label{analysis}}
+\section{Analysis}\label{analysis}
 
-\hypertarget{question-difficulty}{%
-\subsection{Question Difficulty}\label{question-difficulty}}
+\subsection{Question Difficulty}\label{question-difficulty}
 
 confounder rounds, quotes
 
@@ -2679,44 +3053,77 @@ confounder rounds, quotes
 \NormalTok{    Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),}
 \NormalTok{    Total\_Count}\OperatorTok{=}\StringTok{"size"}
 \NormalTok{).reset\_index()}
-\NormalTok{pd.set\_option(}\StringTok{\textquotesingle{}display.max\_rows\textquotesingle{}}\NormalTok{, }\VariableTok{None}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## <string>:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pd.set\_option(}\StringTok{\textquotesingle{}display.max\_columns\textquotesingle{}}\NormalTok{, }\VariableTok{None}\NormalTok{)}
 \BuiltInTok{print}\NormalTok{(aggregated\_df)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##                         Setting  ... Total_Count
-## 0      AI Consultancy Dishonest  ...          27
-## 1      AI Consultancy Dishonest  ...           6
-## 2      AI Consultancy Dishonest  ...           2
-## 3      AI Consultancy Dishonest  ...           5
-## 4         AI Consultancy Honest  ...          27
-## 5         AI Consultancy Honest  ...          18
-## 6         AI Consultancy Honest  ...           3
-## 7         AI Consultancy Honest  ...           8
-## 8                     AI Debate  ...          51
-## 9                     AI Debate  ...          27
-## 10                    AI Debate  ...          10
-## 11                    AI Debate  ...           4
-## 12  Human Consultancy Dishonest  ...          31
-## 13  Human Consultancy Dishonest  ...          29
-## 14  Human Consultancy Dishonest  ...           6
-## 15  Human Consultancy Dishonest  ...           2
-## 16     Human Consultancy Honest  ...          28
-## 17     Human Consultancy Honest  ...          18
-## 18     Human Consultancy Honest  ...           5
-## 19     Human Consultancy Honest  ...           2
-## 20                 Human Debate  ...         318
-## 21                 Human Debate  ...          57
-## 22                 Human Debate  ...           1
-## 23                 Human Debate  ...           0
+##                         Setting Number of judge continues bins  \
+## 0      AI Consultancy Dishonest                            1-3   
+## 1      AI Consultancy Dishonest                            4-6   
+## 2      AI Consultancy Dishonest                            7-9   
+## 3      AI Consultancy Dishonest                            10+   
+## 4         AI Consultancy Honest                            1-3   
+## 5         AI Consultancy Honest                            4-6   
+## 6         AI Consultancy Honest                            7-9   
+## 7         AI Consultancy Honest                            10+   
+## 8                     AI Debate                            1-3   
+## 9                     AI Debate                            4-6   
+## 10                    AI Debate                            7-9   
+## 11                    AI Debate                            10+   
+## 12  Human Consultancy Dishonest                            1-3   
+## 13  Human Consultancy Dishonest                            4-6   
+## 14  Human Consultancy Dishonest                            7-9   
+## 15  Human Consultancy Dishonest                            10+   
+## 16     Human Consultancy Honest                            1-3   
+## 17     Human Consultancy Honest                            4-6   
+## 18     Human Consultancy Honest                            7-9   
+## 19     Human Consultancy Honest                            10+   
+## 20                 Human Debate                            1-3   
+## 21                 Human Debate                            4-6   
+## 22                 Human Debate                            7-9   
+## 23                 Human Debate                            10+   
 ## 
-## [24 rows x 4 columns]
+##     Proportion_True  Total_Count  
+## 0          0.962963           27  
+## 1          0.833333            6  
+## 2          1.000000            2  
+## 3          0.400000            5  
+## 4          0.740741           27  
+## 5          0.777778           18  
+## 6          1.000000            3  
+## 7          0.625000            8  
+## 8          0.843137           51  
+## 9          0.740741           27  
+## 10         0.700000           10  
+## 11         0.500000            4  
+## 12         0.483871           31  
+## 13         0.655172           29  
+## 14         0.833333            6  
+## 15         0.500000            2  
+## 16         0.928571           28  
+## 17         0.833333           18  
+## 18         1.000000            5  
+## 19         0.500000            2  
+## 20         0.871069          318  
+## 21         0.859649           57  
+## 22         1.000000            1  
+## 23              NaN            0
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{pd.reset\_option(}\StringTok{\textquotesingle{}display.max\_rows\textquotesingle{}}\NormalTok{)}
+\NormalTok{pd.reset\_option(}\StringTok{\textquotesingle{}display.max\_columns\textquotesingle{}}\NormalTok{)}
 
 \NormalTok{total\_counts\_for\_setting }\OperatorTok{=}\NormalTok{ judgments.groupby(}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{).size()}
 \NormalTok{result }\OperatorTok{=}\NormalTok{ judgments.groupby([}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Untimed annotator context bins"}\NormalTok{, }\StringTok{"Number of judge continues bins"}\NormalTok{]).agg(}
@@ -2724,24 +3131,33 @@ confounder rounds, quotes
 \NormalTok{    Context\_Count}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\StringTok{\textquotesingle{}size\textquotesingle{}}\NormalTok{),}
 \NormalTok{    Proportion\_Context}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x) }\OperatorTok{/}\NormalTok{ total\_counts\_for\_setting[x.mode()])}
 \NormalTok{).reset\_index()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## <string>:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Is it number of rounds (meaning more evidence) that confounds the consultancy accuracy?:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{result}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ## Is it number of rounds (meaning more evidence) that confounds the consultancy accuracy?:
-##      Final_Setting  ... Proportion_Context
-## 0   AI Consultancy  ...                NaN
-## 1   AI Consultancy  ...           0.010417
-## 2   AI Consultancy  ...                NaN
-## 3   AI Consultancy  ...                NaN
-## 4   AI Consultancy  ...           0.291667
-## ..             ...  ...                ...
-## 59    Human Debate  ...                NaN
-## 60    Human Debate  ...           0.076923
-## 61    Human Debate  ...           0.018568
-## 62    Human Debate  ...                NaN
-## 63    Human Debate  ...                NaN
+##      Final_Setting Untimed annotator context bins  ... Context_Count  Proportion_Context
+## 0   AI Consultancy                              1  ...             0                 NaN
+## 1   AI Consultancy                              1  ...             1            0.010417
+## 2   AI Consultancy                              1  ...             0                 NaN
+## 3   AI Consultancy                              1  ...             0                 NaN
+## 4   AI Consultancy                              2  ...            28            0.291667
+## ..             ...                            ...  ...           ...                 ...
+## 59    Human Debate                              3  ...             0                 NaN
+## 60    Human Debate                              4  ...            29            0.076923
+## 61    Human Debate                              4  ...             7            0.018568
+## 62    Human Debate                              4  ...             0                 NaN
+## 63    Human Debate                              4  ...             0                 NaN
 ## 
 ## [64 rows x 6 columns]
 \end{verbatim}
@@ -2775,11 +3191,9 @@ confounder rounds, quotes
 
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/Accuracy by Context Graph-3}
 
-\hypertarget{judge-skill}{%
-\subsection{Judge Skill}\label{judge-skill}}
+\subsection{Judge Skill}\label{judge-skill}
 
-\hypertarget{judge-experience}{%
-\subsubsection{Judge ``Experience''}\label{judge-experience}}
+\subsubsection{Judge ``Experience''}\label{judge-experience}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2833,8 +3247,7 @@ confounder rounds, quotes
 
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/unnamed-chunk-2-2}
 
-\hypertarget{calibration}{%
-\subsubsection{Calibration}\label{calibration}}
+\subsubsection{Calibration}\label{calibration}
 
 S: (1) debaters didnt learn calibration -\textgreater{} calibration over
 time? S: (2) dishonest debater tricks
@@ -2891,9 +3304,17 @@ time? S: (2) dishonest debater tricks
 ## Expected Calibration Error (ECE) for Human Consultancy: 0.0220
 ## 
 ## <string>:4: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+## <string>:7: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+## <string>:9: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 ## <string>:4: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+## <string>:7: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+## <string>:9: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 ## <string>:4: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+## <string>:7: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+## <string>:9: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 ## <string>:4: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+## <string>:7: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+## <string>:9: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 \end{verbatim}
 
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/calibration-1}
@@ -2901,14 +3322,11 @@ time? S: (2) dishonest debater tricks
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/calibration-3}
 \includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/calibration-4}
 
-\hypertarget{judge-involvement}{%
-\subsubsection{Judge Involvement}\label{judge-involvement}}
+\subsubsection{Judge Involvement}\label{judge-involvement}
 
-\hypertarget{judge-mistakes}{%
-\subsubsection{Judge Mistakes}\label{judge-mistakes}}
+\subsubsection{Judge Mistakes}\label{judge-mistakes}
 
-\hypertarget{debater-skill}{%
-\subsection{Debater Skill}\label{debater-skill}}
+\subsection{Debater Skill}\label{debater-skill}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -3005,10 +3423,6 @@ time? S: (2) dishonest debater tricks
 ##     "Shlomo Kofman") + relevel(factor(Final_Setting), "Human Debate"), 
 ##     family = "binomial", data = judgments[!is.na(judgments$`Dishonest debater`), 
 ##         ])
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.4478   0.3203   0.5083   0.6395   1.5320  
 ## 
 ## Coefficients: (1 not defined because of singularities)
 ##                                                                           Estimate
@@ -3358,10 +3772,10 @@ time? S: (2) dishonest debater tricks
 ## 146                                                     0
 ## 214                                                     1
 ## 289                                                     1
-##     sampled_consultancies_debates_weights Final_Accuracy_char
-## 146                             0.0000000                  NA
-## 214                             0.3333333                  NA
-## 289                             0.5000000                  NA
+##     sampled_consultancies_debates_weights Final_Accuracy_char  fpc  fpcw
+## 146                             0.0000000                  NA 0.33 0.165
+## 214                             0.3333333                  NA 0.01 0.005
+## 289                             0.5000000                  NA 0.01 0.005
 \end{verbatim}
 
 \begin{Shaded}
@@ -5868,77 +6282,77 @@ time? S: (2) dishonest debater tricks
 ## 679                                                     1
 ## 680                                                     1
 ## 683                                                     1
-##     sampled_consultancies_debates_weights Final_Accuracy_char
-## 21                              0.0000000                  NA
-## 43                              0.0000000                  NA
-## 78                              0.0000000                  NA
-## 81                              0.0000000                  NA
-## 91                              0.2500000                  NA
-## 94                              0.0000000                  NA
-## 99                              0.0000000                  NA
-## 113                             0.0000000                  NA
-## 136                             0.0000000                  NA
-## 140                             1.0000000                  NA
-## 149                             0.0000000                  NA
-## 177                             0.0000000                  NA
-## 179                             0.0000000                  NA
-## 185                             1.0000000                  NA
-## 186                             0.0000000                  NA
-## 191                             0.0000000                  NA
-## 202                             0.0000000                  NA
-## 211                             1.0000000                  NA
-## 215                             1.0000000                  NA
-## 216                             0.0000000                  NA
-## 219                             0.2500000                  NA
-## 236                             0.0000000                  NA
-## 240                             0.0000000                  NA
-## 241                             0.0000000                  NA
-## 254                             0.0000000                  NA
-## 270                             1.0000000                  NA
-## 276                             1.0000000                  NA
-## 290                             0.3333333                  NA
-## 306                             0.0000000                  NA
-## 324                             1.0000000                  NA
-## 331                             0.5000000                  NA
-## 332                             1.0000000                  NA
-## 338                             1.0000000                  NA
-## 342                             0.0000000                  NA
-## 348                             1.0000000                  NA
-## 356                             0.5000000                  NA
-## 366                             0.0000000                  NA
-## 378                             0.5000000                  NA
-## 387                             0.0000000                  NA
-## 401                             0.0000000                  NA
-## 411                             0.0000000                  NA
-## 414                             1.0000000                  NA
-## 421                             1.0000000                  NA
-## 424                             1.0000000                  NA
-## 425                             0.5000000                  NA
-## 429                             0.0000000                  NA
-## 431                             1.0000000                  NA
-## 433                             0.5000000                  NA
-## 436                             1.0000000                  NA
-## 439                             0.3333333                  NA
-## 448                             0.3333333                  NA
-## 510                             0.2500000                  NA
-## 533                             0.5000000                  NA
-## 538                             1.0000000                  NA
-## 544                             1.0000000                  NA
-## 550                             0.2500000                  NA
-## 561                             0.5000000                  NA
-## 598                             0.2500000                  NA
-## 602                             0.5000000                  NA
-## 606                             1.0000000                  NA
-## 626                             0.3333333                  NA
-## 637                             0.5000000                  NA
-## 641                             0.5000000                  NA
-## 647                             1.0000000                  NA
-## 648                             0.3333333                  NA
-## 658                             0.5000000                  NA
-## 677                             0.5000000                  NA
-## 679                             0.3333333                  NA
-## 680                             1.0000000                  NA
-## 683                             1.0000000                  NA
+##     sampled_consultancies_debates_weights Final_Accuracy_char  fpc  fpcw
+## 21                              0.0000000                  NA 0.70 0.350
+## 43                              0.0000000                  NA 0.90 0.450
+## 78                              0.0000000                  NA 0.99 0.495
+## 81                              0.0000000                  NA 0.99 0.495
+## 91                              0.2500000                  NA 0.98 0.980
+## 94                              0.0000000                  NA 0.99 0.495
+## 99                              0.0000000                  NA 0.85 0.425
+## 113                             0.0000000                  NA 0.99 0.495
+## 136                             0.0000000                  NA 0.99 0.495
+## 140                             1.0000000                  NA 0.99 0.990
+## 149                             0.0000000                  NA 0.85 0.425
+## 177                             0.0000000                  NA 0.85 0.425
+## 179                             0.0000000                  NA 0.90 0.450
+## 185                             1.0000000                  NA 0.99 0.990
+## 186                             0.0000000                  NA 0.95 0.475
+## 191                             0.0000000                  NA 0.95 0.475
+## 202                             0.0000000                  NA 0.90 0.450
+## 211                             1.0000000                  NA 0.95 0.475
+## 215                             1.0000000                  NA 0.80 0.800
+## 216                             0.0000000                  NA 0.99 0.495
+## 219                             0.2500000                  NA 0.80 0.800
+## 236                             0.0000000                  NA 0.99 0.495
+## 240                             0.0000000                  NA 0.90 0.450
+## 241                             0.0000000                  NA 0.99 0.495
+## 254                             0.0000000                  NA 0.95 0.475
+## 270                             1.0000000                  NA 0.70 0.700
+## 276                             1.0000000                  NA 0.99 0.495
+## 290                             0.3333333                  NA 0.99 0.495
+## 306                             0.0000000                  NA 0.99 0.495
+## 324                             1.0000000                  NA 0.99 0.495
+## 331                             0.5000000                  NA 0.99 0.495
+## 332                             1.0000000                  NA 0.99 0.495
+## 338                             1.0000000                  NA 0.99 0.495
+## 342                             0.0000000                  NA 0.99 0.495
+## 348                             1.0000000                  NA 0.85 0.850
+## 356                             0.5000000                  NA 0.85 0.850
+## 366                             0.0000000                  NA 0.95 0.475
+## 378                             0.5000000                  NA 0.98 0.490
+## 387                             0.0000000                  NA 0.88 0.440
+## 401                             0.0000000                  NA 0.96 0.480
+## 411                             0.0000000                  NA 0.99 0.495
+## 414                             1.0000000                  NA 0.99 0.495
+## 421                             1.0000000                  NA 0.99 0.990
+## 424                             1.0000000                  NA 0.99 0.495
+## 425                             0.5000000                  NA 0.99 0.495
+## 429                             0.0000000                  NA 0.99 0.495
+## 431                             1.0000000                  NA 0.99 0.990
+## 433                             0.5000000                  NA 0.99 0.990
+## 436                             1.0000000                  NA 0.99 0.990
+## 439                             0.3333333                  NA 0.95 0.475
+## 448                             0.3333333                  NA 0.99 0.990
+## 510                             0.2500000                  NA 0.99 0.990
+## 533                             0.5000000                  NA 0.98 0.980
+## 538                             1.0000000                  NA 0.90 0.450
+## 544                             1.0000000                  NA 0.98 0.980
+## 550                             0.2500000                  NA 0.99 0.990
+## 561                             0.5000000                  NA 0.95 0.475
+## 598                             0.2500000                  NA 0.94 0.470
+## 602                             0.5000000                  NA 0.91 0.910
+## 606                             1.0000000                  NA 0.86 0.430
+## 626                             0.3333333                  NA 0.97 0.485
+## 637                             0.5000000                  NA 0.95 0.475
+## 641                             0.5000000                  NA 0.99 0.495
+## 647                             1.0000000                  NA 0.99 0.495
+## 648                             0.3333333                  NA 0.99 0.495
+## 658                             0.5000000                  NA 0.99 0.990
+## 677                             0.5000000                  NA 0.80 0.800
+## 679                             0.3333333                  NA 0.75 0.375
+## 680                             1.0000000                  NA 0.75 0.750
+## 683                             1.0000000                  NA 0.80 0.400
 \end{verbatim}
 
 \begin{Shaded}
@@ -5987,18 +6401,14 @@ time? S: (2) dishonest debater tricks
 
 \includegraphics{debate-2309_files/figure-latex/unnamed-chunk-3-9.pdf}
 
-\hypertarget{debater-experience-ratings---how-many-wins}{%
 \subsubsection{Debater ``Experience'', ratings - how many
-wins?}\label{debater-experience-ratings---how-many-wins}}
+wins?}\label{debater-experience-ratings---how-many-wins}
 
-\hypertarget{ai-vs-humans}{%
-\subsubsection{AI vs Humans}\label{ai-vs-humans}}
+\subsubsection{AI vs Humans}\label{ai-vs-humans}
 
-\hypertarget{old-vs-new}{%
-\subsubsection{Old vs New}\label{old-vs-new}}
+\subsubsection{Old vs New}\label{old-vs-new}
 
-\hypertarget{possibly-unnessary}{%
-\subsubsection{possibly unnessary}\label{possibly-unnessary}}
+\subsubsection{possibly unnessary}\label{possibly-unnessary}
 
 Finally, these are how many we get correct in each setting
 

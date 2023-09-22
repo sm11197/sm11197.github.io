@@ -8,21 +8,23 @@ output:
     toc_depth: 3
     number_sections: true
     toc_float: true
-  #pdf_document: 
-   # keep_tex: yes
+  pdf_document: 
+    keep_tex: yes
 ---
 >Notes:  
 - Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python    
-- Some of this won't make it to the paper. You can probably skip preprocessing unless you want to check certain things, example: did we make sure to remove judgments based on X condition. To find bits that I think will be in the paper search [insight]  
+- Some of this won't make it to the paper. You can probably skip preprocessing unless you want to check certain things, example: did we make sure to remove judgments based on X condition
 - If you want to clarify/comment anything do so at https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd) or message me elsewhere
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(class.source = "foldable")
+knitr::opts_chunk$set(class.source = "foldable")
+lib_path <- "/Users/bila/git/sm11197.github.io/sm11197.github.io/library"
+.libPaths(lib_path)
 options(scipen = 999)
 library(tinytex)
 library(reticulate)
-reticulate::use_virtualenv("/Users/bila/git/for-debate/debate/.venv")
+reticulate::use_virtualenv("/Users/bila/git/sm11197.github.io/sm11197.github.io/.venv")
 library(ggplot2) #graphs
 library(dplyr) #data manipulation
 library(survey) #weighted chi
@@ -31,6 +33,7 @@ library(lmerTest) #tests for the above
 library(brms) #bayesian regression models
 library(boot) #bootstrap resampling for confidence intervals
 library(purrr) #data manipulation - loops
+library(sjstats)
 ```
 
 # Preprocessing
@@ -425,7 +428,7 @@ table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting)
 
 subset_human_consultancies <- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE & judgments_online$Final_Setting == 'Human Consultancy', c("sampled_consultancies_all_debates_weights_grouped_setting","Final_Accuracy")]
 table(subset_human_consultancies$sampled_consultancies_all_debates_weights_grouped_setting, subset_human_consultancies$Final_Accuracy)
-table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_debates_weights_grouped_setting)
+table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights_grouped_setting)
 table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_debates_weights)
 
 ```
@@ -440,11 +443,12 @@ table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_deb
 acc_diff_test <- function(design, Setting){
   print(design)
   freq_table <- svytable(~Final_Setting+Final_Accuracy, design)
-  print(freq_table)
   chisq_result <- svychisq(~Final_Setting+Final_Accuracy, design, statistic = "Chisq")
   print(chisq_result)
   pairwise_result <- pairwise.prop.test(freq_table, p.adjust.method="none", alternative="two.sided")
   print(pairwise_result)
+  freq_table <- cbind(freq_table, Accuracy = (freq_table[,2] / (freq_table[,1]+freq_table[,2]))*100)
+  print(freq_table)
 }
 
 print("Really raw")
@@ -455,6 +459,7 @@ print("Balanced consultancies")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting))))
 print("Balanced consultancies, question weights (grouped settings)")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
+acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights))
 print("Balanced consultancies sampled debates, question weights (grouped settings)")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE), weights = ~sampled_consultancies_debates_weights_grouped_setting))
 acc_diff_test(svydesign(ids = ~1, data = judgments_online, weights = ~sampled_consultancies_debates_weights_grouped_setting))
@@ -544,7 +549,47 @@ prop_table
 print(prop.test(c(prop_table["Human Consultancy","TRUE"],prop_table["Human Debate","TRUE"]),c(prop_table["Human Consultancy", "TRUE"]+prop_table["Human Consultancy", "FALSE"], prop_table["Human Debate", "TRUE"]+prop_table["Human Debate", "FALSE"])))
 ```
 
+```{r final probability correct}
+judgments_online$fpc <- judgments_online$`Final probability correct`
+judgments_online %>%
+  ggplot() +
+  geom_boxplot(aes(x = Final_Setting, y = fpc)) +
+  labs(y = "fpc", x = "Setting")+
+  theme_minimal()
+judgments_online %>%
+  group_by(Final_Setting) %>% summarise(fpcmed = median(fpc),
+                                                           fpcmean = mean(Final_Accuracy)) %>%
+  ggplot() +
+  geom_boxplot(aes(x = Final_Setting, y = fpcmean)) +
+  labs(y = "acc", x = "Setting")+
+  theme_minimal()
+consultancy_design <- svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
 
+
+
+human_consultancy_design <- svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
+
+
+svyranktest(fpc~Final_Setting, human_consultancy_design)
+judgments_online %>% group_by(Final_Setting) %>% summarise(fpcmed = median(fpc),
+                                                           fpcmean = mean(fpc))
+
+svyranktest(fpc~Final_Setting, consultancy_design, test = "median")
+svyranktest(fpc~Final_Setting, consultancy_design, test = "wilcoxon")
+svyranktest(fpc~Final_Setting, consultancy_design, test = "vanderWaerden")
+weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
+
+
+data(efc)
+str(efc)
+efc$weight <- abs(rnorm(nrow(efc), 1, .3))
+weighted_mannwhitney(c12hour ~ c161sex + weight, efc)
+weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
+wilcox.test(efc$c12hour,efc$c161sex)
+
+judgments_online$fpcw <- judgments_online$fpc *judgments_online$sampled_consultancies_all_debates_weights_grouped_setting
+wilcox.test(fpcw~Final_Setting, subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), conf.int=T)
+```
 ### Logistic regression
 
 ```{r}
@@ -790,6 +835,15 @@ span_difference_debate_consultancies<-py$filtered_df
 ggplot(span_difference_debate_consultancies) +
   geom_boxplot(aes(x = `Setting 2`, y = `Span Difference Count`))
 
+
+filtered_outliers <- characters %>%
+  group_by(Final_Setting) %>%
+  mutate(Q1 = quantile(quote_length, 0.25),
+         Q3 = quantile(quote_length, 0.75),
+         IQR = Q3 - Q1,
+         lower_bound = Q1 - 1.5 * IQR,
+         upper_bound = Q3 + 1.5 * IQR)
+
 ggplot(characters) +
   geom_boxplot(aes(x = Final_Setting, y = `Quote length`)) +
   labs(y = "Total Quote Length (characters)")+
@@ -801,17 +855,23 @@ filtered <- characters %>%
          IQR = Q3 - Q1,
          lower_bound = Q1 - 1.5 * IQR,
          upper_bound = Q3 + 1.5 * IQR) %>%
-  filter(quote_length >= lower_bound & quote_length <= upper_bound) %>%
-  select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound)
+  filter(quote_length > 0 & quote_length < 750) %>%
+  select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound) 
 filtered %>%
   ggplot() +
-  geom_boxplot(aes(x = Final_Setting, y = quote_length), outlier.shape = NA) +
+  geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
+  labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
+  theme_minimal()
+characters %>%
+  ggplot() +
+  geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
   theme_minimal()
 pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
 
 
-filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(quote_length))
+filtered %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
+characters %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
 ```
 
 ```{r rounds graph, out.width = "100%", dpi = 300}
@@ -841,9 +901,15 @@ filtered %>%
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`), outlier.shape = NA) +
   labs(y = "Rounds", x = "Setting")+
   theme_minimal()
+characters %>%
+  ggplot() +
+  geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
+  labs(y = "Rounds", x = "Setting")+
+  theme_minimal()
 pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
 
 filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(`Max judge rounds by room`))
+
 ```
 
 ### Length of debates, stratified
@@ -1021,9 +1087,9 @@ aggregated_df = judgments.groupby(["Setting", "Number of judge continues bins"])
     Proportion_True=lambda x: x.mean(),
     Total_Count="size"
 ).reset_index()
-pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 print(aggregated_df)
-pd.reset_option('display.max_rows')
+pd.reset_option('display.max_columns')
 
 total_counts_for_setting = judgments.groupby('Final_Setting').size()
 result = judgments.groupby(["Final_Setting", "Untimed annotator context bins", "Number of judge continues bins"]).agg(
