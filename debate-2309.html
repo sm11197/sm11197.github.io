@@ -358,13 +358,13 @@ div.tocify {
 <blockquote>
 <p>Notes:<br />
 - Some of this is already in or was based on the blogpost/interface
-code. Hit show to see code. I switch between R and Python<br />
-- Some of this won’t make it to the paper. You can probably skip
-preprocessing unless you want to check certain things, example: did we
-make sure to remove judgments based on X condition - If you want to
-clarify/comment anything do so at <a
-href="https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd"
-class="uri">https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd</a>)
+code. Hit show to see code. I switch between R and Python - Some of this
+won’t make it to the paper. You can probably skip preprocessing unless
+you want to check certain things, example: did we make sure to remove
+judgments based on X condition - If you want to clarify/comment anything
+do so at <a
+href="https://github.com/sm11197/sm11197.github.io/blob/main/debate-0923.Rmd"
+class="uri">https://github.com/sm11197/sm11197.github.io/blob/main/debate-0923.Rmd</a>)
 or message me elsewhere</p>
 </blockquote>
 <div id="preprocessing" class="section level1" number="1">
@@ -374,7 +374,7 @@ number="1.1">
 <h2><span class="header-section-number">1.1</span> Importing, filtering,
 and adding columns</h2>
 <p>We have 3 sets of data from the interface:</p>
-<pre class="python"><code>import pandas as pd
+<pre class="python foldable"><code>import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import re
@@ -388,7 +388,7 @@ print(f&#39; {debates.shape} - Debates&#39;) ;print(f&#39;{sessions.shape} - Ses
 <pre><code>##  (632, 29) - Debates
 ## (1863, 46) - Sessions, which has multiple rows (of participants) for each debate
 ## (6220, 16) - and Turns, which has multiple rows (of participant turns) for each debate</code></pre>
-<pre class="python"><code># Only include debates within a given period
+<pre class="python foldable"><code># Only include debates within a given period
 debates[&quot;Start time&quot;] = pd.to_datetime(debates[&quot;Start time&quot;], unit=&quot;ms&quot;)
 debates[&quot;End time&quot;] = pd.to_datetime(debates[&quot;End time&quot;], unit=&quot;ms&quot;)
 debates[&quot;Last modified time&quot;] = pd.to_datetime(debates[&quot;Last modified time&quot;], unit=&quot;ms&quot;)
@@ -402,7 +402,7 @@ sessions = sessions.merge(debates[[&quot;Room name&quot;]], how=&quot;inner&quot
 turns = turns.merge(debates[[&quot;Room name&quot;]], how=&quot;inner&quot;, on=&quot;Room name&quot;)
 print(f&#39;We have {len(debates)} debates when filtering out the initial pilots last fall&#39;)</code></pre>
 <pre><code>## We have 583 debates when filtering out the initial pilots last fall</code></pre>
-<pre class="python"><code># Secondary analysis: Question Difficulty
+<pre class="python foldable"><code># Secondary analysis: Question Difficulty
 # Create new columns with bin labels
 debates[&#39;Untimed annotator context bins&#39;] = pd.cut(debates[&#39;Untimed annotator context&#39;].round(), bins=[0, 1, 2, 3, 4], labels=[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;], right=True)
 debates[&#39;Speed annotator accuracy bins&#39;] = pd.cut(debates[&#39;Speed annotator accuracy&#39;], bins=[-0.999, 0.001, 0.201, 0.401], labels=[&#39;0&#39;, &#39;0.2&#39;, &#39;0.4&#39;])
@@ -420,7 +420,7 @@ print(f&#39;Average accuracy per context required by question:\n{debates.groupby
 ## 4                                      0.632653           98
 ## 
 ## &lt;string&gt;:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.</code></pre>
-<pre class="python"><code>print(f&#39;Average accuracy per difficulty based on speed annotator accuracy:\n{debates.groupby(&quot;Speed annotator accuracy bins&quot;)[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}\nHm, this seems less likely to be a good indicator of question difficulty&#39;)</code></pre>
+<pre class="python foldable"><code>print(f&#39;Average accuracy per difficulty based on speed annotator accuracy:\n{debates.groupby(&quot;Speed annotator accuracy bins&quot;)[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}\nHm, this seems less likely to be a good indicator of question difficulty&#39;)</code></pre>
 <pre><code>## Average accuracy per difficulty based on speed annotator accuracy:
 ##                                Proportion_True  Total_Count
 ## Speed annotator accuracy bins                              
@@ -430,7 +430,7 @@ print(f&#39;Average accuracy per context required by question:\n{debates.groupby
 ## Hm, this seems less likely to be a good indicator of question difficulty
 ## 
 ## &lt;string&gt;:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.</code></pre>
-<pre class="python"><code>
+<pre class="python foldable"><code>
 
 # Determine settings for each row
 def setups(row):
@@ -453,7 +453,7 @@ debates[&#39;Final_Setting&#39;] = debates[&#39;Setting&#39;].str.replace(&#39; 
 number="1.2">
 <h2><span class="header-section-number">1.2</span> Merging, filtering
 for judgments</h2>
-<pre class="python"><code># Merge sessions with debates, so we have each judge&#39;s final probability correct and the debate&#39;s metadata
+<pre class="python foldable"><code># Merge sessions with debates, so we have each judge&#39;s final probability correct and the debate&#39;s metadata
 source = sessions.merge(
         debates[[&quot;Room name&quot;, &quot;Debater A&quot;,&quot;Debater B&quot;,&quot;Honest debater&quot;, &quot;Dishonest debater&quot;,
                  &quot;Is single debater&quot;, &#39;Has honest debater&#39;,
@@ -473,7 +473,7 @@ print(f&#39;After merging debates with sessions, we have the following participa
 ## Debater A        458
 ## Offline Judge    223
 ## Name: count, dtype: int64</code></pre>
-<pre class="python"><code>#[source[&#39;Is over&#39;] == True] to check for completed online/offline debates
+<pre class="python foldable"><code>#[source[&#39;Is over&#39;] == True] to check for completed online/offline debates
 
 # Filter out incomplete judgments
 judgments = source[source[&#39;Final probability correct&#39;].notnull()]
@@ -484,7 +484,7 @@ print(f&#39;After filtering to judges that have finalized their judgment, we hav
 ## Offline Judge    214
 ## Name: count, dtype: int64
 ## for a total of 722 judgments.</code></pre>
-<pre class="python"><code>judgments[&#39;Final_Accuracy&#39;] = judgments[&#39;Final probability correct&#39;] &gt; 0.5
+<pre class="python foldable"><code>judgments[&#39;Final_Accuracy&#39;] = judgments[&#39;Final probability correct&#39;] &gt; 0.5
 
 print(f&#39;Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):\n{judgments[&quot;Setting&quot;].value_counts()}&#39;)</code></pre>
 <pre><code>## Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):
@@ -496,7 +496,7 @@ print(f&#39;Of those judgments, we have this much for each setting (not consolid
 ## Human Consultancy Honest        53
 ## AI Consultancy Dishonest        40
 ## Name: count, dtype: int64</code></pre>
-<pre class="python"><code>print(f&#39;Of those judgments, we have this much for each setting (aggregated):\n{judgments.groupby(&quot;Final_Setting&quot;)[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}&#39;)</code></pre>
+<pre class="python foldable"><code>print(f&#39;Of those judgments, we have this much for each setting (aggregated):\n{judgments.groupby(&quot;Final_Setting&quot;)[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}&#39;)</code></pre>
 <pre><code>## Of those judgments, we have this much for each setting (aggregated):
 ##                    Proportion_True  Total_Count
 ## Final_Setting                                  
@@ -504,7 +504,7 @@ print(f&#39;Of those judgments, we have this much for each setting (not consolid
 ## AI Debate                 0.782609           92
 ## Human Consultancy         0.719008          121
 ## Human Debate              0.876513          413</code></pre>
-<pre class="python"><code># Remove judges who see the story more than once
+<pre class="python foldable"><code># Remove judges who see the story more than once
 judgments[&#39;base_room_name&#39;] = judgments[&#39;Room name&#39;].str.extract(&#39;(.*)\d+$&#39;, expand=False).fillna(judgments[&#39;Room name&#39;])
 judgments = judgments.sort_values(by=[&#39;base_room_name&#39;,&#39;End time&#39;]).groupby([&#39;Participant&#39;, &#39;base_room_name&#39;]).first().reset_index()
 
@@ -516,7 +516,7 @@ print(f&#39;1. We then filter to judgments where the judge has only seen a story
 ## AI Debate                 0.782609           92
 ## Human Consultancy         0.719008          121
 ## Human Debate              0.867374          377</code></pre>
-<pre class="python"><code># Filter to online judges only
+<pre class="python foldable"><code># Filter to online judges only
 judgments_online = judgments[judgments[&quot;Role&quot;] == &quot;Judge&quot;]
 print(f&#39;2. We\&#39;ll make a copy of the online judgments only leaving us with the following judgments:\n{judgments_online.groupby(&quot;Final_Setting&quot;)[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}&#39;)</code></pre>
 <pre><code>## 2. We&#39;ll make a copy of the online judgments only leaving us with the following judgments:
@@ -526,7 +526,7 @@ print(f&#39;2. We\&#39;ll make a copy of the online judgments only leaving us wi
 ## AI Debate                 0.791209           91
 ## Human Consultancy         0.709091          110
 ## Human Debate              0.861538          195</code></pre>
-<pre class="python"><code>judgments_online = judgments_online[judgments_online[&#39;Untimed annotator context bins&#39;].isin([&#39;2&#39;, &#39;3&#39;, &#39;4&#39;])]
+<pre class="python foldable"><code>judgments_online = judgments_online[judgments_online[&#39;Untimed annotator context bins&#39;].isin([&#39;2&#39;, &#39;3&#39;, &#39;4&#39;])]
 
 print(f&#39;3. We then filter to judgments which require more than a sentence or two, and now we have this much for each setting (aggregated):\n{judgments_online.groupby([&quot;Final_Setting&quot;])[&quot;Final_Accuracy&quot;].agg(Proportion_True=lambda x: x.mean(),Total_Count=&quot;size&quot;)}&#39;)</code></pre>
 <pre><code>## 3. We then filter to judgments which require more than a sentence or two, and now we have this much for each setting (aggregated):
@@ -536,7 +536,7 @@ print(f&#39;3. We then filter to judgments which require more than a sentence or
 ## AI Debate                 0.781609           87
 ## Human Consultancy         0.700935          107
 ## Human Debate              0.838710          155</code></pre>
-<pre class="python"><code>pd.set_option(&#39;display.max_columns&#39;, None)
+<pre class="python foldable"><code>pd.set_option(&#39;display.max_columns&#39;, None)
 total_counts_for_setting = judgments_online.groupby(&#39;Final_Setting&#39;).size()
 result = judgments_online.groupby([&quot;Final_Setting&quot;, &quot;Untimed annotator context bins&quot;]).agg(
     Proportion_True=pd.NamedAgg(column=&#39;Final_Accuracy&#39;, aggfunc=lambda x: x.mean()),
@@ -544,7 +544,7 @@ result = judgments_online.groupby([&quot;Final_Setting&quot;, &quot;Untimed anno
     Proportion_Context=pd.NamedAgg(column=&#39;Final_Setting&#39;, aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
 )</code></pre>
 <pre><code>## &lt;string&gt;:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.</code></pre>
-<pre class="python"><code>print(f&#39;Are the difficult questions equally enough distributed amongst settings?:\n{result}&#39;)</code></pre>
+<pre class="python foldable"><code>print(f&#39;Are the difficult questions equally enough distributed amongst settings?:\n{result}&#39;)</code></pre>
 <pre><code>## Are the difficult questions equally enough distributed amongst settings?:
 ##                                                   Proportion_True  \
 ## Final_Setting     Untimed annotator context bins                    
@@ -602,7 +602,7 @@ result = judgments_online.groupby([&quot;Final_Setting&quot;, &quot;Untimed anno
 ##                   2                                         0.470968  
 ##                   3                                         0.387097  
 ##                   4                                         0.141935</code></pre>
-<pre class="python"><code>pd.reset_option(&#39;display.max_columns&#39;)</code></pre>
+<pre class="python foldable"><code>pd.reset_option(&#39;display.max_columns&#39;)</code></pre>
 <p>So question difficulty isn’t perfectly balanced… but consultancies
 have a different relationship with question difficulty anyway?
 <strong>need a second opinion</strong></p>
@@ -619,7 +619,7 @@ data</h2>
 class="section level3" number="1.3.1">
 <h3><span class="header-section-number">1.3.1</span> Balancing honest
 &amp; dishonest consultancies</h3>
-<pre class="python"><code>def balance_consultancies(df, sample_setting, random_state):
+<pre class="python foldable"><code>def balance_consultancies(df, sample_setting, random_state):
     &quot;&quot;&quot;
     Sample distinct questions, then use common questions, ensure equal counts.
     &quot;&quot;&quot;
@@ -739,7 +739,7 @@ def run_experiment(judgments_online):
 <div id="balance-debates" class="section level3" number="1.3.2">
 <h3><span class="header-section-number">1.3.2</span> Balance
 debates</h3>
-<pre class="python"><code>def balance_debates(df, sample_setting, random_state):
+<pre class="python foldable"><code>def balance_debates(df, sample_setting, random_state):
     debates_df = df[df[&#39;Setting&#39;].str.contains(sample_setting, na=False)]
     sample_column_name = f&#39;{sample_setting} Sample&#39;
     df[sample_column_name] = False
@@ -782,7 +782,7 @@ print(f&#39;Accuracy after balancing consultancies:\n{judgments_online.groupby([
 <div id="question-weights" class="section level3" number="1.3.3">
 <h3><span class="header-section-number">1.3.3</span> Question
 weights</h3>
-<pre class="python"><code>def question_weights(data, columns, weight_column_name, consultancy_sample=None, debate_sample=None):
+<pre class="python foldable"><code>def question_weights(data, columns, weight_column_name, consultancy_sample=None, debate_sample=None):
     # 0. Make a copy of the original data for weight calculations
     working_data = data.copy()
     # 0.1. Custom filtering based on the &#39;Setting&#39; column
@@ -815,7 +815,7 @@ judgments_online = question_weights(
     columns=[&#39;Article ID&#39;, &#39;Question&#39;, &#39;Final_Setting&#39;], 
     weight_column_name=&#39;initial_question_weights_grouped_setting&#39;
 )</code></pre>
-<pre class="python"><code>def print_weight_summary_by_setting(df, weight_column, consultancy_sample=None):
+<pre class="python foldable"><code>def print_weight_summary_by_setting(df, weight_column, consultancy_sample=None):
     consultancy_condition = df[&#39;Setting&#39;].str.contains(&#39;Consultancy&#39;, case=False, na=False)
     if consultancy_sample is not None:
         consultancy_condition &amp;= (df[&#39;Sample&#39;] == consultancy_sample)
@@ -826,14 +826,14 @@ judgments_online = question_weights(
 
 print(&#39;Unsampled (initial) weights, by group setting&#39;)</code></pre>
 <pre><code>## Unsampled (initial) weights, by group setting</code></pre>
-<pre class="python"><code>print_weight_summary_by_setting(judgments_online, &#39;initial_question_weights_grouped_setting&#39;)</code></pre>
+<pre class="python foldable"><code>print_weight_summary_by_setting(judgments_online, &#39;initial_question_weights_grouped_setting&#39;)</code></pre>
 <pre><code>## Total initial_question_weights_grouped_setting for AI Consultancy Dishonest: 32.50
 ## Total initial_question_weights_grouped_setting for Human Debate: 107.00
 ## Total initial_question_weights_grouped_setting for AI Debate: 75.00
 ## Total initial_question_weights_grouped_setting for Human Consultancy Dishonest: 34.67
 ## Total initial_question_weights_grouped_setting for Human Consultancy Honest: 26.33
 ## Total initial_question_weights_grouped_setting for AI Consultancy Honest: 49.50</code></pre>
-<pre class="python"><code># Recalculate weights for balanced consultancies, all debates
+<pre class="python foldable"><code># Recalculate weights for balanced consultancies, all debates
 judgments_online = question_weights(
     data=judgments_online, 
     columns=[&#39;Article ID&#39;, &#39;Question&#39;], 
@@ -854,28 +854,28 @@ judgments_online = question_weights(
 )
 print(&#39;Consultancy balanced weights, by no/yes group setting&#39;)</code></pre>
 <pre><code>## Consultancy balanced weights, by no/yes group setting</code></pre>
-<pre class="python"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights&#39;, consultancy_sample=True)</code></pre>
+<pre class="python foldable"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights&#39;, consultancy_sample=True)</code></pre>
 <pre><code>## Total sampled_consultancies_all_debates_weights for AI Consultancy Dishonest: 28.07
 ## Total sampled_consultancies_all_debates_weights for Human Debate: 82.48
 ## Total sampled_consultancies_all_debates_weights for AI Debate: 66.52
 ## Total sampled_consultancies_all_debates_weights for Human Consultancy Honest: 16.52
 ## Total sampled_consultancies_all_debates_weights for Human Consultancy Dishonest: 16.00
 ## Total sampled_consultancies_all_debates_weights for AI Consultancy Honest: 36.42</code></pre>
-<pre class="python"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights_grouped_setting&#39;, consultancy_sample=True)</code></pre>
+<pre class="python foldable"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights_grouped_setting&#39;, consultancy_sample=True)</code></pre>
 <pre><code>## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Dishonest: 38.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Debate: 107.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Debate: 75.00
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Honest: 30.50
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Dishonest: 30.50
 ## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Honest: 38.00</code></pre>
-<pre class="python"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights_setting&#39;, consultancy_sample=True)</code></pre>
+<pre class="python foldable"><code>print_weight_summary_by_setting(judgments_online[consultancy_balanced], &#39;sampled_consultancies_all_debates_weights_setting&#39;, consultancy_sample=True)</code></pre>
 <pre><code>## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Dishonest: 38.00
 ## Total sampled_consultancies_all_debates_weights_setting for Human Debate: 107.00
 ## Total sampled_consultancies_all_debates_weights_setting for AI Debate: 75.00
 ## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Honest: 41.00
 ## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Dishonest: 41.00
 ## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Honest: 38.00</code></pre>
-<pre class="python"><code>
+<pre class="python foldable"><code>
 judgments_online = question_weights(
     data=judgments_online, 
     columns=[&#39;Article ID&#39;, &#39;Question&#39;, &#39;Final_Setting&#39;], 
@@ -897,7 +897,7 @@ counts of the debate settings are on the same questions</p>
 <div id="load-into-r-environment" class="section level2" number="1.4">
 <h2><span class="header-section-number">1.4</span> Load into R
 environment</h2>
-<pre class="r"><code>set.seed(123)
+<pre class="r foldable"><code>set.seed(123)
 judgments &lt;- py$judgments
 judgments_online &lt;- py$judgments_online
 # Convert the Accuracy column to a factor for better plotting
@@ -913,33 +913,33 @@ table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting
 ##       FALSE TRUE
 ##   0.5    11   10
 ##   1       7   13</code></pre>
-<pre class="r"><code>table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting, subset_honest$Final_Accuracy)</code></pre>
+<pre class="r foldable"><code>table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting, subset_honest$Final_Accuracy)</code></pre>
 <pre><code>##      
 ##       FALSE TRUE
 ##   0.5     5   16
 ##   1       1   19</code></pre>
-<pre class="r"><code>table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
+<pre class="r foldable"><code>table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
 <pre><code>## 
 ## 0.5   1 
 ##  21  20</code></pre>
-<pre class="r"><code>table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
+<pre class="r foldable"><code>table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
 <pre><code>## 
 ## 0.5   1 
 ##  21  20</code></pre>
-<pre class="r"><code>subset_human_consultancies &lt;- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE &amp; judgments_online$Final_Setting == &#39;Human Consultancy&#39;, c(&quot;sampled_consultancies_all_debates_weights_grouped_setting&quot;,&quot;Final_Accuracy&quot;)]
+<pre class="r foldable"><code>subset_human_consultancies &lt;- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE &amp; judgments_online$Final_Setting == &#39;Human Consultancy&#39;, c(&quot;sampled_consultancies_all_debates_weights_grouped_setting&quot;,&quot;Final_Accuracy&quot;)]
 table(subset_human_consultancies$sampled_consultancies_all_debates_weights_grouped_setting, subset_human_consultancies$Final_Accuracy)</code></pre>
 <pre><code>##      
 ##       FALSE TRUE
 ##   0.5    16   26
 ##   1       8   32</code></pre>
-<pre class="r"><code>table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
+<pre class="r foldable"><code>table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights_grouped_setting)</code></pre>
 <pre><code>##                    
 ##                      0 0.5  1
 ##   AI Consultancy    17   0 76
 ##   AI Debate          0  24 63
 ##   Human Consultancy 25  42 40
 ##   Human Debate       0  96 59</code></pre>
-<pre class="r"><code>table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_debates_weights)</code></pre>
+<pre class="r foldable"><code>table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_debates_weights)</code></pre>
 <pre><code>##                    
 ##                      0 0.2 0.25 0.333333333333333 0.5  1
 ##   AI Consultancy    17   1    9                 4   1 61
@@ -956,7 +956,7 @@ table(subset_human_consultancies$sampled_consultancies_all_debates_weights_group
 number="2.1.1">
 <h3><span class="header-section-number">2.1.1</span> Difference in
 proportions</h3>
-<pre class="r"><code>acc_diff_test &lt;- function(design, Setting){
+<pre class="r foldable"><code>acc_diff_test &lt;- function(design, Setting){
   print(design)
   freq_table &lt;- svytable(~Final_Setting+Final_Accuracy, design)
   chisq_result &lt;- svychisq(~Final_Setting+Final_Accuracy, design, statistic = &quot;Chisq&quot;)
@@ -969,7 +969,7 @@ proportions</h3>
 
 print(&quot;Really raw&quot;)</code></pre>
 <pre><code>## [1] &quot;Really raw&quot;</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = judgments))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = judgments))</code></pre>
 <pre><code>## Warning in svydesign.default(ids = ~1, data = judgments): No weights or
 ## probabilities supplied, assuming equal probability</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
@@ -996,9 +996,9 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate            20   72 78.26087
 ## Human Consultancy    34   87 71.90083
 ## Human Debate         50  327 86.73740</code></pre>
-<pre class="r"><code>print(&quot;Raw&quot;)</code></pre>
+<pre class="r foldable"><code>print(&quot;Raw&quot;)</code></pre>
 <pre><code>## [1] &quot;Raw&quot;</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = judgments_online))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = judgments_online))</code></pre>
 <pre><code>## Warning in svydesign.default(ids = ~1, data = judgments_online): No weights or
 ## probabilities supplied, assuming equal probability</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
@@ -1025,9 +1025,9 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate            19   68 78.16092
 ## Human Consultancy    32   75 70.09346
 ## Human Debate         25  130 83.87097</code></pre>
-<pre class="r"><code>print(&quot;Balanced consultancies&quot;)</code></pre>
+<pre class="r foldable"><code>print(&quot;Balanced consultancies&quot;)</code></pre>
 <pre><code>## [1] &quot;Balanced consultancies&quot;</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting))))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting))))</code></pre>
 <pre><code>## Warning in svydesign.default(ids = ~1, data = subset(judgments_online,
 ## `Consultancy Sample` == : No weights or probabilities supplied, assuming equal
 ## probability</code></pre>
@@ -1055,9 +1055,9 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate            19   68 78.16092
 ## Human Consultancy    24   58 70.73171
 ## Human Debate         25  130 83.87097</code></pre>
-<pre class="r"><code>print(&quot;Balanced consultancies, question weights (grouped settings)&quot;)</code></pre>
+<pre class="r foldable"><code>print(&quot;Balanced consultancies, question weights (grouped settings)&quot;)</code></pre>
 <pre><code>## [1] &quot;Balanced consultancies, question weights (grouped settings)&quot;</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
 ## print(design)
 ## 
@@ -1082,7 +1082,7 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate          15.5 59.5 79.33333
 ## Human Consultancy  16.0 45.0 73.77049
 ## Human Debate       16.5 90.5 84.57944</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights))</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
 ## print(design)
 ## 
@@ -1107,9 +1107,9 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate         14.016667 52.50000 78.92759
 ## Human Consultancy  9.866667 22.65000 69.65659
 ## Human Debate      10.850000 71.63333 86.84583</code></pre>
-<pre class="r"><code>print(&quot;Balanced consultancies sampled debates, question weights (grouped settings)&quot;)</code></pre>
+<pre class="r foldable"><code>print(&quot;Balanced consultancies sampled debates, question weights (grouped settings)&quot;)</code></pre>
 <pre><code>## [1] &quot;Balanced consultancies sampled debates, question weights (grouped settings)&quot;</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE), weights = ~sampled_consultancies_debates_weights_grouped_setting))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE), weights = ~sampled_consultancies_debates_weights_grouped_setting))</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
 ## print(design)
 ## 
@@ -1134,7 +1134,7 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate            15   60 80.00000
 ## Human Consultancy    16   45 73.77049
 ## Human Debate         16   91 85.04673</code></pre>
-<pre class="r"><code>acc_diff_test(svydesign(ids = ~1, data = judgments_online, weights = ~sampled_consultancies_debates_weights_grouped_setting))</code></pre>
+<pre class="r foldable"><code>acc_diff_test(svydesign(ids = ~1, data = judgments_online, weights = ~sampled_consultancies_debates_weights_grouped_setting))</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
 ## print(design)
 ## 
@@ -1159,7 +1159,7 @@ print(&quot;Really raw&quot;)</code></pre>
 ## AI Debate            15   60 80.00000
 ## Human Consultancy    16   45 73.77049
 ## Human Debate         16   91 85.04673</code></pre>
-<pre class="r"><code>design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
+<pre class="r foldable"><code>design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
 acc_diff_test(design)</code></pre>
 <pre><code>## Independent Sampling design (with replacement)
 ## svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == 
@@ -1183,7 +1183,7 @@ acc_diff_test(design)</code></pre>
 ##                   FALSE TRUE Accuracy
 ## Human Consultancy  16.0 45.0 73.77049
 ## Human Debate       16.5 90.5 84.57944</code></pre>
-<pre class="r"><code>final_table &lt;- svytable(~Final_Setting+Final_Accuracy, 
+<pre class="r foldable"><code>final_table &lt;- svytable(~Final_Setting+Final_Accuracy, 
                         design = svydesign(ids = ~1, 
                                            data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)),
                                            weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
@@ -1194,7 +1194,7 @@ final_table</code></pre>
 ##   AI Debate          15.5 59.5
 ##   Human Consultancy  16.0 45.0
 ##   Human Debate       16.5 90.5</code></pre>
-<pre class="r"><code># Add accuracy
+<pre class="r foldable"><code># Add accuracy
 final_table &lt;- cbind(final_table, Accuracy = (final_table[,2] / (final_table[,1]+final_table[,2]))*100)
 # Calculate the difference in accuracy for each row compared to &quot;Human Debate&quot;
 difference_with_debate &lt;- final_table[,&quot;Accuracy&quot;] - final_table[&quot;Human Debate&quot;, &quot;Accuracy&quot;]
@@ -1229,7 +1229,7 @@ final_table</code></pre>
 ## AI Debate         17.816936 0.4731832
 ## Human Consultancy 25.083549 0.1329563
 ## Human Debate       9.677288 1.0000000</code></pre>
-<pre class="r"><code># Display the updated table using knitr::kable
+<pre class="r foldable"><code># Display the updated table using knitr::kable
 knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
              col.names = c(&quot;# Incorrect (weighted)&quot;, &quot;# Correct (weighted)&quot;, &quot;Accuracy&quot;, &quot;Difference&quot;, &quot;95% CI Lower Limit&quot;,&quot;95% CI Upper Limit&quot;,&quot;p-value&quot;))</code></pre>
 <table>
@@ -1298,7 +1298,7 @@ knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>human_only &lt;- subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting))
+<pre class="r foldable"><code>human_only &lt;- subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting))
 human_only$Setting &lt;- droplevels(human_only$Setting)
 table(human_only$Setting)</code></pre>
 <pre><code>## 
@@ -1306,7 +1306,7 @@ table(human_only$Setting)</code></pre>
 ##                          41                          41 
 ##                Human Debate 
 ##                         155</code></pre>
-<pre class="r"><code>final_table &lt;- svytable(~Setting+Final_Accuracy, 
+<pre class="r foldable"><code>final_table &lt;- svytable(~Setting+Final_Accuracy, 
                         design = svydesign(ids = ~1, 
                                            data = human_only,
                                            weights = ~sampled_consultancies_all_debates_weights_setting))
@@ -1316,7 +1316,7 @@ final_table</code></pre>
 ##   Human Consultancy Dishonest  18.0 23.0
 ##   Human Consultancy Honest      6.0 35.0
 ##   Human Debate                 16.5 90.5</code></pre>
-<pre class="r"><code># Add accuracy
+<pre class="r foldable"><code># Add accuracy
 final_table &lt;- cbind(final_table, Accuracy = (final_table[,2] / (final_table[,1]+final_table[,2]))*100)
 # Calculate the difference in accuracy for each row compared to &quot;Human Debate&quot;
 difference_with_debate &lt;- final_table[,&quot;Accuracy&quot;] - final_table[&quot;Human Debate&quot;, &quot;Accuracy&quot;]
@@ -1349,7 +1349,7 @@ final_table</code></pre>
 ## Human Consultancy Dishonest  10.134444 46.829313 0.0005598759
 ## Human Consultancy Honest    -14.374115 12.801286 1.0000000000
 ## Human Debate                 -9.677288  9.677288 1.0000000000</code></pre>
-<pre class="r"><code># Display the updated table using knitr::kable
+<pre class="r foldable"><code># Display the updated table using knitr::kable
 knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
              col.names = c(&quot;# Incorrect (weighted)&quot;, &quot;# Correct (weighted)&quot;, &quot;Accuracy&quot;, &quot;Difference&quot;, &quot;95% CI Lower Limit&quot;,&quot;95% CI Upper Limit&quot;,&quot;p-value&quot;))</code></pre>
 <table>
@@ -1408,14 +1408,14 @@ knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>prop_table &lt;- svytable(~Final_Setting+Final_Accuracy, design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting)),weights = ~sampled_consultancies_all_debates_weights))
+<pre class="r foldable"><code>prop_table &lt;- svytable(~Final_Setting+Final_Accuracy, design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting)),weights = ~sampled_consultancies_all_debates_weights))
 #prop_table &lt;- svytable(~Final_Setting+Final_Accuracy, design = svydesign(ids = ~1, data = subset(judgments_online, !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
 prop_table</code></pre>
 <pre><code>##                    Final_Accuracy
 ## Final_Setting           FALSE      TRUE
 ##   Human Consultancy  9.866667 22.650000
 ##   Human Debate      10.850000 71.633333</code></pre>
-<pre class="r"><code>print(prop.test(c(prop_table[&quot;Human Consultancy&quot;,&quot;TRUE&quot;],prop_table[&quot;Human Debate&quot;,&quot;TRUE&quot;]),c(prop_table[&quot;Human Consultancy&quot;, &quot;TRUE&quot;]+prop_table[&quot;Human Consultancy&quot;, &quot;FALSE&quot;], prop_table[&quot;Human Debate&quot;, &quot;TRUE&quot;]+prop_table[&quot;Human Debate&quot;, &quot;FALSE&quot;])))</code></pre>
+<pre class="r foldable"><code>print(prop.test(c(prop_table[&quot;Human Consultancy&quot;,&quot;TRUE&quot;],prop_table[&quot;Human Debate&quot;,&quot;TRUE&quot;]),c(prop_table[&quot;Human Consultancy&quot;, &quot;TRUE&quot;]+prop_table[&quot;Human Consultancy&quot;, &quot;FALSE&quot;], prop_table[&quot;Human Debate&quot;, &quot;TRUE&quot;]+prop_table[&quot;Human Debate&quot;, &quot;FALSE&quot;])))</code></pre>
 <pre><code>## 
 ##  2-sample test for equality of proportions with continuity correction
 ## 
@@ -1427,14 +1427,14 @@ prop_table</code></pre>
 ## sample estimates:
 ##    prop 1    prop 2 
 ## 0.6965659 0.8684583</code></pre>
-<pre class="r"><code>judgments_online$fpc &lt;- judgments_online$`Final probability correct`
+<pre class="r foldable"><code>judgments_online$fpc &lt;- judgments_online$`Final probability correct`
 judgments_online %&gt;%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = fpc)) +
   labs(y = &quot;fpc&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/final%20probability%20correct-1.png" width="672" /></p>
-<pre class="r"><code>judgments_online %&gt;%
+<pre class="r foldable"><code>judgments_online %&gt;%
   group_by(Final_Setting) %&gt;% summarise(fpcmed = median(fpc),
                                                            fpcmean = mean(Final_Accuracy)) %&gt;%
   ggplot() +
@@ -1442,7 +1442,7 @@ judgments_online %&gt;%
   labs(y = &quot;acc&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/final%20probability%20correct-2.png" width="672" /></p>
-<pre class="r"><code>consultancy_design &lt;- svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
+<pre class="r foldable"><code>consultancy_design &lt;- svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
 
 
 
@@ -1459,32 +1459,32 @@ svyranktest(fpc~Final_Setting, human_consultancy_design)</code></pre>
 ## sample estimates:
 ## difference in mean rank score 
 ##                     0.0969166</code></pre>
-<pre class="r"><code>judgments_online %&gt;% group_by(Final_Setting) %&gt;% summarise(fpcmed = median(fpc),
+<pre class="r foldable"><code>judgments_online %&gt;% group_by(Final_Setting) %&gt;% summarise(fpcmed = median(fpc),
                                                            fpcmean = mean(fpc))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":["Final_Setting"],"name":[1],"type":["chr"],"align":["left"]},{"label":["fpcmed"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["fpcmean"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"AI Consultancy","2":"0.96","3":"0.7639785"},{"1":"AI Debate","2":"0.99","3":"0.7539080"},{"1":"Human Consultancy","2":"0.87","3":"0.6722430"},{"1":"Human Debate","2":"0.95","3":"0.7921935"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;median&quot;)</code></pre>
+<pre class="r foldable"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;median&quot;)</code></pre>
 <pre><code>## 
 ##  Design-based median test
 ## 
 ## data:  fpc ~ Final_Setting
 ## df = 3, Chisq = 13.969, p-value = 0.003272</code></pre>
-<pre class="r"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;wilcoxon&quot;)</code></pre>
+<pre class="r foldable"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;wilcoxon&quot;)</code></pre>
 <pre><code>## 
 ##  Design-based KruskalWallis test
 ## 
 ## data:  fpc ~ Final_Setting
 ## df = 3, Chisq = 12.446, p-value = 0.006514</code></pre>
-<pre class="r"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;vanderWaerden&quot;)</code></pre>
+<pre class="r foldable"><code>svyranktest(fpc~Final_Setting, consultancy_design, test = &quot;vanderWaerden&quot;)</code></pre>
 <pre><code>## 
 ##  Design-based vanderWaerden test
 ## 
 ## data:  fpc ~ Final_Setting
 ## df = 3, Chisq = 9.8037, p-value = 0.02133</code></pre>
-<pre class="r"><code>weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)</code></pre>
+<pre class="r foldable"><code>weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)</code></pre>
 <pre><code>## Warning in summary.glm(glm.object): observations with zero weight not used for
 ## calculating dispersion</code></pre>
 <pre><code>## 
@@ -1492,7 +1492,7 @@ svyranktest(fpc~Final_Setting, human_consultancy_design)</code></pre>
 ## 
 ##   comparison of fpc by Final_Setting
 ##   Chisq=3.00  df=12  p-value=0.006</code></pre>
-<pre class="r"><code>data(efc)
+<pre class="r foldable"><code>data(efc)
 str(efc)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    908 obs. of  26 variables:
 ##  $ c12hour : num  16 148 70 168 168 16 161 110 28 40 ...
@@ -1581,14 +1581,14 @@ str(efc)</code></pre>
 ##   ..- attr(*, &quot;label&quot;)= chr &quot;Care level&quot;
 ##   ..- attr(*, &quot;labels&quot;)= Named chr [1:3] &quot;1&quot; &quot;2&quot; &quot;3&quot;
 ##   .. ..- attr(*, &quot;names&quot;)= chr [1:3] &quot;Care Level 1&quot; &quot;Care Level 2&quot; &quot;Care Level 3/3+&quot;</code></pre>
-<pre class="r"><code>efc$weight &lt;- abs(rnorm(nrow(efc), 1, .3))
+<pre class="r foldable"><code>efc$weight &lt;- abs(rnorm(nrow(efc), 1, .3))
 weighted_mannwhitney(c12hour ~ c161sex + weight, efc)</code></pre>
 <pre><code>## 
 ## # Weighted Mann-Whitney-U test
 ## 
 ##   comparison of c12hour by c161sex
 ##   Chisq=2.47  df=899  p-value=0.014</code></pre>
-<pre class="r"><code>weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)</code></pre>
+<pre class="r foldable"><code>weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)</code></pre>
 <pre><code>## Warning in summary.glm(glm.object): observations with zero weight not used for
 ## calculating dispersion</code></pre>
 <pre><code>## 
@@ -1596,14 +1596,14 @@ weighted_mannwhitney(c12hour ~ c161sex + weight, efc)</code></pre>
 ## 
 ##   comparison of fpc by Final_Setting
 ##   Chisq=3.00  df=12  p-value=0.006</code></pre>
-<pre class="r"><code>wilcox.test(efc$c12hour,efc$c161sex)</code></pre>
+<pre class="r foldable"><code>wilcox.test(efc$c12hour,efc$c161sex)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
 ## data:  efc$c12hour and efc$c161sex
 ## W = 812702, p-value &lt; 0.00000000000000022
 ## alternative hypothesis: true location shift is not equal to 0</code></pre>
-<pre class="r"><code>judgments_online$fpcw &lt;- judgments_online$fpc *judgments_online$sampled_consultancies_all_debates_weights_grouped_setting
+<pre class="r foldable"><code>judgments_online$fpcw &lt;- judgments_online$fpc *judgments_online$sampled_consultancies_all_debates_weights_grouped_setting
 wilcox.test(fpcw~Final_Setting, subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl(&quot;Consultancy&quot;, Final_Setting) &amp; !grepl(&quot;AI&quot;, Final_Setting)), conf.int=T)</code></pre>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
@@ -1620,7 +1620,7 @@ wilcox.test(fpcw~Final_Setting, subset(judgments_online, `Human Consultancy Samp
 <div id="logistic-regression" class="section level3" number="2.1.2">
 <h3><span class="header-section-number">2.1.2</span> Logistic
 regression</h3>
-<pre class="r"><code>#judgments_online$Final_Setting &lt;- relevel(judgments_online$Final_Setting, ref = &quot;Human Debate&quot;)
+<pre class="r foldable"><code>#judgments_online$Final_Setting &lt;- relevel(judgments_online$Final_Setting, ref = &quot;Human Debate&quot;)
 model1 &lt;- glm(Final_Accuracy ~ relevel(factor(Final_Setting), &#39;Human Debate&#39;), family = &#39;binomial&#39;, data = judgments_online)
 
 summary(model1)</code></pre>
@@ -1665,15 +1665,15 @@ summary(model1)</code></pre>
 ## AIC: 458.23
 ## 
 ## Number of Fisher Scoring iterations: 4</code></pre>
-<pre class="r"><code>table(model1$fitted.values &gt; 0.5) </code></pre>
+<pre class="r foldable"><code>table(model1$fitted.values &gt; 0.5) </code></pre>
 <pre><code>## 
 ## TRUE 
 ##  442</code></pre>
-<pre class="r"><code>table(judgments_online$Final_Accuracy)</code></pre>
+<pre class="r foldable"><code>table(judgments_online$Final_Accuracy)</code></pre>
 <pre><code>## 
 ## FALSE  TRUE 
 ##    94   348</code></pre>
-<pre class="r"><code>model2 &lt;- glm(Final_Accuracy ~ relevel(factor(Participant),&#39;Aliyaah Toussaint&#39;) + relevel(factor(Final_Setting), &#39;Human Debate&#39;), family = &#39;binomial&#39;, data = judgments_online)
+<pre class="r foldable"><code>model2 &lt;- glm(Final_Accuracy ~ relevel(factor(Participant),&#39;Aliyaah Toussaint&#39;) + relevel(factor(Final_Setting), &#39;Human Debate&#39;), family = &#39;binomial&#39;, data = judgments_online)
 
 summary(model2)</code></pre>
 <pre><code>## 
@@ -1811,7 +1811,7 @@ summary(model2)</code></pre>
 </div>
 <div id="lmer" class="section level3" number="2.1.3">
 <h3><span class="header-section-number">2.1.3</span> LMER</h3>
-<pre class="r"><code>random.intercept.model = lmer(`Final probability correct` ~ (1|Final_Setting), 
+<pre class="r foldable"><code>random.intercept.model = lmer(`Final probability correct` ~ (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 judgments$random.intercept.preds = predict(random.intercept.model)
 summary(random.intercept.model)</code></pre>
@@ -1837,7 +1837,7 @@ summary(random.intercept.model)</code></pre>
 ## (Intercept)  0.75723    0.02948 3.33321   25.68  0.00006 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>ranef(random.intercept.model)</code></pre>
+<pre class="r foldable"><code>ranef(random.intercept.model)</code></pre>
 <pre><code>## $Final_Setting
 ##                    (Intercept)
 ## AI Consultancy     0.002319435
@@ -1846,13 +1846,13 @@ summary(random.intercept.model)</code></pre>
 ## Human Debate       0.055772047
 ## 
 ## with conditional variances for &quot;Final_Setting&quot;</code></pre>
-<pre class="r"><code>ranova(random.intercept.model)</code></pre>
+<pre class="r foldable"><code>ranova(random.intercept.model)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["npar"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["logLik"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["AIC"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["LRT"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Df"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["Pr(>Chisq)"],"name":[6],"type":["dbl"],"align":["right"]}],"data":[{"1":"3","2":"-182.0001","3":"370.0002","4":"NA","5":"NA","6":"NA","_rn_":"<none>"},{"1":"2","2":"-187.2282","3":"378.4564","4":"10.45621","5":"1","6":"0.001222376","_rn_":"(1 | Final_Setting)"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>random.intercept.model = lmer(`Final probability correct` ~ (1|Participant) + (1|Final_Setting), 
+<pre class="r foldable"><code>random.intercept.model = lmer(`Final probability correct` ~ (1|Participant) + (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 judgments$random.intercept.preds = predict(random.intercept.model)
 summary(random.intercept.model)</code></pre>
@@ -1879,7 +1879,7 @@ summary(random.intercept.model)</code></pre>
 ## (Intercept)  0.75549    0.03211 4.44845   23.52 0.00000772 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>ranef(random.intercept.model)</code></pre>
+<pre class="r foldable"><code>ranef(random.intercept.model)</code></pre>
 <pre><code>## $Participant
 ##                      (Intercept)
 ## Adelle Fernando    -0.0231887667
@@ -1910,7 +1910,7 @@ summary(random.intercept.model)</code></pre>
 ## Human Debate       0.0560636219
 ## 
 ## with conditional variances for &quot;Participant&quot; &quot;Final_Setting&quot;</code></pre>
-<pre class="r"><code>ranova(random.intercept.model)</code></pre>
+<pre class="r foldable"><code>ranova(random.intercept.model)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["npar"],"name":[1],"type":["int"],"align":["right"]},{"label":["logLik"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["AIC"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["LRT"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Df"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["Pr(>Chisq)"],"name":[6],"type":["dbl"],"align":["right"]}],"data":[{"1":"4","2":"-178.9522","3":"365.9045","4":"NA","5":"NA","6":"NA","_rn_":"<none>"},{"1":"3","2":"-182.0001","3":"370.0002","4":"6.095678","5":"1","6":"0.013551293","_rn_":"(1 | Participant)"},{"1":"3","2":"-183.6525","3":"373.3049","4":"9.400441","5":"1","6":"0.002169332","_rn_":"(1 | Final_Setting)"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
@@ -1919,7 +1919,7 @@ summary(random.intercept.model)</code></pre>
 </div>
 <div id="brms" class="section level3" number="2.1.4">
 <h3><span class="header-section-number">2.1.4</span> BRMS</h3>
-<pre class="r"><code>#brm1 &lt;- brm(data = judgments_online,
+<pre class="r foldable"><code>#brm1 &lt;- brm(data = judgments_online,
 #             formula = as.numeric(Final_Accuracy) | trials(2) ~ 1 + (1 | Final_Setting),
 #             family = binomial(&quot;identity&quot;),
 #             iter = 2000, warmup = 1000, chains = 4, cores = 4,
@@ -1933,7 +1933,7 @@ summary(random.intercept.model)</code></pre>
 <div id="quotes-caveats" class="section level3" number="2.2.1">
 <h3><span class="header-section-number">2.2.1</span> Quotes %,
 caveats</h3>
-<pre class="python"><code>characters = turns.merge(
+<pre class="python foldable"><code>characters = turns.merge(
         debates[[&quot;Room name&quot;, &quot;Question&quot;, &quot;Story length&quot;,
                  &quot;Untimed annotator context&quot;,&quot;Untimed annotator context bins&quot;,
                  &quot;Setting&quot;, &quot;Final_Setting&quot;, &quot;Final_Accuracy&quot;,
@@ -2067,7 +2067,7 @@ span_differences_all = compute_span_differences(characters_agg)
 #print(span_differences_all.keys())
 #for span in span_differences_all[(&#39;Why were Jorgenson and Ganti not put to death?&#39;, &#39;Human Consultancy Dishonest&#39;, &#39;Human Consultancy Honest&#39;)]:
 #  print(len(quote_length(span)))</code></pre>
-<pre class="python"><code>split_span_differences_with_room = []
+<pre class="python foldable"><code>split_span_differences_with_room = []
 # Iterate over the span differences
 for (question, setting_1, room_1, acc_1, setting_2, room_2, acc_2), (diff_1, diff_2) in span_differences_all.items():
     split_span_differences_with_room.append((question, setting_1, room_1, acc_1, setting_2, room_2, acc_2, diff_1))
@@ -2087,54 +2087,58 @@ grouped_data = split_span_df.groupby(&quot;Settings&quot;).agg(
 ).reset_index()
 
 grouped_data</code></pre>
-<pre><code>##                                              Settings  Count  Average_Span_Difference
-## 0    AI Consultancy Dishonest - AI Consultancy Honest     12               137.416667
-## 1                AI Consultancy Dishonest - AI Debate     12               141.500000
-## 2   AI Consultancy Dishonest - Human Consultancy D...     12               169.833333
-## 3   AI Consultancy Dishonest - Human Consultancy H...     13                96.384615
-## 4             AI Consultancy Dishonest - Human Debate     13               129.153846
-## 5    AI Consultancy Honest - AI Consultancy Dishonest     12               202.916667
-## 6                   AI Consultancy Honest - AI Debate     12               189.750000
-## 7   AI Consultancy Honest - Human Consultancy Dish...     12               211.333333
-## 8    AI Consultancy Honest - Human Consultancy Honest     12               177.416667
-## 9                AI Consultancy Honest - Human Debate     12               197.833333
-## 10               AI Debate - AI Consultancy Dishonest     12                85.083333
-## 11                  AI Debate - AI Consultancy Honest     12                65.500000
-## 12            AI Debate - Human Consultancy Dishonest     12                94.500000
-## 13               AI Debate - Human Consultancy Honest     12                78.000000
-## 14                           AI Debate - Human Debate     16                88.062500
-## 15  Human Consultancy Dishonest - AI Consultancy D...     12               340.166667
-## 16  Human Consultancy Dishonest - AI Consultancy H...     12               315.000000
-## 17            Human Consultancy Dishonest - AI Debate     12               404.750000
-## 18  Human Consultancy Dishonest - Human Consultanc...     38               334.815789
-## 19         Human Consultancy Dishonest - Human Debate     46               300.847826
-## 20  Human Consultancy Honest - AI Consultancy Dish...     13               280.692308
-## 21   Human Consultancy Honest - AI Consultancy Honest     12               293.333333
-## 22               Human Consultancy Honest - AI Debate     12               299.083333
-## 23  Human Consultancy Honest - Human Consultancy D...     38               272.763158
-## 24            Human Consultancy Honest - Human Debate     42               255.380952
-## 25            Human Debate - AI Consultancy Dishonest     13               179.153846
-## 26               Human Debate - AI Consultancy Honest     12               201.250000
-## 27                           Human Debate - AI Debate     16               188.625000
-## 28         Human Debate - Human Consultancy Dishonest     46               163.956522
-## 29            Human Debate - Human Consultancy Honest     42               147.880952</code></pre>
-<pre class="python"><code>filtered_df = split_span_df[
+<pre><code>##                                              Settings  ...  Average_Span_Difference
+## 0    AI Consultancy Dishonest - AI Consultancy Honest  ...               137.416667
+## 1                AI Consultancy Dishonest - AI Debate  ...               141.500000
+## 2   AI Consultancy Dishonest - Human Consultancy D...  ...               169.833333
+## 3   AI Consultancy Dishonest - Human Consultancy H...  ...                96.384615
+## 4             AI Consultancy Dishonest - Human Debate  ...               129.153846
+## 5    AI Consultancy Honest - AI Consultancy Dishonest  ...               202.916667
+## 6                   AI Consultancy Honest - AI Debate  ...               189.750000
+## 7   AI Consultancy Honest - Human Consultancy Dish...  ...               211.333333
+## 8    AI Consultancy Honest - Human Consultancy Honest  ...               177.416667
+## 9                AI Consultancy Honest - Human Debate  ...               197.833333
+## 10               AI Debate - AI Consultancy Dishonest  ...                85.083333
+## 11                  AI Debate - AI Consultancy Honest  ...                65.500000
+## 12            AI Debate - Human Consultancy Dishonest  ...                94.500000
+## 13               AI Debate - Human Consultancy Honest  ...                78.000000
+## 14                           AI Debate - Human Debate  ...                88.062500
+## 15  Human Consultancy Dishonest - AI Consultancy D...  ...               340.166667
+## 16  Human Consultancy Dishonest - AI Consultancy H...  ...               315.000000
+## 17            Human Consultancy Dishonest - AI Debate  ...               404.750000
+## 18  Human Consultancy Dishonest - Human Consultanc...  ...               334.815789
+## 19         Human Consultancy Dishonest - Human Debate  ...               300.847826
+## 20  Human Consultancy Honest - AI Consultancy Dish...  ...               280.692308
+## 21   Human Consultancy Honest - AI Consultancy Honest  ...               293.333333
+## 22               Human Consultancy Honest - AI Debate  ...               299.083333
+## 23  Human Consultancy Honest - Human Consultancy D...  ...               272.763158
+## 24            Human Consultancy Honest - Human Debate  ...               255.380952
+## 25            Human Debate - AI Consultancy Dishonest  ...               179.153846
+## 26               Human Debate - AI Consultancy Honest  ...               201.250000
+## 27                           Human Debate - AI Debate  ...               188.625000
+## 28         Human Debate - Human Consultancy Dishonest  ...               163.956522
+## 29            Human Debate - Human Consultancy Honest  ...               147.880952
+## 
+## [30 rows x 3 columns]</code></pre>
+<pre class="python foldable"><code>filtered_df = split_span_df[
     (split_span_df[&quot;Setting 1&quot;] == &quot;Human Debate&quot;) &amp;
     ((split_span_df[&quot;Setting 2&quot;] == &quot;Human Consultancy Honest&quot;) | (split_span_df[&quot;Setting 2&quot;] == &quot;Human Consultancy Dishonest&quot;))
 ]
 
 print(filtered_df.groupby([&#39;Setting 2&#39;,&#39;Acc_1&#39;,&#39;Acc_2&#39;])[&#39;Span Difference Count&#39;].describe())</code></pre>
-<pre><code>##                                          count        mean         std    min     25%    50%     75%    max
-## Setting 2                   Acc_1 Acc_2                                                                    
-## Human Consultancy Dishonest False False    5.0  187.200000   90.698401   92.0  131.00  145.0  275.00  293.0
-##                                   True     8.0  149.625000  100.637876   39.0   42.75  156.5  236.25  275.0
-##                             True  False   16.0  148.687500   81.308236   47.0   89.75  128.0  182.00  358.0
-##                                   True    17.0  178.235294  115.183294   57.0   92.00  161.0  233.00  526.0
-## Human Consultancy Honest    False False    4.0  144.750000  134.321443   14.0   36.50  149.0  257.25  267.0
-##                                   True    12.0  122.416667   95.625651   30.0   55.50   83.0  164.75  325.0
-##                             True  False    4.0  197.000000   63.050245  120.0  170.25  197.5  224.25  273.0
-##                                   True    22.0  153.409091   94.780277   30.0   75.00  130.0  195.00  394.0</code></pre>
-<pre class="python"><code># Calculate the IQR and bounds for each group in &#39;Setting 2&#39;
+<pre><code>##                                          count        mean  ...     75%    max
+## Setting 2                   Acc_1 Acc_2                     ...               
+## Human Consultancy Dishonest False False    5.0  187.200000  ...  275.00  293.0
+##                                   True     8.0  149.625000  ...  236.25  275.0
+##                             True  False   16.0  148.687500  ...  182.00  358.0
+##                                   True    17.0  178.235294  ...  233.00  526.0
+## Human Consultancy Honest    False False    4.0  144.750000  ...  257.25  267.0
+##                                   True    12.0  122.416667  ...  164.75  325.0
+##                             True  False    4.0  197.000000  ...  224.25  273.0
+##                                   True    22.0  153.409091  ...  195.00  394.0
+## 
+## [8 rows x 8 columns]</code></pre>
+<pre class="python foldable"><code># Calculate the IQR and bounds for each group in &#39;Setting 2&#39;
 grouped = filtered_df.groupby(&#39;Setting 2&#39;)[&#39;Span Difference Count&#39;]
 
 Q1 = grouped.quantile(0.25)
@@ -2165,23 +2169,25 @@ filtered_no_outliers</code></pre>
 ## 546     Why were Jorgenson and Ganti not put to death?  ...     Human Debate - Human Consultancy Honest
 ## 
 ## [87 rows x 10 columns]</code></pre>
-<pre class="python"><code>print(filtered_no_outliers.groupby([&#39;Setting 2&#39;,&#39;Acc_1&#39;,&#39;Acc_2&#39;])[&#39;Span Difference Count&#39;].describe())</code></pre>
-<pre><code>##                                          count        mean         std    min     25%    50%     75%    max
-## Setting 2                   Acc_1 Acc_2                                                                    
-## Human Consultancy Dishonest False False    5.0  187.200000   90.698401   92.0  131.00  145.0  275.00  293.0
-##                                   True     8.0  149.625000  100.637876   39.0   42.75  156.5  236.25  275.0
-##                             True  False   16.0  148.687500   81.308236   47.0   89.75  128.0  182.00  358.0
-##                                   True    16.0  156.500000   74.733304   57.0   91.25  143.0  220.25  289.0
-## Human Consultancy Honest    False False    4.0  144.750000  134.321443   14.0   36.50  149.0  257.25  267.0
-##                                   True    12.0  122.416667   95.625651   30.0   55.50   83.0  164.75  325.0
-##                             True  False    4.0  197.000000   63.050245  120.0  170.25  197.5  224.25  273.0
-##                                   True    22.0  153.409091   94.780277   30.0   75.00  130.0  195.00  394.0</code></pre>
-<pre class="r"><code>characters&lt;- py$characters_agg
+<pre class="python foldable"><code>print(filtered_no_outliers.groupby([&#39;Setting 2&#39;,&#39;Acc_1&#39;,&#39;Acc_2&#39;])[&#39;Span Difference Count&#39;].describe())</code></pre>
+<pre><code>##                                          count        mean  ...     75%    max
+## Setting 2                   Acc_1 Acc_2                     ...               
+## Human Consultancy Dishonest False False    5.0  187.200000  ...  275.00  293.0
+##                                   True     8.0  149.625000  ...  236.25  275.0
+##                             True  False   16.0  148.687500  ...  182.00  358.0
+##                                   True    16.0  156.500000  ...  220.25  289.0
+## Human Consultancy Honest    False False    4.0  144.750000  ...  257.25  267.0
+##                                   True    12.0  122.416667  ...  164.75  325.0
+##                             True  False    4.0  197.000000  ...  224.25  273.0
+##                                   True    22.0  153.409091  ...  195.00  394.0
+## 
+## [8 rows x 8 columns]</code></pre>
+<pre class="r foldable"><code>characters&lt;- py$characters_agg
 span_difference_debate_consultancies&lt;-py$filtered_df
 ggplot(span_difference_debate_consultancies) +
   geom_boxplot(aes(x = `Setting 2`, y = `Span Difference Count`))</code></pre>
 <p><img src="debate-2309_files/figure-html/quote_length%20graph-1.png" width="100%" /></p>
-<pre class="r"><code>filtered_outliers &lt;- characters %&gt;%
+<pre class="r foldable"><code>filtered_outliers &lt;- characters %&gt;%
   group_by(Final_Setting) %&gt;%
   mutate(Q1 = quantile(quote_length, 0.25),
          Q3 = quantile(quote_length, 0.75),
@@ -2194,7 +2200,7 @@ ggplot(characters) +
   labs(y = &quot;Total Quote Length (characters)&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/quote_length%20graph-2.png" width="100%" /></p>
-<pre class="r"><code>filtered &lt;- characters %&gt;%
+<pre class="r foldable"><code>filtered &lt;- characters %&gt;%
   group_by(Final_Setting) %&gt;%
   mutate(Q1 = quantile(quote_length, 0.25),
          Q3 = quantile(quote_length, 0.75),
@@ -2209,13 +2215,13 @@ filtered %&gt;%
   labs(y = &quot;Total Quote Length in a Debate/Consultancy (unique tokens)&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/quote_length%20graph-3.png" width="100%" /></p>
-<pre class="r"><code>characters %&gt;%
+<pre class="r foldable"><code>characters %&gt;%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = &quot;Total Quote Length in a Debate/Consultancy (unique tokens)&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/quote_length%20graph-4.png" width="100%" /></p>
-<pre class="r"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
+<pre class="r foldable"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
 <pre><code>## 
 ##  Pairwise comparisons using t tests with pooled SD 
 ## 
@@ -2227,19 +2233,19 @@ filtered %&gt;%
 ## Human Debate      0.80222        0.00443        0.000000019213   
 ## 
 ## P value adjustment method: holm</code></pre>
-<pre class="r"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = median(quote_length))</code></pre>
+<pre class="r foldable"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = median(quote_length))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":["Final_Setting"],"name":[1],"type":["chr"],"align":["left"]},{"label":["avground"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"AI Consultancy","2":"160.0"},{"1":"AI Debate","2":"117.5"},{"1":"Human Consultancy","2":"296.0"},{"1":"Human Debate","2":"181.0"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>characters %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = median(quote_length))</code></pre>
+<pre class="r foldable"><code>characters %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = median(quote_length))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":["Final_Setting"],"name":[1],"type":["chr"],"align":["left"]},{"label":["avground"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"AI Consultancy","2":"160.0"},{"1":"AI Debate","2":"117.5"},{"1":"Human Consultancy","2":"309.0"},{"1":"Human Debate","2":"181.0"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>characters &lt;- characters %&gt;%
+<pre class="r foldable"><code>characters &lt;- characters %&gt;%
   group_by(`Room name`,) %&gt;%
   mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %&gt;%
   ungroup()
@@ -2248,7 +2254,7 @@ ggplot(characters) +
   labs(y = &#39;Max Judging Rounds&#39;) +
   theme_minimal() </code></pre>
 <p><img src="debate-2309_files/figure-html/rounds%20graph-1.png" width="100%" /></p>
-<pre class="r"><code>pairwise.t.test(characters$`Max judge rounds by room`, characters$Final_Setting)</code></pre>
+<pre class="r foldable"><code>pairwise.t.test(characters$`Max judge rounds by room`, characters$Final_Setting)</code></pre>
 <pre><code>## 
 ##  Pairwise comparisons using t tests with pooled SD 
 ## 
@@ -2260,7 +2266,7 @@ ggplot(characters) +
 ## Human Debate      0.0000003      0.002     0.0000020        
 ## 
 ## P value adjustment method: holm</code></pre>
-<pre class="r"><code>filtered &lt;- characters %&gt;%
+<pre class="r foldable"><code>filtered &lt;- characters %&gt;%
   group_by(Final_Setting) %&gt;%
   mutate(Q1 = quantile(`Max judge rounds by room`, 0.25),
          Q3 = quantile(`Max judge rounds by room`, 0.75),
@@ -2275,13 +2281,13 @@ filtered %&gt;%
   labs(y = &quot;Rounds&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/rounds%20graph-2.png" width="100%" /></p>
-<pre class="r"><code>characters %&gt;%
+<pre class="r foldable"><code>characters %&gt;%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
   labs(y = &quot;Rounds&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/rounds%20graph-3.png" width="100%" /></p>
-<pre class="r"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
+<pre class="r foldable"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
 <pre><code>## 
 ##  Pairwise comparisons using t tests with pooled SD 
 ## 
@@ -2293,7 +2299,7 @@ filtered %&gt;%
 ## Human Debate      0.560            0.018            0.00000000003675 
 ## 
 ## P value adjustment method: holm</code></pre>
-<pre class="r"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = mean(`Max judge rounds by room`))</code></pre>
+<pre class="r foldable"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = mean(`Max judge rounds by room`))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":["Final_Setting"],"name":[1],"type":["chr"],"align":["left"]},{"label":["avground"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"AI Consultancy","2":"4.240000"},{"1":"AI Debate","2":"4.066667"},{"1":"Human Consultancy","2":"3.611111"},{"1":"Human Debate","2":"2.522222"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
@@ -2304,7 +2310,7 @@ filtered %&gt;%
 number="2.2.2">
 <h3><span class="header-section-number">2.2.2</span> Length of debates,
 stratified</h3>
-<pre class="python"><code>per_turn = turns.merge(
+<pre class="python foldable"><code>per_turn = turns.merge(
         debates[[&quot;Room name&quot;, &quot;Honest debater&quot;, &quot;Dishonest debater&quot;, &quot;Question&quot;, &quot;Article ID&quot;,
                  &quot;Speed annotator accuracy&quot;,&quot;Untimed annotator context&quot;,&quot;Untimed annotator context bins&quot;,&quot;Is offline&quot;,&quot;Final_Setting&quot;, &quot;Setting&quot;,&quot;Final_Accuracy&quot;]],
         how=&quot;left&quot;,
@@ -2318,7 +2324,7 @@ print(per_turn.groupby(&#39;Final_Setting&#39;)[&#39;Num previous judging rounds
 ## Human Consultancy    2.759310
 ## Human Debate         1.475072
 ## Name: Num previous judging rounds, dtype: float64</code></pre>
-<pre class="python"><code># Calculate the IQR and bounds for each group in &#39;Setting 2&#39;
+<pre class="python foldable"><code># Calculate the IQR and bounds for each group in &#39;Setting 2&#39;
 grouped = per_turn.groupby(&#39;Setting&#39;)[&#39;Num previous judging rounds&#39;]
 
 Q1 = grouped.quantile(0.25)
@@ -2335,21 +2341,21 @@ filtered_no_outliers = per_turn[
 ]
 
 filtered_no_outliers</code></pre>
-<pre><code>##                            Room name  Room start time  ...                      Setting Final_Accuracy
-## 0                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
-## 1                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
-## 2                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
-## 3                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
-## 4                         ambition-8    1686950589862  ...  Human Consultancy Dishonest           True
-## ...                              ...              ...  ...                          ...            ...
-## 6013                   break-a-leg-3    1682110823449  ...                 Human Debate           True
-## 6014                   break-a-leg-3    1682110823449  ...                 Human Debate           True
-## 6015  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
-## 6016  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
-## 6017  the-absurdity-of-family-love-2    1689876267578  ...     Human Consultancy Honest           True
+<pre><code>##                            Room name  ...  Final_Accuracy
+## 0                         ambition-8  ...            True
+## 1                         ambition-8  ...            True
+## 2                         ambition-8  ...            True
+## 3                         ambition-8  ...            True
+## 4                         ambition-8  ...            True
+## ...                              ...  ...             ...
+## 6013                   break-a-leg-3  ...            True
+## 6014                   break-a-leg-3  ...            True
+## 6015  the-absurdity-of-family-love-2  ...            True
+## 6016  the-absurdity-of-family-love-2  ...            True
+## 6017  the-absurdity-of-family-love-2  ...            True
 ## 
 ## [5875 rows x 27 columns]</code></pre>
-<pre class="python"><code>for setting in filtered_no_outliers[&#39;Setting&#39;].unique():
+<pre class="python foldable"><code>for setting in filtered_no_outliers[&#39;Setting&#39;].unique():
   per_turn_setting = filtered_no_outliers[filtered_no_outliers[&#39;Setting&#39;]==setting]
   print(setting)
   # Calculate the maximum &#39;Num previous judging rounds&#39; for each combination of &#39;Room name&#39; and &#39;Participant&#39;
@@ -2375,7 +2381,7 @@ filtered_no_outliers</code></pre>
   plt.legend()
   plt.show()</code></pre>
 <p><img src="debate-2309_files/figure-html/strat-1.png" width="100%" /><img src="debate-2309_files/figure-html/strat-2.png" width="100%" /><img src="debate-2309_files/figure-html/strat-3.png" width="100%" /><img src="debate-2309_files/figure-html/strat-4.png" width="100%" /><img src="debate-2309_files/figure-html/strat-5.png" width="100%" /><img src="debate-2309_files/figure-html/strat-6.png" width="100%" /></p>
-<pre class="r"><code>strat &lt;- py$per_turn
+<pre class="r foldable"><code>strat &lt;- py$per_turn
 strat &lt;- strat %&gt;%
   group_by(`Room name`, Participant) %&gt;%
   mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %&gt;%
@@ -2408,10 +2414,10 @@ strat %&gt;%
   facet_wrap(~Setting) +
   theme_bw() +
   theme(legend.position = &quot;none&quot;)</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;Setting&#39;, &#39;Num previous judging rounds&#39;. You can override using the `.groups`
-## argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Setting&#39;, &#39;Num previous judging rounds&#39;.
+## You can override using the `.groups` argument.</code></pre>
 <p><img src="debate-2309_files/figure-html/strat%20ggplot-13.png" width="2100" /></p>
-<pre class="r"><code>strat %&gt;%
+<pre class="r foldable"><code>strat %&gt;%
   group_by(Setting, `Num previous judging rounds`, `Max judge rounds by room`) %&gt;%
   summarize(`Average Probability Correct` = mean(`Probability correct`, na.rm = TRUE)) %&gt;%
   mutate(Completion = `Num previous judging rounds` / `Max judge rounds by room`) %&gt;%
@@ -2423,15 +2429,15 @@ strat %&gt;%
   facet_wrap(~Setting) +
   theme_minimal() +
   theme(legend.position = &quot;none&quot;)</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;Setting&#39;, &#39;Num previous judging rounds&#39;. You can override using the `.groups`
-## argument.</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Setting&#39;, &#39;Num previous judging rounds&#39;.
+## You can override using the `.groups` argument.</code></pre>
 <pre><code>## Warning: Removed 10 rows containing missing values (`geom_line()`).</code></pre>
 <p><img src="debate-2309_files/figure-html/strat%20ggplot-14.png" width="2100" /></p>
 </div>
 <div id="time-offline-judging.." class="section level3" number="2.2.3">
 <h3><span class="header-section-number">2.2.3</span> Time (offline
 judging..?)</h3>
-<pre class="python"><code># Convert to datetime
+<pre class="python foldable"><code># Convert to datetime
 judgments[&quot;Offline judging start time&quot;] = pd.to_datetime(judgments[&quot;Offline judging start time&quot;], unit=&quot;ms&quot;)
 judgments[&quot;Offline judging end time&quot;] = pd.to_datetime(judgments[&quot;Offline judging end time&quot;], unit=&quot;ms&quot;)
 
@@ -2451,7 +2457,7 @@ print(f&quot;Number of offline judgments on consultancies:\n{judgments[judgments
 ## max      4369.697933
 ## Name: Offline judging time, dtype: float64
 ## Only 13...</code></pre>
-<pre class="python"><code># Filter out rows with NaT values
+<pre class="python foldable"><code># Filter out rows with NaT values
 valid_judging_time = judgments[&quot;Offline judging time&quot;].dropna()
 
 # Calculate summary statistics
@@ -2466,7 +2472,7 @@ print(summary_stats)</code></pre>
 ## 75%         10.295583
 ## max      14202.493917
 ## Name: Offline judging time, dtype: float64</code></pre>
-<pre class="python"><code># Filter judgments with offline judging time above 65 minutes
+<pre class="python foldable"><code># Filter judgments with offline judging time above 65 minutes
 filtered_judgments = judgments[(judgments[&quot;Offline judging time&quot;] &lt; 65) &amp; (judgments[&quot;Untimed annotator context&quot;] &gt; 0)]
 
 # Print filtered judgments
@@ -2481,7 +2487,7 @@ print(filtered_judgments[&#39;Offline judging time&#39;].describe())</code></pre
 ## 75%        8.716300
 ## max       64.173267
 ## Name: Offline judging time, dtype: float64</code></pre>
-<pre class="python"><code># Create the histogram
+<pre class="python foldable"><code># Create the histogram
 plt.hist(filtered_judgments[&#39;Offline judging time&#39;], bins=10)
 
 # Set labels and title
@@ -2492,7 +2498,7 @@ plt.title(&quot;Histogram of Offline Judging Time&quot;)
 # Display the histogram
 plt.show()</code></pre>
 <p><img src="debate-2309_files/figure-html/TODO%20offline%20judging-1.png" width="672" /></p>
-<pre class="python"><code>
+<pre class="python foldable"><code>
 aggregates = {
     &#39;Final probability correct&#39;: &#39;mean&#39;,
     &#39;Untimed annotator context&#39;: &#39;mean&#39;
@@ -2508,7 +2514,7 @@ filtered_judgments = filtered_judgments.groupby(&#39;Offline judging time&#39;).
 <h2><span class="header-section-number">3.1</span> Question
 Difficulty</h2>
 <p>confounder rounds, quotes</p>
-<pre class="python"><code>judgments[&quot;Number of judge continues bins&quot;] = pd.cut(
+<pre class="python foldable"><code>judgments[&quot;Number of judge continues bins&quot;] = pd.cut(
     judgments[&quot;Number of judge continues&quot;], 
     bins=[0, 3, 6, 9, float(&#39;inf&#39;)],  # bin edges
     labels=[&#39;1-3&#39;, &#39;4-6&#39;, &#39;7-9&#39;, &#39;10+&#39;],  # labels for the resulting bins
@@ -2519,7 +2525,7 @@ aggregated_df = judgments.groupby([&quot;Setting&quot;, &quot;Number of judge co
     Total_Count=&quot;size&quot;
 ).reset_index()</code></pre>
 <pre><code>## &lt;string&gt;:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.</code></pre>
-<pre class="python"><code>pd.set_option(&#39;display.max_columns&#39;, None)
+<pre class="python foldable"><code>pd.set_option(&#39;display.max_columns&#39;, None)
 print(aggregated_df)</code></pre>
 <pre><code>##                         Setting Number of judge continues bins  \
 ## 0      AI Consultancy Dishonest                            1-3   
@@ -2572,7 +2578,7 @@ print(aggregated_df)</code></pre>
 ## 21         0.859649           57  
 ## 22         1.000000            1  
 ## 23              NaN            0</code></pre>
-<pre class="python"><code>pd.reset_option(&#39;display.max_columns&#39;)
+<pre class="python foldable"><code>pd.reset_option(&#39;display.max_columns&#39;)
 
 total_counts_for_setting = judgments.groupby(&#39;Final_Setting&#39;).size()
 result = judgments.groupby([&quot;Final_Setting&quot;, &quot;Untimed annotator context bins&quot;, &quot;Number of judge continues bins&quot;]).agg(
@@ -2581,23 +2587,23 @@ result = judgments.groupby([&quot;Final_Setting&quot;, &quot;Untimed annotator c
     Proportion_Context=pd.NamedAgg(column=&#39;Final_Setting&#39;, aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
 ).reset_index()</code></pre>
 <pre><code>## &lt;string&gt;:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.</code></pre>
-<pre class="python"><code>print(f&#39;Is it number of rounds (meaning more evidence) that confounds the consultancy accuracy?:\n{result}&#39;)</code></pre>
+<pre class="python foldable"><code>print(f&#39;Is it number of rounds (meaning more evidence) that confounds the consultancy accuracy?:\n{result}&#39;)</code></pre>
 <pre><code>## Is it number of rounds (meaning more evidence) that confounds the consultancy accuracy?:
-##      Final_Setting Untimed annotator context bins  ... Context_Count  Proportion_Context
-## 0   AI Consultancy                              1  ...             0                 NaN
-## 1   AI Consultancy                              1  ...             1            0.010417
-## 2   AI Consultancy                              1  ...             0                 NaN
-## 3   AI Consultancy                              1  ...             0                 NaN
-## 4   AI Consultancy                              2  ...            28            0.291667
-## ..             ...                            ...  ...           ...                 ...
-## 59    Human Debate                              3  ...             0                 NaN
-## 60    Human Debate                              4  ...            29            0.076923
-## 61    Human Debate                              4  ...             7            0.018568
-## 62    Human Debate                              4  ...             0                 NaN
-## 63    Human Debate                              4  ...             0                 NaN
+##      Final_Setting  ... Proportion_Context
+## 0   AI Consultancy  ...                NaN
+## 1   AI Consultancy  ...           0.010417
+## 2   AI Consultancy  ...                NaN
+## 3   AI Consultancy  ...                NaN
+## 4   AI Consultancy  ...           0.291667
+## ..             ...  ...                ...
+## 59    Human Debate  ...                NaN
+## 60    Human Debate  ...           0.076923
+## 61    Human Debate  ...           0.018568
+## 62    Human Debate  ...                NaN
+## 63    Human Debate  ...                NaN
 ## 
 ## [64 rows x 6 columns]</code></pre>
-<pre class="r"><code>judgments$`Untimed annotator context bins` &lt;- as.factor(judgments$`Untimed annotator context bins`)
+<pre class="r foldable"><code>judgments$`Untimed annotator context bins` &lt;- as.factor(judgments$`Untimed annotator context bins`)
 
 bootstrap_mean &lt;- function(data, indices) {
   return(mean(data[indices], na.rm = TRUE))
@@ -2626,7 +2632,7 @@ judgments_online %&gt;%
 <div id="judge-experience" class="section level3" number="3.2.1">
 <h3><span class="header-section-number">3.2.1</span> Judge
 “Experience”</h3>
-<pre class="r"><code>judgments_online %&gt;% 
+<pre class="r foldable"><code>judgments_online %&gt;% 
   group_by(Final_Setting, Participant) %&gt;%
   arrange(`End time`) %&gt;%
   mutate(count=row_number()) %&gt;% 
@@ -2646,7 +2652,7 @@ judgments_online %&gt;%
   theme_minimal() +
   facet_wrap(~ Final_Setting)</code></pre>
 <p><img src="debate-2309_files/figure-html/unnamed-chunk-2-1.png" width="100%" /></p>
-<pre class="r"><code>subset(judgments_online, judgments_online[&#39;Setting&#39;] == &#39;Human Debate&#39;) %&gt;% 
+<pre class="r foldable"><code>subset(judgments_online, judgments_online[&#39;Setting&#39;] == &#39;Human Debate&#39;) %&gt;% 
   group_by(`Untimed annotator context bins`, Participant) %&gt;%
   arrange(`End time`) %&gt;%
   mutate(count=row_number()) %&gt;% 
@@ -2671,7 +2677,7 @@ judgments_online %&gt;%
 <h3><span class="header-section-number">3.2.2</span> Calibration</h3>
 <p>S: (1) debaters didnt learn calibration -&gt; calibration over time?
 S: (2) dishonest debater tricks</p>
-<pre class="python"><code>import pandas as pd
+<pre class="python foldable"><code>import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.calibration import calibration_curve
@@ -2740,7 +2746,7 @@ Involvement</h3>
 </div>
 <div id="debater-skill" class="section level2" number="3.3">
 <h2><span class="header-section-number">3.3</span> Debater Skill</h2>
-<pre class="r"><code>random.intercept.model = lmer(`Final probability correct` ~  (1|Final_Setting), 
+<pre class="r foldable"><code>random.intercept.model = lmer(`Final probability correct` ~  (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 
 judgments$random.intercept.preds = predict(random.intercept.model)
@@ -2812,7 +2818,7 @@ colnames(judgments)</code></pre>
 ## [64] &quot;Last modified time&quot;                     
 ## [65] &quot;Final_Accuracy&quot;                         
 ## [66] &quot;random.intercept.preds&quot;</code></pre>
-<pre class="r"><code>dishonest &lt;- judgments[!is.na(judgments$`Dishonest debater`), ]
+<pre class="r foldable"><code>dishonest &lt;- judgments[!is.na(judgments$`Dishonest debater`), ]
 model3 &lt;- glm(Final_Accuracy ~ relevel(factor(`Dishonest debater`), &#39;Shlomo Kofman&#39;) + relevel(factor(Final_Setting), &#39;Human Debate&#39;), family = &#39;binomial&#39;, data = judgments[!is.na(judgments$`Dishonest debater`), ])
 summary(model3)</code></pre>
 <pre><code>## 
@@ -2953,7 +2959,7 @@ summary(model3)</code></pre>
 ## AIC: 531.85
 ## 
 ## Number of Fisher Scoring iterations: 16</code></pre>
-<pre class="r"><code>result &lt;- judgments_online %&gt;%
+<pre class="r foldable"><code>result &lt;- judgments_online %&gt;%
   group_by(`Dishonest debater`) %&gt;%
   summarize(
     Win_Rate = sum(Final_Accuracy == &quot;FALSE&quot;) / n()
@@ -2967,7 +2973,7 @@ result</code></pre>
 {"columns":[{"label":["Dishonest debater"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Win_Rate"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"Shlomo Kofman","2":"0.54545455"},{"1":"Salsabila Mahdi","2":"0.35714286"},{"1":"Jessica Li","2":"0.35294118"},{"1":"Noor Mirza-Rashid","2":"0.33333333"},{"1":"Adelle Fernando","2":"0.29629630"},{"1":"Sean Wang","2":"0.28000000"},{"1":"Reeya Kansra","2":"0.27272727"},{"1":"Sam Jin","2":"0.25000000"},{"1":"Shreeram Modi","2":"0.24000000"},{"1":"GPT-4","2":"0.19200000"},{"1":"NA","2":"0.18446602"},{"1":"Anuj Jain","2":"0.14285714"},{"1":"Julian Michael","2":"0.12500000"},{"1":"Aliyaah Toussaint","2":"0.11111111"},{"1":"Ethan Rosen","2":"0.09090909"},{"1":"Jackson Petty","2":"0.07692308"},{"1":"David Rein","2":"0.00000000"},{"1":"Julien Dirani","2":"0.00000000"},{"1":"Max Layden","2":"0.00000000"},{"1":"Vishakh Padmakumar","2":"0.00000000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>result1 &lt;- judgments_online %&gt;%
+<pre class="r foldable"><code>result1 &lt;- judgments_online %&gt;%
   group_by(`Honest debater`) %&gt;%
   summarize(
     Win_Rate = sum(Final_Accuracy == &quot;TRUE&quot;) / n()
@@ -2981,7 +2987,7 @@ result1</code></pre>
 {"columns":[{"label":["Honest debater"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Win_Rate"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"Julian Michael","2":"1.0000000"},{"1":"Julien Dirani","2":"1.0000000"},{"1":"Noor Mirza-Rashid","2":"1.0000000"},{"1":"Sean Wang","2":"0.9600000"},{"1":"Jessica Li","2":"0.9230769"},{"1":"Salsabila Mahdi","2":"0.9166667"},{"1":"Adelle Fernando","2":"0.9047619"},{"1":"Reeya Kansra","2":"0.9000000"},{"1":"Vishakh Padmakumar","2":"0.8571429"},{"1":"Shlomo Kofman","2":"0.8333333"},{"1":"Anuj Jain","2":"0.8000000"},{"1":"David Rein","2":"0.8000000"},{"1":"Shreeram Modi","2":"0.8000000"},{"1":"Ethan Rosen","2":"0.7857143"},{"1":"GPT-4","2":"0.7746479"},{"1":"NA","2":"0.6804124"},{"1":"Jackson Petty","2":"0.6666667"},{"1":"Sam Jin","2":"0.6666667"},{"1":"Aliyaah Toussaint","2":"0.6250000"},{"1":"Emmanuel Makinde","2":"0.0000000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code># Filter for high win rate debaters
+<pre class="r foldable"><code># Filter for high win rate debaters
 high_win_rate_debaters &lt;- result1 %&gt;%
   filter(Win_Rate &gt; 0.90)  # Set the threshold for high win rate
 
@@ -2999,7 +3005,7 @@ cases_high_win_rate_lost</code></pre>
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Participant"],"name":[1],"type":["fct"],"align":["left"]},{"label":["base_room_name"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Room name"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Room start time"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Role"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Is turn"],"name":[6],"type":["lgl"],"align":["right"]},{"label":["Is over"],"name":[7],"type":["lgl"],"align":["right"]},{"label":["Number of judge continues"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["Final probability correct"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["Offline judging start time"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Offline judging end time"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["other"],"name":[12],"type":["chr"],"align":["left"]},{"label":["factual informativeness (comparative).1"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["factual informativeness (comparative).2"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics (single)"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["factual accuracy (single)"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["clarity.1"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["clarity.2"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["factual accuracy.1"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["factual accuracy.2"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["judge reasoning"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["reason for outcome"],"name":[22],"type":["chr"],"align":["left"]},{"label":["protocol"],"name":[23],"type":["chr"],"align":["left"]},{"label":["evidence use.1"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["evidence use.2"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["evidence in story.1"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["evidence in story.2"],"name":[27],"type":["dbl"],"align":["right"]},{"label":["other factors"],"name":[28],"type":["chr"],"align":["left"]},{"label":["judge adaptation (single)"],"name":[29],"type":["dbl"],"align":["right"]},{"label":["evidence in debate.1"],"name":[30],"type":["dbl"],"align":["right"]},{"label":["evidence in debate.2"],"name":[31],"type":["dbl"],"align":["right"]},{"label":["interface"],"name":[32],"type":["chr"],"align":["left"]},{"label":["evidence in debate (single)"],"name":[33],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics.1"],"name":[34],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics.2"],"name":[35],"type":["dbl"],"align":["right"]},{"label":["clash.1"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["clash.2"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["identity guesses.Judge"],"name":[38],"type":["chr"],"align":["left"]},{"label":["identity guesses.Debater A"],"name":[39],"type":["chr"],"align":["left"]},{"label":["identity guesses.Debater B"],"name":[40],"type":["chr"],"align":["left"]},{"label":["judge adaptation.1"],"name":[41],"type":["dbl"],"align":["right"]},{"label":["judge adaptation.2"],"name":[42],"type":["dbl"],"align":["right"]},{"label":["subjective correctness"],"name":[43],"type":["dbl"],"align":["right"]},{"label":["evidence use (single)"],"name":[44],"type":["dbl"],"align":["right"]},{"label":["factual informativeness (total)"],"name":[45],"type":["dbl"],"align":["right"]},{"label":["judge strategies"],"name":[46],"type":["chr"],"align":["left"]},{"label":["clarity (single)"],"name":[47],"type":["dbl"],"align":["right"]},{"label":["Debater A"],"name":[48],"type":["chr"],"align":["left"]},{"label":["Debater B"],"name":[49],"type":["chr"],"align":["left"]},{"label":["Honest debater"],"name":[50],"type":["chr"],"align":["left"]},{"label":["Dishonest debater"],"name":[51],"type":["chr"],"align":["left"]},{"label":["Is single debater"],"name":[52],"type":["lgl"],"align":["right"]},{"label":["Has honest debater"],"name":[53],"type":["lgl"],"align":["right"]},{"label":["Final_Setting"],"name":[54],"type":["chr"],"align":["left"]},{"label":["Setting"],"name":[55],"type":["fct"],"align":["left"]},{"label":["Question"],"name":[56],"type":["chr"],"align":["left"]},{"label":["Article ID"],"name":[57],"type":["dbl"],"align":["right"]},{"label":["Speed annotator accuracy bins"],"name":[58],"type":["ord"],"align":["right"]},{"label":["Untimed annotator context bins"],"name":[59],"type":["ord"],"align":["right"]},{"label":["Speed annotator accuracy"],"name":[60],"type":["dbl"],"align":["right"]},{"label":["Untimed annotator context"],"name":[61],"type":["dbl"],"align":["right"]},{"label":["Is offline"],"name":[62],"type":["lgl"],"align":["right"]},{"label":["End time"],"name":[63],"type":["dttm"],"align":["right"]},{"label":["Last modified time"],"name":[64],"type":["dttm"],"align":["right"]},{"label":["Final_Accuracy"],"name":[65],"type":["lgl"],"align":["right"]},{"label":["Human Consultancy Sample"],"name":[66],"type":["lgl"],"align":["right"]},{"label":["AI Consultancy Sample"],"name":[67],"type":["lgl"],"align":["right"]},{"label":["Human Debate Sample"],"name":[68],"type":["lgl"],"align":["right"]},{"label":["AI Debate Sample"],"name":[69],"type":["lgl"],"align":["right"]},{"label":["Sample"],"name":[70],"type":["lgl"],"align":["right"]},{"label":["Consultancy Sample"],"name":[71],"type":["lgl"],"align":["right"]},{"label":["initial_question_weights"],"name":[72],"type":["dbl"],"align":["right"]},{"label":["initial_question_weights_grouped_setting"],"name":[73],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights"],"name":[74],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights_grouped_setting"],"name":[75],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights_setting"],"name":[76],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_debates_weights_grouped_setting"],"name":[77],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_debates_weights"],"name":[78],"type":["dbl"],"align":["right"]},{"label":["Final_Accuracy_char"],"name":[79],"type":["lgl"],"align":["right"]},{"label":["fpc"],"name":[80],"type":["dbl"],"align":["right"]},{"label":["fpcw"],"name":[81],"type":["dbl"],"align":["right"]}],"data":[{"1":"Anuj Jain","2":"survival-type-","3":"survival-type-5","4":"1681159356736","5":"Judge","6":"FALSE","7":"TRUE","8":"5","9":"0.33","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"i suck","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"3","35":"3","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Ethan Rosen","50":"Adelle Fernando","51":"Ethan Rosen","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How did the planet of Niobe compare to others that Earth was exploring?","57":"51395","58":"0.2","59":"3","60":"0.1666667","61":"2.750000","62":"FALSE","63":"2023-04-17 17:12:59.017","64":"2023-04-28 12:29:25.259","65":"FALSE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.33","81":"0.165","_rn_":"146"},{"1":"Ethan Rosen","2":"the-great-nebraska-sea-","3":"the-great-nebraska-sea-0","4":"1683321454611","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.01","10":"NaN","11":"NaN","12":"NA","13":"1","14":"1","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"1","22":"I thought \"like\" was over-technical compared to what these questions typically ask for. I was wrong.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"4","37":"4","38":"NA","39":"NA","40":"NA","41":"4","42":"3","43":"NaN","44":"NaN","45":"1","46":"NA","47":"NaN","48":"Salsabila Mahdi","49":"Sean Wang","50":"Sean Wang","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How is this article written?","57":"50893","58":"0.2","59":"3","60":"0.2000000","61":"3.333333","62":"FALSE","63":"2023-05-08 17:14:28.855","64":"2023-06-22 15:20:58.914","65":"FALSE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2000000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.01","81":"0.005","_rn_":"214"},{"1":"Jessica Li","2":"rx-","3":"rx-1","4":"1683298141840","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.01","10":"NaN","11":"NaN","12":"NA","13":"4","14":"2","15":"NaN","16":"NaN","17":"4","18":"1","19":"NaN","20":"NaN","21":"4","22":"B's last arg was literally 2 sentences, and A's ev was very convincing.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"4","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Adelle Fernando","50":"Adelle Fernando","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What were the specialties of the Red and Green Doctors, respectively?","57":"60412","58":"0.2","59":"3","60":"0.2000000","61":"2.800000","62":"FALSE","63":"2023-06-22 15:18:02.838","64":"2023-06-22 15:18:02.838","65":"FALSE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.01","81":"0.005","_rn_":"289"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code># Filter for high win rate debaters
+<pre class="r foldable"><code># Filter for high win rate debaters
 high_win_rate_debaters &lt;- result %&gt;%
   filter(Win_Rate &gt; 0.20)  # Set the threshold for high win rate
 
@@ -3017,7 +3023,7 @@ cases_high_win_rate_lost</code></pre>
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Participant"],"name":[1],"type":["fct"],"align":["left"]},{"label":["base_room_name"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Room name"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Room start time"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Role"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Is turn"],"name":[6],"type":["lgl"],"align":["right"]},{"label":["Is over"],"name":[7],"type":["lgl"],"align":["right"]},{"label":["Number of judge continues"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["Final probability correct"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["Offline judging start time"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Offline judging end time"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["other"],"name":[12],"type":["chr"],"align":["left"]},{"label":["factual informativeness (comparative).1"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["factual informativeness (comparative).2"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics (single)"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["factual accuracy (single)"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["clarity.1"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["clarity.2"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["factual accuracy.1"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["factual accuracy.2"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["judge reasoning"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["reason for outcome"],"name":[22],"type":["chr"],"align":["left"]},{"label":["protocol"],"name":[23],"type":["chr"],"align":["left"]},{"label":["evidence use.1"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["evidence use.2"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["evidence in story.1"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["evidence in story.2"],"name":[27],"type":["dbl"],"align":["right"]},{"label":["other factors"],"name":[28],"type":["chr"],"align":["left"]},{"label":["judge adaptation (single)"],"name":[29],"type":["dbl"],"align":["right"]},{"label":["evidence in debate.1"],"name":[30],"type":["dbl"],"align":["right"]},{"label":["evidence in debate.2"],"name":[31],"type":["dbl"],"align":["right"]},{"label":["interface"],"name":[32],"type":["chr"],"align":["left"]},{"label":["evidence in debate (single)"],"name":[33],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics.1"],"name":[34],"type":["dbl"],"align":["right"]},{"label":["facts versus semantics.2"],"name":[35],"type":["dbl"],"align":["right"]},{"label":["clash.1"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["clash.2"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["identity guesses.Judge"],"name":[38],"type":["chr"],"align":["left"]},{"label":["identity guesses.Debater A"],"name":[39],"type":["chr"],"align":["left"]},{"label":["identity guesses.Debater B"],"name":[40],"type":["chr"],"align":["left"]},{"label":["judge adaptation.1"],"name":[41],"type":["dbl"],"align":["right"]},{"label":["judge adaptation.2"],"name":[42],"type":["dbl"],"align":["right"]},{"label":["subjective correctness"],"name":[43],"type":["dbl"],"align":["right"]},{"label":["evidence use (single)"],"name":[44],"type":["dbl"],"align":["right"]},{"label":["factual informativeness (total)"],"name":[45],"type":["dbl"],"align":["right"]},{"label":["judge strategies"],"name":[46],"type":["chr"],"align":["left"]},{"label":["clarity (single)"],"name":[47],"type":["dbl"],"align":["right"]},{"label":["Debater A"],"name":[48],"type":["chr"],"align":["left"]},{"label":["Debater B"],"name":[49],"type":["chr"],"align":["left"]},{"label":["Honest debater"],"name":[50],"type":["chr"],"align":["left"]},{"label":["Dishonest debater"],"name":[51],"type":["chr"],"align":["left"]},{"label":["Is single debater"],"name":[52],"type":["lgl"],"align":["right"]},{"label":["Has honest debater"],"name":[53],"type":["lgl"],"align":["right"]},{"label":["Final_Setting"],"name":[54],"type":["chr"],"align":["left"]},{"label":["Setting"],"name":[55],"type":["fct"],"align":["left"]},{"label":["Question"],"name":[56],"type":["chr"],"align":["left"]},{"label":["Article ID"],"name":[57],"type":["dbl"],"align":["right"]},{"label":["Speed annotator accuracy bins"],"name":[58],"type":["ord"],"align":["right"]},{"label":["Untimed annotator context bins"],"name":[59],"type":["ord"],"align":["right"]},{"label":["Speed annotator accuracy"],"name":[60],"type":["dbl"],"align":["right"]},{"label":["Untimed annotator context"],"name":[61],"type":["dbl"],"align":["right"]},{"label":["Is offline"],"name":[62],"type":["lgl"],"align":["right"]},{"label":["End time"],"name":[63],"type":["dttm"],"align":["right"]},{"label":["Last modified time"],"name":[64],"type":["dttm"],"align":["right"]},{"label":["Final_Accuracy"],"name":[65],"type":["lgl"],"align":["right"]},{"label":["Human Consultancy Sample"],"name":[66],"type":["lgl"],"align":["right"]},{"label":["AI Consultancy Sample"],"name":[67],"type":["lgl"],"align":["right"]},{"label":["Human Debate Sample"],"name":[68],"type":["lgl"],"align":["right"]},{"label":["AI Debate Sample"],"name":[69],"type":["lgl"],"align":["right"]},{"label":["Sample"],"name":[70],"type":["lgl"],"align":["right"]},{"label":["Consultancy Sample"],"name":[71],"type":["lgl"],"align":["right"]},{"label":["initial_question_weights"],"name":[72],"type":["dbl"],"align":["right"]},{"label":["initial_question_weights_grouped_setting"],"name":[73],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights"],"name":[74],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights_grouped_setting"],"name":[75],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_all_debates_weights_setting"],"name":[76],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_debates_weights_grouped_setting"],"name":[77],"type":["dbl"],"align":["right"]},{"label":["sampled_consultancies_debates_weights"],"name":[78],"type":["dbl"],"align":["right"]},{"label":["Final_Accuracy_char"],"name":[79],"type":["lgl"],"align":["right"]},{"label":["fpc"],"name":[80],"type":["dbl"],"align":["right"]},{"label":["fpcw"],"name":[81],"type":["dbl"],"align":["right"]}],"data":[{"1":"Adelle Fernando","2":"monopoly-","3":"monopoly-1","4":"1680552464768","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.70","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"1","18":"1","19":"NaN","20":"NaN","21":"3","22":"This was a tough question because it deals with a character's intent, which seemed to be given little textual support in the story. I voted A because I think the ev showing him fighting with rebels was more conclusive and I wasn't convinced he lost hope.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"2","32":"NA","33":"NaN","34":"3","35":"3","36":"1","37":"2","38":"NA","39":"NA","40":"NA","41":"1","42":"1","43":"NaN","44":"NaN","45":"1","46":"NA","47":"NaN","48":"Ethan Rosen","49":"Sean Wang","50":"Ethan Rosen","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which is the best summary of this story?","57":"61499","58":"0","59":"4","60":"0.0000000","61":"3.666667","62":"FALSE","63":"2023-04-10 16:16:41.598","64":"2023-04-28 11:30:24.344","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.70","81":"0.350","_rn_":"21"},{"1":"Adelle Fernando","2":"tollivers-orbit-","3":"tollivers-orbit-1","4":"1681765942714","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.90","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"3","22":"A was quite defensive, and B was countering alot of their ev, so it went to B","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"3","35":"2","36":"2","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"Jessica Li","49":"Ethan Rosen","50":"Ethan Rosen","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which word doesn't describe Tolliver?","57":"61053","58":"0","59":"4","60":"0.0000000","61":"3.666667","62":"FALSE","63":"2023-05-21 14:03:16.038","64":"2023-05-26 10:54:34.612","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.90","81":"0.450","_rn_":"43"},{"1":"Aliyaah Toussaint","2":"rx-","3":"rx-3","4":"1683298141840","5":"Judge","6":"FALSE","7":"TRUE","8":"1","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"4","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"I got it right because A never stated that Earth was the site of a pervious wartime hospital. If you look at the quotes B shows the rest of A's quotes. The evidence is for the recent events not previous wartime hospital.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"2","35":"1","36":"1","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"4","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Julian Michael","50":"Julian Michael","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How did Earth come to be the hospital planet?","57":"60412","58":"0","59":"2","60":"0.0000000","61":"2.000000","62":"FALSE","63":"2023-05-19 15:40:18.598","64":"2023-05-19 16:20:39.934","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"78"},{"1":"Aliyaah Toussaint","2":"stranger-from-space-","3":"stranger-from-space-0","4":"1683298716462","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"B characterized the character as delusional which made me think the character is crazy enough for A's answer to be true.\\n","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"3","32":"NA","33":"NaN","34":"1","35":"1","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Sean Wang","50":"Shreeram Modi","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why does Koroby feel motivated to start the fire?","57":"62314","58":"0.2","59":"3","60":"0.2000000","61":"3.000000","62":"FALSE","63":"2023-06-22 17:38:01.177","64":"2023-06-23 11:56:33.036","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"81"},{"1":"Aliyaah Toussaint","2":"the-long-remembered-thunder-","3":"the-long-remembered-thunder-1","4":"1689876270711","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.98","10":"NaN","11":"NaN","12":"NA","13":"1","14":"3","15":"NaN","16":"NaN","17":"1","18":"3","19":"NaN","20":"NaN","21":"4","22":"B does an amazing job showing that Ms.Caroll was not spiteful toward Mr.Bram. Also A seems confused about the story which leads me to believe that B is right because no one knows if Tremaine got his answer resolved.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"3","35":"1","36":"0","37":"3","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shlomo Kofman","49":"Sean Wang","50":"Sean Wang","51":"Shlomo Kofman","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Did the questions Tremaine needed answers to get resolved?","57":"52844","58":"0.2","59":"4","60":"0.2000000","61":"4.000000","62":"FALSE","63":"2023-07-27 16:36:48.035","64":"2023-07-27 16:36:48.035","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.1666667","73":"1.0","74":"0.2000000","75":"1.0","76":"1.0","77":"1","78":"0.2500000","79":"NA","80":"0.98","81":"0.980","_rn_":"91"},{"1":"Aliyaah Toussaint","2":"the-princess-and-the-physicist-","3":"the-princess-and-the-physicist-4","4":"1682112300045","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"4","14":"2","15":"NaN","16":"NaN","17":"2","18":"4","19":"NaN","20":"NaN","21":"4","22":"A failed to address my concerns in the end which made me confidently vote B.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"3","32":"NA","33":"NaN","34":"2","35":"1","36":"1","37":"4","38":"NA","39":"NA","40":"NA","41":"1","42":"4","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Anuj Jain","50":"Anuj Jain","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why did the physicist and anthropologist travel to Uxen?","57":"51126","58":"0.2","59":"2","60":"0.2000000","61":"1.800000","62":"FALSE","63":"2023-06-29 18:36:11.250","64":"2023-06-29 18:41:52.359","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"94"},{"1":"Aliyaah Toussaint","2":"the-starsent-knaves-","3":"the-starsent-knaves-2","4":"1688757372245","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.85","10":"NaN","11":"NaN","12":"NA","13":"1","14":"3","15":"NaN","16":"NaN","17":"1","18":"3","19":"NaN","20":"NaN","21":"4","22":"I got the right answer because A gave up. B had clear strong evidence. A conceded that the vehicle was called a cage.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"2","35":"3","36":"1","37":"3","38":"NA","39":"NA","40":"NA","41":"0","42":"4","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Shreeram Modi","50":"Shreeram Modi","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What was the blue spectral vehicle Dan acquired?","57":"52855","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-07-13 17:57:20.122","64":"2023-07-31 15:39:55.230","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.85","81":"0.425","_rn_":"99"},{"1":"Anuj Jain","2":"cosmic-yoyo-","3":"cosmic-yoyo-0","4":"1681159027164","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"2","22":"B gave up LOL","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"2","32":"NA","33":"NaN","34":"2","35":"2","36":"2","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"Noor Mirza-Rashid","49":"Sean Wang","50":"Noor Mirza-Rashid","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is likely the next step in the story?","57":"63527","58":"0","59":"3","60":"0.0000000","61":"3.000000","62":"FALSE","63":"2023-04-21 16:43:34.572","64":"2023-04-21 16:48:05.522","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"113"},{"1":"Anuj Jain","2":"out-of-the-iron-womb-","3":"out-of-the-iron-womb-0","4":"1689876275997","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"4","14":"3","15":"NaN","16":"NaN","17":"4","18":"3","19":"NaN","20":"NaN","21":"4","22":"b struggled to give ev that answered key questions","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"3","32":"NA","33":"NaN","34":"4","35":"3","36":"4","37":"3","38":"NA","39":"NA","40":"NA","41":"4","42":"3","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Adelle Fernando","50":"Shreeram Modi","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was the murderer trying to kill Bo?","57":"63633","58":"0.2","59":"4","60":"0.2000000","61":"4.000000","62":"FALSE","63":"2023-07-24 15:45:08.755","64":"2023-07-24 15:45:08.755","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.1428571","73":"0.5","74":"0.1666667","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"136"},{"1":"Anuj Jain","2":"planet-of-dread-","3":"planet-of-dread-2","4":"1680829456935","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"4","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"4","22":"B provided a functionally true quote but then A cooked it up by giving the full context. Next speech A cooked by proving the second part.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"3","32":"NA","33":"NaN","34":"1","35":"3","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Jessica Li","50":"Reeya Kansra","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is the mission of the crew?","57":"43046","58":"0.4","59":"2","60":"0.4000000","61":"1.600000","62":"FALSE","63":"2023-04-17 16:40:55.302","64":"2023-06-12 16:25:09.391","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.990","_rn_":"140"},{"1":"Anuj Jain","2":"the-air-of-castor-oil-","3":"the-air-of-castor-oil-5","4":"1680552962919","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.85","10":"NaN","11":"NaN","12":"NA","13":"1","14":"3","15":"NaN","16":"NaN","17":"1","18":"2","19":"NaN","20":"NaN","21":"4","22":"B uses lots of evidence and explains the story. A operates on just defense.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"3","35":"1","36":"2","37":"2","38":"NA","39":"Emmanuel Makinde","40":"NA","41":"1","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Salsabila Mahdi","49":"Jessica Li","50":"Jessica Li","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was the main character daydreaming about being a war-time pilot?","57":"51688","58":"0.2","59":"2","60":"0.2000000","61":"2.333333","62":"FALSE","63":"2023-04-10 17:33:21.834","64":"2023-04-12 17:18:09.483","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.85","81":"0.425","_rn_":"149"},{"1":"David Rein","2":"monopoly-","3":"monopoly-2","4":"1680552464768","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.85","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"3","22":"This was a weird/hard one, where I felt like the debaters didn't clash as much as they could have. Overall though I thought the evidence for A was a bit better than B.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"2","37":"2","38":"NA","39":"NA","40":"NA","41":"1","42":"1","43":"NaN","44":"NaN","45":"1","46":"NA","47":"NaN","48":"Ethan Rosen","49":"Reeya Kansra","50":"Ethan Rosen","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Generally, which of the following best describes Brian's character?","57":"61499","58":"0.2","59":"3","60":"0.2000000","61":"3.333333","62":"FALSE","63":"2023-04-18 15:05:57.536","64":"2023-04-28 10:25:57.801","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.85","81":"0.425","_rn_":"177"},{"1":"David Rein","2":"peggy-finds-the-theatre-","3":"peggy-finds-the-theatre-4","4":"1682110072206","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.90","10":"NaN","11":"NaN","12":"NA","13":"NaN","14":"NaN","15":"NaN","16":"NaN","17":"NaN","18":"NaN","19":"NaN","20":"NaN","21":"NaN","22":"NA","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"NaN","31":"NaN","32":"NA","33":"NaN","34":"NaN","35":"NaN","36":"NaN","37":"NaN","38":"NA","39":"NA","40":"NA","41":"NaN","42":"NaN","43":"NaN","44":"NaN","45":"NaN","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Jackson Petty","50":"Jackson Petty","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which of these sets of descriptions best describes Peggy?","57":"55933","58":"0.4","59":"3","60":"0.4000000","61":"3.333333","62":"FALSE","63":"2023-07-20 15:41:51.076","64":"2023-07-20 15:41:51.076","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.90","81":"0.450","_rn_":"179"},{"1":"David Rein","2":"stalemate-in-space-","3":"stalemate-in-space-0","4":"1677532762430","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"This was an easy debate, because there was basically no specific textual evidence for option A, the incorrect answer.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"3","32":"I accidentally entered the probabilities backwards","33":"NaN","34":"2","35":"1","36":"2","37":"3","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"1","46":"I said this to debater A: Are there any other resources mentioned, or context that helps explain resources? I'm not convinced that a \"key\" is the kind of resource that the question-writer would refer to. Also, I don't think Terrans (I'm assuming they are humans or some living species) would be referred to as a resource.","47":"NaN","48":"Shreeram Modi","49":"Ethan Rosen","50":"Ethan Rosen","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What was the relationship between the globes?","57":"63862","58":"0.2","59":"2","60":"0.2000000","61":"2.000000","62":"FALSE","63":"2023-02-27 17:02:34.740","64":"2023-04-28 16:44:08.378","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.990","_rn_":"185"},{"1":"David Rein","2":"stranger-from-space-","3":"stranger-from-space-4","4":"1683298716462","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"1","14":"1","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"4","22":"Partially because the dishonest debater gave up after a while, and partially because there was a bit more evidence in favor of A.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"2","35":"1","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"1","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Adelle Fernando","50":"Shreeram Modi","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How does Robert view Koroby?","57":"62314","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-05-12 16:09:16.963","64":"2023-05-12 16:09:16.963","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.95","81":"0.475","_rn_":"186"},{"1":"David Rein","2":"the-great-nebraska-sea-","3":"the-great-nebraska-sea-1","4":"1683321454611","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"1","14":"1","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"4","22":"A was unable to explain why the article was written in the past tense if it's supposed to be a theory.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"3","35":"3","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"4","42":"4","43":"NaN","44":"NaN","45":"1","46":"NA","47":"NaN","48":"Sean Wang","49":"Salsabila Mahdi","50":"Salsabila Mahdi","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How is this article written?","57":"50893","58":"0.2","59":"3","60":"0.2000000","61":"3.333333","62":"FALSE","63":"2023-05-09 16:15:12.746","64":"2023-05-19 16:52:53.628","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2000000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.95","81":"0.475","_rn_":"191"},{"1":"Ethan Rosen","2":"cosmic-yoyo-","3":"cosmic-yoyo-3","4":"1681159027164","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.90","10":"NaN","11":"NaN","12":"NA","13":"3","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"B had better evidence that it was a fad","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"3","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Sean Wang","50":"Sean Wang","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why do Bob and Quezy haul asteroids in the first place?","57":"63527","58":"0.2","59":"2","60":"0.2000000","61":"1.666667","62":"FALSE","63":"2023-04-14 18:04:29.331","64":"2023-04-29 18:16:46.082","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.90","81":"0.450","_rn_":"202"},{"1":"Ethan Rosen","2":"stranger-from-space-","3":"stranger-from-space-5","4":"1683298716462","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"4","14":"2","15":"NaN","16":"NaN","17":"4","18":"1","19":"NaN","20":"NaN","21":"4","22":"B failed to present evidence that addressed my concerns.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"0","32":"NA","33":"NaN","34":"0","35":"4","36":"4","37":"1","38":"NA","39":"NA","40":"NA","41":"4","42":"1","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Shreeram Modi","50":"Sean Wang","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How does Robert view Koroby?","57":"62314","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-05-12 16:15:12.634","64":"2023-05-18 11:38:29.727","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.95","81":"0.475","_rn_":"211"},{"1":"Ethan Rosen","2":"the-man-who-was-six-","3":"the-man-who-was-six-1","4":"1676313105423","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.80","10":"NaN","11":"NaN","12":"nope.","13":"3","14":"2","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"A cut out key context that said the only memory he had was C. That indicates to me that W is new","23":"nope.","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"Nope.","29":"NaN","30":"4","31":"1","32":"The interface is great!","33":"NaN","34":"0","35":"1","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"4","42":"4","43":"NaN","44":"NaN","45":"2","46":"I wanted clash on complexity vs. time. A gave new evidence, B repeated. I figured B was surface level.","47":"NaN","48":"David Rein","49":"Sean Wang","50":"David Rein","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was Dr. Crander so proud of his work on the patient?","57":"51295","58":"0.4","59":"3","60":"0.4000000","61":"3.000000","62":"FALSE","63":"2023-02-13 16:41:56.983","64":"2023-02-13 16:41:56.983","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.80","81":"0.800","_rn_":"215"},{"1":"Ethan Rosen","2":"the-monster-maker-","3":"the-monster-maker-4","4":"1681159292566","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"A accidentally argued for B. In fairness, the question was weirdly worded.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"0","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"4","43":"NaN","44":"NaN","45":"0","46":"NA","47":"NaN","48":"Noor Mirza-Rashid","49":"Shreeram Modi","50":"Shreeram Modi","51":"Noor Mirza-Rashid","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is not a type technology that is used in this story?","57":"62569","58":"0.4","59":"3","60":"0.4000000","61":"3.000000","62":"FALSE","63":"2023-04-14 16:31:19.063","64":"2023-05-01 16:31:54.842","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"216"},{"1":"Jackson Petty","2":"atom-mystery-young-atom-detective-","3":"atom-mystery-young-atom-detective-0","4":"1689949095893","5":"Judge","6":"FALSE","7":"TRUE","8":"6","9":"0.80","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Honest had better ev and a more coherent story.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"2","35":"2","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Anuj Jain","49":"Sam Jin","50":"Anuj Jain","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What best describes how the overall tone changed from the beginning of the article?","57":"53269","58":"0.2","59":"4","60":"0.2000000","61":"3.666667","62":"FALSE","63":"2023-07-28 15:39:59.035","64":"2023-07-28 15:39:59.035","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.1666667","73":"1.0","74":"0.2000000","75":"1.0","76":"1.0","77":"1","78":"0.2500000","79":"NA","80":"0.80","81":"0.800","_rn_":"219"},{"1":"Jackson Petty","2":"muck-man-","3":"muck-man-5","4":"1687546720669","5":"Judge","6":"FALSE","7":"TRUE","8":"7","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"4","22":"The honest debater apparently had a dynamite quote that they didn't bring in until speech 7, but gosh was it good.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"1","35":"1","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Sam Jin","49":"Shlomo Kofman","50":"Shlomo Kofman","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What would best describe Asa's motive for working as a muck man?","57":"61467","58":"0.4","59":"2","60":"0.4000000","61":"2.333333","62":"FALSE","63":"2023-06-26 17:15:36.480","64":"2023-06-26 17:15:36.480","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"236"},{"1":"Jackson Petty","2":"rx-","3":"rx-4","4":"1683298141840","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.90","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"4","22":"Dishonest debater ended up making somewhat vague and unconvincing points.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"2","32":"NA","33":"NaN","34":"1","35":"1","36":"4","37":"3","38":"NA","39":"NA","40":"NA","41":"4","42":"2","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Reeya Kansra","50":"Adelle Fernando","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why did the Earth doctor use the mortar and pestle?","57":"60412","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-06-16 16:50:59.292","64":"2023-06-23 23:14:19.180","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.90","81":"0.450","_rn_":"240"},{"1":"Jackson Petty","2":"silence-isdeadly-","3":"silence-isdeadly-3","4":"1688157095546","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"Honest debater's quote in the second round was a clear winner.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"3","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Sam Jin","49":"Anuj Jain","50":"Anuj Jain","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Who are the four to blame for the Comerford’s incident? \\n","57":"61481","58":"0.2","59":"3","60":"0.2000000","61":"3.333333","62":"FALSE","63":"2023-07-17 16:33:07.888","64":"2023-07-17 16:33:07.888","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"241"},{"1":"Jackson Petty","2":"the-princess-and-the-physicist-","3":"the-princess-and-the-physicist-0","4":"1682112300045","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"2","19":"NaN","20":"NaN","21":"3","22":"Dishonest debater avoided questions.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"1","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Anuj Jain","49":"Reeya Kansra","50":"Anuj Jain","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What did Zen think of the plan the royal father and daughter hatched?","57":"51126","58":"0","59":"2","60":"0.0000000","61":"2.200000","62":"FALSE","63":"2023-07-17 15:04:00.321","64":"2023-07-17 15:04:00.321","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.95","81":"0.475","_rn_":"254"},{"1":"Jessica Li","2":"doctor-universe-","3":"doctor-universe-0","4":"1680206097221","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.70","10":"NaN","11":"NaN","12":"NA","13":"2","14":"3","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"B has more direct and clear ev, A's ev was mostly implicit/insubstantial.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"2","35":"0","36":"2","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"4","43":"NaN","44":"NaN","45":"3","46":"B, could you give evidence that the current political climate is restless?\\nA, I understand how the Doctor is using the flames, but do you have direct proof that the show is meant to manipulate?","47":"NaN","48":"Reeya Kansra","49":"Anuj Jain","50":"Anuj Jain","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why is Grannie Annie so concerned about the Green Flame’s whereabouts?","57":"63109","58":"0.2","59":"2","60":"0.2000000","61":"1.666667","62":"FALSE","63":"2023-04-14 17:10:57.200","64":"2023-04-28 16:50:44.996","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.70","81":"0.700","_rn_":"270"},{"1":"Jessica Li","2":"how-to-make-friends-1","3":"how-to-make-friends-11","4":"1681724583153","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"3","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"B proves that mc does have access to a part needed to make the third person.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"2","35":"0","36":"2","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"4","43":"NaN","44":"NaN","45":"4","46":"I kind of pushed a semantic argument which the debaters didn't pick up, but it was largely irrelevant to the debate.","47":"NaN","48":"Adelle Fernando","49":"Ethan Rosen","50":"Ethan Rosen","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How many companions did Manet make with the kit?","57":"50818","58":"0.2","59":"3","60":"0.2000000","61":"3.400000","62":"FALSE","63":"2023-05-15 16:10:35.476","64":"2023-05-15 16:10:35.476","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"276"},{"1":"Jessica Li","2":"silence-isdeadly-","3":"silence-isdeadly-2","4":"1688157095546","5":"Judge","6":"FALSE","7":"TRUE","8":"1","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"4","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"B's ev is clear cut and explicit. B also helped me understand the context + the individuals more.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"3","35":"0","36":"1","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Sam Jin","50":"Sam Jin","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Who are the four to blame for the Comerford’s incident? \\n","57":"61481","58":"0.2","59":"3","60":"0.2000000","61":"3.333333","62":"FALSE","63":"2023-07-06 15:47:04.918","64":"2023-07-06 15:47:04.918","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.99","81":"0.495","_rn_":"290"},{"1":"Jessica Li","2":"the-princess-and-the-physicist-","3":"the-princess-and-the-physicist-2","4":"1682112300045","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"1","14":"0","15":"NaN","16":"NaN","17":"1","18":"0","19":"NaN","20":"NaN","21":"4","22":"B's last speech was literally just please vote for me, and on principle that makes me not want to vote for B","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"0","32":"NA","33":"NaN","34":"4","35":"3","36":"1","37":"0","38":"NA","39":"NA","40":"NA","41":"1","42":"0","43":"NaN","44":"NaN","45":"0","46":"NA","47":"NaN","48":"Anuj Jain","49":"Sean Wang","50":"Anuj Jain","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What was the population of the Uxen like among the galaxy?","57":"51126","58":"0.2","59":"2","60":"0.2000000","61":"2.200000","62":"FALSE","63":"2023-06-29 17:10:29.615","64":"2023-07-17 18:30:49.420","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"306"},{"1":"Julian Michael","2":"monopoly-","3":"monopoly-0","4":"1680552464768","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"4","15":"NaN","16":"NaN","17":"0","18":"3","19":"NaN","20":"NaN","21":"4","22":"A's story was internally inconsistent, they didn't back up important claims with necessary evidence, and B eventually was able to provide enough evidence and context to back up their side. I tried to cajole the debaters, and it might have helped, but I'm not sure.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"3","32":"NA","33":"NaN","34":"0","35":"0","36":"1","37":"4","38":"NA","39":"Reeya Kansra","40":"Sean Wang","41":"2","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Sean Wang","50":"Sean Wang","51":"Reeya Kansra","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which is the best summary of this story?","57":"61499","58":"0","59":"4","60":"0.0000000","61":"3.666667","62":"FALSE","63":"2023-05-01 17:55:02.894","64":"2023-05-11 16:49:22.963","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"324"},{"1":"Julian Michael","2":"stranger-from-space-","3":"stranger-from-space-1","4":"1683298716462","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"3","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"A didn't have evidence for the critical part of their answer, A's story contradicted some of B's evidence in serious ways, A failed to meaningfully respond or produce evidence in the second round, and A failed to respond to any of my concerns. The decision was clear.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"1","37":"4","38":"NA","39":"Reeya Kansra","40":"Sean Wang","41":"0","42":"4","43":"NaN","44":"NaN","45":"3","46":"I identified particular holes/burdens for A and posed them as questions, so A not having a response was more incriminating.","47":"NaN","48":"Shreeram Modi","49":"Sean Wang","50":"Sean Wang","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why does Koroby feel motivated to start the fire?","57":"62314","58":"0.2","59":"3","60":"0.2000000","61":"3.000000","62":"FALSE","63":"2023-05-05 11:55:03.127","64":"2023-05-11 15:50:12.046","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.99","81":"0.495","_rn_":"331"},{"1":"Julian Michael","2":"survival-type-","3":"survival-type-4","4":"1681159356736","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"Maybe I could have decided sooner, even. but first round is a lot to go for.","13":"1","14":"4","15":"NaN","16":"NaN","17":"3","18":"4","19":"NaN","20":"NaN","21":"4","22":"A's case was weak and contained a bunch of lies, especially in the last round; B had a decent case and pointed out the lies effectively.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"3","32":"NA","33":"NaN","34":"0","35":"0","36":"0","37":"4","38":"NA","39":"NA","40":"NA","41":"4","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Ethan Rosen","50":"Ethan Rosen","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How did the planet of Niobe compare to others that Earth was exploring?","57":"51395","58":"0.2","59":"3","60":"0.1666667","61":"2.750000","62":"FALSE","63":"2023-04-15 06:30:53.125","64":"2023-04-29 17:56:08.565","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"332"},{"1":"Julian Michael","2":"the-monster-maker-","3":"the-monster-maker-3","4":"1681159292566","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"1","14":"4","15":"NaN","16":"NaN","17":"1","18":"4","19":"NaN","20":"NaN","21":"4","22":"A provided zero evidence for their side after the first argument, while B refuted well and provided evidence.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"3","32":"NA","33":"NaN","34":"0","35":"0","36":"0","37":"4","38":"NA","39":"NA","40":"NA","41":"0","42":"4","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Anuj Jain","50":"Anuj Jain","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which best describes the relationship between the protagonists?","57":"62569","58":"0.2","59":"3","60":"0.2000000","61":"3.000000","62":"FALSE","63":"2023-06-22 18:58:39.177","64":"2023-06-22 18:58:39.177","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"338"},{"1":"Julian Michael","2":"the-spicy-sound-of-success-","3":"the-spicy-sound-of-success-4","4":"1679607458871","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"4","15":"NaN","16":"NaN","17":"1","18":"2","19":"NaN","20":"NaN","21":"4","22":"A seemed to have misused a quote pretty badly, and B had some strong evidence of the circumstance (unrefuted by A) of Gavin changing his outlook over the course of the story. (It's also just a more plausible story arc regardless).","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"2","37":"4","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Jessica Li","49":"Anuj Jain","50":"Anuj Jain","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is the relationship between Gavin and the First Officer like?","57":"51351","58":"0.2","59":"3","60":"0.1666667","61":"2.800000","62":"FALSE","63":"2023-06-26 15:43:46.098","64":"2023-06-26 15:57:14.970","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"342"},{"1":"Julien Dirani","2":"manners-and-customs-","3":"manners-and-customs-1","4":"1676043334730","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.85","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"A mix of evidence coming from the honest debater vs. absence of evidence from dishonest debater + the dishonest debater was arguing over the semantics of the Q","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"3","35":"1","36":"4","37":"4","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Jessica Li","50":"Jessica Li","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is the definition of truth to the Thrid?","57":"61430","58":"0","59":"2","60":"0.0000000","61":"1.600000","62":"FALSE","63":"2023-02-24 11:44:11.756","64":"2023-04-28 16:45:16.966","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.85","81":"0.850","_rn_":"348"},{"1":"Noor Mirza-Rashid","2":"doctor-universe-","3":"doctor-universe-5","4":"1680206097221","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.85","10":"NaN","11":"NaN","12":"NA","13":"2","14":"1","15":"NaN","16":"NaN","17":"1","18":"1","19":"NaN","20":"NaN","21":"4","22":"rereading the evidence provided in quotes tab a lot","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"1","32":"NA","33":"NaN","34":"1","35":"2","36":"1","37":"1","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"Reeya Kansra","49":"Shreeram Modi","50":"Reeya Kansra","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why is Billy so drawn to Grannie Annie?","57":"63109","58":"0.2","59":"3","60":"0.2000000","61":"2.666667","62":"FALSE","63":"2023-04-21 16:49:20.226","64":"2023-04-21 16:49:20.226","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.85","81":"0.850","_rn_":"356"},{"1":"Noor Mirza-Rashid","2":"volpla-","3":"volpla-2","4":"1680205817615","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"1","14":"2","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"3","22":"Eventually got through all evidence and reconsidered quotes.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"3","32":"NA","33":"NaN","34":"2","35":"1","36":"2","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Salsabila Mahdi","50":"Salsabila Mahdi","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What does the narrator consider an imminent fun game?","57":"51201","58":"0","59":"3","60":"0.0000000","61":"2.600000","62":"FALSE","63":"2023-05-12 10:15:53.003","64":"2023-05-12 10:15:53.003","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.95","81":"0.475","_rn_":"366"},{"1":"Reeya Kansra","2":"how-to-make-friends-","3":"how-to-make-friends-0","4":"1681724583153","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.98","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"I think I continued the debate for an extra round just to see if anything would be revealed to me. Sometimes that's risky cause longer debates can make me more confused. However B also had more quotes and was able to produce evidence that expressed that Tom's relationship to manet was at best agreeable and I used a little bit of a logic because if this guy just sells him the plot device for the rest of the story then I'm guessing the rest of the story revolves around what he does with the device and Victor seems like a bigger character overall.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"4","32":"NA","33":"NaN","34":"3","35":"0","36":"4","37":"4","38":"NA","39":"Jessica Li","40":"Adelle Fernando","41":"4","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Salsabila Mahdi","49":"Ethan Rosen","50":"Ethan Rosen","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Who did Manet like the best?","57":"50818","58":"0.4","59":"4","60":"0.4000000","61":"3.600000","62":"FALSE","63":"2023-05-12 11:42:59.999","64":"2023-06-12 16:33:57.349","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.98","81":"0.490","_rn_":"378"},{"1":"Reeya Kansra","2":"muck-man-","3":"muck-man-7","4":"1687546765239","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.88","10":"NaN","11":"NaN","12":"NA","13":"3","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"I notived that A started to have shorter and less relevant speeches which made me more confident that I was picking the right answer. The only reason I wasn't fully confident at the end was because I made my own leaps and bounds as a judge in order to connect dots which I don't like to do because it should be up to the debater to convince me not my self. That being said B started off with more compelling ev in the beginning which already made me prefer them.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"4","35":"4","36":"4","37":"4","38":"NA","39":"Julien Dirani","40":"Ethan Rosen","41":"4","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Sam Jin","49":"Shlomo Kofman","50":"Shlomo Kofman","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What happens to a changeling after their sentence is served?","57":"61467","58":"0.4","59":"2","60":"0.4000000","61":"2.000000","62":"FALSE","63":"2023-07-07 17:37:10.357","64":"2023-07-07 17:37:10.357","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.88","81":"0.440","_rn_":"387"},{"1":"Reeya Kansra","2":"the-monster-maker-","3":"the-monster-maker-1","4":"1681159292566","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.96","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"Accidentally voted for the wrong team during the debate. I think I had to take a little direction from A just because B's final speech started to confuse me (as it should). When they brought the debate back to the question at hand B's argumentation started to make sense. However A had a lot more convincing and logical evidence which is why I ended up voting for them. I generally vote with a full 99/1 confidence for the winning team however a little bit of sway from B made me lower my percentage.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"4","32":"NA","33":"NaN","34":"1","35":"0","36":"4","37":"4","38":"NA","39":"Emmanuel Makinde","40":"Adelle Fernando","41":"4","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Anuj Jain","49":"Noor Mirza-Rashid","50":"Anuj Jain","51":"Noor Mirza-Rashid","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What makes the protagonists become less concerned about being trapped by the beasts?","57":"62569","58":"0","59":"2","60":"0.0000000","61":"2.000000","62":"FALSE","63":"2023-04-21 16:27:51.982","64":"2023-04-21 16:27:51.982","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.96","81":"0.480","_rn_":"401"},{"1":"Salsabila Mahdi","2":"break-a-leg-","3":"break-a-leg-5","4":"1682110823449","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"A was being semantic-y, B's answer was more direct","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"3","32":"NA","33":"NaN","34":"3","35":"2","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Anuj Jain","50":"Anuj Jain","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was the approach that Charlie took to engage with the aliens unsuccessful?","57":"51320","58":"0.2","59":"2","60":"0.1666667","61":"2.400000","62":"FALSE","63":"2023-04-28 13:51:32.411","64":"2023-05-12 10:49:32.467","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"411"},{"1":"Salsabila Mahdi","2":"cosmic-yoyo-","3":"cosmic-yoyo-2","4":"1681159027164","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Clear text evidence","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"1","35":"2","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Adelle Fernando","50":"Adelle Fernando","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why do Bob and Quezy haul asteroids in the first place?","57":"63527","58":"0.2","59":"2","60":"0.2000000","61":"1.666667","62":"FALSE","63":"2023-04-14 16:42:51.792","64":"2023-06-12 16:48:26.216","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"414"},{"1":"Salsabila Mahdi","2":"manners-and-customs-","3":"manners-and-customs-0","4":"1676043281654","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"1","14":"3","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"NaN","22":"Debater A didn't respond well and stopped providing evidence or mind-changing reasoning.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"?","29":"NaN","30":"1","31":"3","32":"NA","33":"NaN","34":"1","35":"1","36":"2","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"4","43":"NaN","44":"NaN","45":"3","46":"Yes, I asked for more textual quotes & expanding evidence. I also asked them to clarify parts of their reasoning or what's going on in the story","47":"NaN","48":"Shreeram Modi","49":"Julian Michael","50":"Julian Michael","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why is Jorgenson allowed to speak to Ganti?","57":"61430","58":"0.4","59":"2","60":"0.4000000","61":"2.200000","62":"FALSE","63":"2023-02-17 11:51:02.058","64":"2023-05-15 17:10:36.536","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.990","_rn_":"421"},{"1":"Salsabila Mahdi","2":"muck-man-","3":"muck-man-4","4":"1687546720669","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Understanding the story, checking what facts lined up","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"1","35":"1","36":"3","37":"3","38":"NA","39":"Shlomo Kofman","40":"Sam Jin","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shlomo Kofman","49":"Sam Jin","50":"Sam Jin","51":"Shlomo Kofman","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What would best describe Asa's motive for working as a muck man?","57":"61467","58":"0.4","59":"2","60":"0.4000000","61":"2.333333","62":"FALSE","63":"2023-06-26 18:59:34.055","64":"2023-06-26 18:59:34.055","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"424"},{"1":"Salsabila Mahdi","2":"planet-of-dread-","3":"planet-of-dread-1","4":"1680829456935","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"B couldn't back that up with more, and A just obviously having that killed evidence","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"3","32":"NA","33":"NaN","34":"2","35":"2","36":"3","37":"3","38":"NA","39":"Jessica Li","40":"Anuj Jain","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Jessica Li","49":"Shreeram Modi","50":"Jessica Li","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why didn't Moran kill Harper?","57":"43046","58":"0.4","59":"3","60":"0.4000000","61":"3.200000","62":"FALSE","63":"2023-04-14 17:20:04.217","64":"2023-04-28 10:10:59.249","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.99","81":"0.495","_rn_":"425"},{"1":"Salsabila Mahdi","2":"silence-isdeadly-","3":"silence-isdeadly-6","4":"1688157095546","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"2","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Kept pushing for the story & evidence, dishonest debater runs out","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"3","32":"NA","33":"NaN","34":"1","35":"1","36":"3","37":"2","38":"NA","39":"Jessica Li","40":"Shreeram Modi","41":"3","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sam Jin","49":"Adelle Fernando","50":"Sam Jin","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is Androka’s motivation for using the zone of silence? \\n","57":"61481","58":"0","59":"3","60":"0.0000000","61":"3.333333","62":"FALSE","63":"2023-07-06 17:58:47.461","64":"2023-07-06 17:58:47.461","65":"TRUE","66":"FALSE","67":"FALSE","68":"FALSE","69":"FALSE","70":"FALSE","71":"FALSE","72":"0.2000000","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"0","78":"0.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"429"},{"1":"Salsabila Mahdi","2":"stranger-from-space-","3":"stranger-from-space-2","4":"1683298716462","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Evidence is clear, honest debater is responsive, dishonest debater has a shifty narrative","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"3","32":"NA","33":"NaN","34":"1","35":"2","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Adelle Fernando","50":"Shreeram Modi","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Which of the following is not a reason why Koroby is impressed by the stranger who lands in a spaceship?","57":"62314","58":"0.2","59":"2","60":"0.2000000","61":"2.200000","62":"FALSE","63":"2023-05-12 11:47:45.266","64":"2023-06-12 16:01:09.312","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.990","_rn_":"431"},{"1":"Salsabila Mahdi","2":"the-happy-castaway-","3":"the-happy-castaway-2","4":"1679606564549","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"Pushing for convincing evidence and/or reasoning","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"2","32":"NA","33":"NaN","34":"1","35":"1","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Aliyaah Toussaint","49":"Adelle Fernando","50":"Aliyaah Toussaint","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Johnathan doesn't tell the Interstellar Cosmography Society about the twenty-seven women who are waiting to be rescued because...","57":"63401","58":"0.2","59":"2","60":"0.2000000","61":"2.200000","62":"FALSE","63":"2023-04-07 16:34:58.352","64":"2023-04-07 16:34:58.352","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.99","81":"0.990","_rn_":"433"},{"1":"Salsabila Mahdi","2":"the-reluctant-heroes-","3":"the-reluctant-heroes-2","4":"1682965111772","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"4","22":"Evidence, okay steering of the debate, debater responsiveness/not consistent/not","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"3","32":"NA","33":"NaN","34":"2","35":"2","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"4","42":"3","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Vishakh Padmakumar","49":"Shreeram Modi","50":"Vishakh Padmakumar","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How many people live on the moon at any one time?","57":"51483","58":"0.2","59":"2","60":"0.2000000","61":"2.200000","62":"FALSE","63":"2023-05-11 14:57:46.216","64":"2023-05-11 14:57:46.216","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.990","_rn_":"436"},{"1":"Salsabila Mahdi","2":"the-starsent-knaves-","3":"the-starsent-knaves-0","4":"1688757372245","5":"Judge","6":"FALSE","7":"TRUE","8":"6","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"this took a long time, i think the honest debater and i misunderstood each other. but i took more rounds. and eventually dishonest debater couldn't back up what i wanted with quotes - rereading the debate to realize this was also helpful","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"3","32":"NA","33":"NaN","34":"2","35":"1","36":"2","37":"2","38":"NA","39":"Sean Wang","40":"Reeya Kansra","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sam Jin","49":"Adelle Fernando","50":"Adelle Fernando","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What was the blue spectral vehicle Dan acquired?","57":"52855","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-07-13 13:02:18.154","64":"2023-07-13 13:02:18.154","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.95","81":"0.475","_rn_":"439"},{"1":"Sam Jin","2":"coming-of-the-gods-","3":"coming-of-the-gods-2","4":"1689020073883","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"NaN","14":"NaN","15":"NaN","16":"NaN","17":"NaN","18":"NaN","19":"NaN","20":"NaN","21":"NaN","22":"NA","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"NaN","31":"NaN","32":"NA","33":"NaN","34":"NaN","35":"NaN","36":"NaN","37":"NaN","38":"NA","39":"NA","40":"NA","41":"NaN","42":"NaN","43":"NaN","44":"NaN","45":"NaN","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Jessica Li","50":"Adelle Fernando","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What became of Ro's mother?","57":"63523","58":"0.2","59":"3","60":"0.2000000","61":"3.400000","62":"FALSE","63":"2023-07-14 16:51:09.134","64":"2023-07-14 16:51:09.134","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2000000","73":"1.0","74":"0.3333333","75":"1.0","76":"1.0","77":"1","78":"0.3333333","79":"NA","80":"0.99","81":"0.990","_rn_":"448"},{"1":"Sam Jin","2":"venus-is-a-mans-world-","3":"venus-is-a-mans-world-0","4":"1691058680973","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"NaN","14":"NaN","15":"NaN","16":"NaN","17":"NaN","18":"NaN","19":"NaN","20":"NaN","21":"NaN","22":"NA","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"NaN","31":"NaN","32":"NA","33":"NaN","34":"NaN","35":"NaN","36":"NaN","37":"NaN","38":"NA","39":"NA","40":"NA","41":"NaN","42":"NaN","43":"NaN","44":"NaN","45":"NaN","46":"NA","47":"NaN","48":"Anuj Jain","49":"Shlomo Kofman","50":"Anuj Jain","51":"Shlomo Kofman","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What was the relationship like between Ferdinand and the man from Venus?","57":"51150","58":"0.2","59":"3","60":"0.2000000","61":"3.000000","62":"FALSE","63":"2023-08-04 16:36:03.740","64":"2023-08-04 16:36:03.740","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.1666667","73":"1.0","74":"0.2000000","75":"1.0","76":"1.0","77":"1","78":"0.2500000","79":"NA","80":"0.99","81":"0.990","_rn_":"510"},{"1":"Sean Wang","2":"lost-in-translation-","3":"lost-in-translation-3","4":"1678404069200","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.98","10":"NaN","11":"NaN","12":"NA","13":"3","14":"2","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"3","22":"The evidence was just way more in B's favor.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"1","32":"NA","33":"NaN","34":"2","35":"1","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Salsabila Mahdi","50":"Salsabila Mahdi","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why did Korvin have to word his questions to the guard carefully?","57":"30029","58":"0.4","59":"2","60":"0.4000000","61":"1.800000","62":"FALSE","63":"2023-03-10 11:53:42.380","64":"2023-04-13 16:46:04.954","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.98","81":"0.980","_rn_":"533"},{"1":"Sean Wang","2":"peggy-finds-the-theatre-","3":"peggy-finds-the-theatre-0","4":"1682090000149","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.90","10":"NaN","11":"NaN","12":"NA","13":"4","14":"4","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"Both debaters agreed on the overall story, it was kind of hard to argue that a fairly mundane experience of a girl bargaining w her parents was \"highly excited\" after that.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"3","35":"3","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"4","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Salsabila Mahdi","49":"Vishakh Padmakumar","50":"Vishakh Padmakumar","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How would you describe the tone throughout the passage?","57":"55933","58":"0","59":"4","60":"0.0000000","61":"4.000000","62":"FALSE","63":"2023-04-28 10:13:44.101","64":"2023-06-12 16:24:31.756","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.90","81":"0.450","_rn_":"538"},{"1":"Sean Wang","2":"survival-type-","3":"survival-type-0","4":"1681159356736","5":"Judge","6":"FALSE","7":"TRUE","8":"1","9":"0.98","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"Quality of evidence","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"0","31":"3","32":"NA","33":"NaN","34":"3","35":"0","36":"0","37":"0","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"0","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Jackson Petty","50":"Jackson Petty","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was Earth exploring Niobe?","57":"51395","58":"0.2","59":"2","60":"0.2000000","61":"2.250000","62":"FALSE","63":"2023-04-17 17:06:13.467","64":"2023-04-18 13:42:45.338","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.98","81":"0.980","_rn_":"544"},{"1":"Sean Wang","2":"the-cool-war-","3":"the-cool-war-0","4":"1689949097911","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"4","18":"4","19":"NaN","20":"NaN","21":"4","22":"I feel like the end twist is that Pashkov is using the cubans as scapegoats and also all of A's ev postdates B's and B hasn't contested any of it","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"3","32":"NA","33":"NaN","34":"2","35":"1","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Jessica Li","49":"Shlomo Kofman","50":"Jessica Li","51":"Shlomo Kofman","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why did Pashkov sell small arms to the Cubans?","57":"51256","58":"0.4","59":"3","60":"0.4000000","61":"3.000000","62":"FALSE","63":"2023-08-03 16:36:15.082","64":"2023-08-03 16:36:15.082","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"1.0","74":"0.2500000","75":"1.0","76":"1.0","77":"1","78":"0.2500000","79":"NA","80":"0.99","81":"0.990","_rn_":"550"},{"1":"Sean Wang","2":"volpla-","3":"volpla-3","4":"1680205817615","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"4","22":"Quality of evidence","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"2","35":"0","36":"4","37":"4","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Aliyaah Toussaint","50":"Aliyaah Toussaint","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What does the narrator consider an imminent fun game?","57":"51201","58":"0","59":"3","60":"0.0000000","61":"2.600000","62":"FALSE","63":"2023-04-17 17:45:31.796","64":"2023-04-29 22:45:31.171","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.95","81":"0.475","_rn_":"561"},{"1":"Shlomo Kofman","2":"out-of-the-iron-womb-","3":"out-of-the-iron-womb-1","4":"1689876275999","5":"Judge","6":"FALSE","7":"TRUE","8":"1","9":"0.94","10":"NaN","11":"NaN","12":"NA","13":"4","14":"2","15":"NaN","16":"NaN","17":"1","18":"4","19":"NaN","20":"NaN","21":"4","22":"A had zero context or EV for the story; B was super clear on proof, context and including the name of the story in thier argument","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"2","32":"NA","33":"NaN","34":"2","35":"1","36":"2","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Shreeram Modi","49":"Adelle Fernando","50":"Adelle Fernando","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was the murderer trying to kill Bo?","57":"63633","58":"0.2","59":"4","60":"0.2000000","61":"4.000000","62":"FALSE","63":"2023-07-24 17:40:02.914","64":"2023-07-24 17:40:02.914","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.1428571","73":"0.5","74":"0.1666667","75":"0.5","76":"0.5","77":"1","78":"0.2500000","79":"NA","80":"0.94","81":"0.470","_rn_":"598"},{"1":"Shlomo Kofman","2":"pied-piper-of-mars-","3":"pied-piper-of-mars-8","4":"1689278492513","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.91","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"3","18":"2","19":"NaN","20":"NaN","21":"3","22":"A had a strong last round and provided the twist at the end of the story","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"2","32":"NA","33":"NaN","34":"2","35":"2","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Jessica Li","49":"Sean Wang","50":"Jessica Li","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What would be the main reason Mr. Ranson wants to find the creator of the hypnotic music?","57":"62085","58":"0.2","59":"2","60":"0.2000000","61":"2.333333","62":"FALSE","63":"2023-07-17 19:39:59.954","64":"2023-07-17 19:39:59.954","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.91","81":"0.910","_rn_":"602"},{"1":"Shlomo Kofman","2":"rx-","3":"rx-5","4":"1683298141840","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.86","10":"NaN","11":"NaN","12":"NA","13":"2","14":"3","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"4","22":"B had more ev, was concise and clear and had quotes to support it.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"2","35":"2","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"2","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Adelle Fernando","49":"Reeya Kansra","50":"Reeya Kansra","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why did the Earth doctor use the mortar and pestle?","57":"60412","58":"0.2","59":"3","60":"0.2000000","61":"2.600000","62":"FALSE","63":"2023-07-07 18:12:21.375","64":"2023-07-07 21:30:24.456","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.86","81":"0.430","_rn_":"606"},{"1":"Shlomo Kofman","2":"the-starbusters-","3":"the-starbusters-3","4":"1689371609880","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.97","10":"NaN","11":"NaN","12":"NA","13":"2","14":"4","15":"NaN","16":"NaN","17":"1","18":"4","19":"NaN","20":"NaN","21":"4","22":"B had way more EV and A didn't provide me with plot points like I asked them too","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"4","32":"NA","33":"NaN","34":"0","35":"0","36":"0","37":"4","38":"NA","39":"NA","40":"NA","41":"0","42":"4","43":"NaN","44":"NaN","45":"4","46":"NA","47":"NaN","48":"Sam Jin","49":"Adelle Fernando","50":"Adelle Fernando","51":"Sam Jin","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"How did Hendricks outfit the ship for war?","57":"63855","58":"0","59":"2","60":"0.0000000","61":"2.000000","62":"FALSE","63":"2023-07-17 19:00:09.980","64":"2023-07-17 19:00:09.980","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.97","81":"0.485","_rn_":"626"},{"1":"Shreeram Modi","2":"cosmic-yoyo-","3":"cosmic-yoyo-1","4":"1681159027164","5":"Judge","6":"FALSE","7":"TRUE","8":"4","9":"0.95","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"3","22":"B lost steam and didn't use the whole argument length.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"3","37":"3","38":"NA","39":"NA","40":"NA","41":"3","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Adelle Fernando","50":"Sean Wang","51":"Adelle Fernando","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is likely the next step in the story?","57":"63527","58":"0","59":"3","60":"0.0000000","61":"3.000000","62":"FALSE","63":"2023-04-17 18:48:16.625","64":"2023-04-18 14:26:39.448","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.95","81":"0.475","_rn_":"637"},{"1":"Shreeram Modi","2":"in-the-garden-","3":"in-the-garden-6","4":"1680206043370","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"1","15":"NaN","16":"NaN","17":"2","18":"1","19":"NaN","20":"NaN","21":"3","22":"I made an educated guess based on what behaviors are likely with honest and dishonest debaters.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"3","31":"1","32":"NA","33":"NaN","34":"1","35":"3","36":"2","37":"0","38":"NA","39":"NA","40":"NA","41":"2","42":"1","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"David Rein","49":"Jessica Li","50":"David Rein","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is likely to happen to the crew when they return to the planet?","57":"61007","58":"0.2","59":"2","60":"0.2000000","61":"1.666667","62":"FALSE","63":"2023-05-12 10:16:04.732","64":"2023-05-12 10:16:04.732","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"0.5","74":"0.3333333","75":"0.5","76":"0.5","77":"1","78":"0.5000000","79":"NA","80":"0.99","81":"0.495","_rn_":"641"},{"1":"Shreeram Modi","2":"peggy-finds-the-theatre-","3":"peggy-finds-the-theatre-2","4":"1682090000149","5":"Judge","6":"FALSE","7":"TRUE","8":"1","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"3","14":"3","15":"NaN","16":"NaN","17":"3","18":"3","19":"NaN","20":"NaN","21":"3","22":"The question was worded in a weird way.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"1","31":"3","32":"NA","33":"NaN","34":"3","35":"2","36":"2","37":"3","38":"NA","39":"NA","40":"NA","41":"2","42":"2","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Salsabila Mahdi","49":"Vishakh Padmakumar","50":"Vishakh Padmakumar","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was Socks a part of this story?","57":"55933","58":"0.2","59":"2","60":"0.2000000","61":"2.000000","62":"FALSE","63":"2023-04-24 17:33:24.717","64":"2023-05-24 16:28:55.141","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.99","81":"0.495","_rn_":"647"},{"1":"Shreeram Modi","2":"phone-me-in-central-park-","3":"phone-me-in-central-park-5","4":"1678684819928","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.99","10":"1682713008576","11":"1682713141741","12":"NA","13":"1","14":"3","15":"NaN","16":"NaN","17":"2","18":"3","19":"NaN","20":"NaN","21":"3","22":"There was clear evidence in B's favor and A couldn't provide evidence.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"4","32":"NA","33":"NaN","34":"2","35":"1","36":"2","37":"4","38":"NA","39":"NA","40":"NA","41":"1","42":"4","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Sean Wang","49":"Ethan Rosen","50":"Ethan Rosen","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is the true explanation for Charles being the last man on Earth? \\n\\n","57":"63631","58":"0.2","59":"3","60":"0.2000000","61":"2.666667","62":"FALSE","63":"2023-03-20 17:06:51.331","64":"2023-04-28 16:39:55.296","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2000000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.99","81":"0.495","_rn_":"648"},{"1":"Shreeram Modi","2":"the-man-who-was-six-","3":"the-man-who-was-six-5","4":"1676645924826","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.99","10":"NaN","11":"NaN","12":"NA","13":"2","14":"3","15":"NaN","16":"NaN","17":"2","18":"2","19":"NaN","20":"NaN","21":"2","22":"This debate was incredibly confusing. However, in the end B directly responded to the points A made more while A kept just repeating the same arguments over and over again, which led me to side with B.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"2","31":"2","32":"NA","33":"NaN","34":"3","35":"3","36":"1","37":"3","38":"NA","39":"NA","40":"NA","41":"1","42":"3","43":"NaN","44":"NaN","45":"3","46":"Yes. I indicated particular pieces of evidence that both were missing and that would help me greatly in evaluating the debate. I told A to find quotes of the clothes being mentioned somewhere and also a direct comparison of the two's heights. I told B to try to find a quote that would show both Erica and Dan together before the accident.","47":"NaN","48":"Sean Wang","49":"Julian Michael","50":"Julian Michael","51":"Sean Wang","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"If Dan and Erica had been seen together before the accident, what would people have likely thought?","57":"51295","58":"0.4","59":"4","60":"0.4000000","61":"3.666667","62":"FALSE","63":"2023-02-22 17:30:45.461","64":"2023-02-22 17:30:45.461","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.99","81":"0.990","_rn_":"658"},{"1":"Vishakh Padmakumar","2":"stalemate-in-space-","3":"stalemate-in-space-2","4":"1677792427135","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.80","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"3","18":"2","19":"NaN","20":"NaN","21":"3","22":"The debate reached a single contradiction which was resolved and conveyed to me that the dishonest debater was being dishonest. I didn't really think I understood the rest of the story but it helped me answer the question.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"1","32":"Quote limits seemed to hamper both debaters? Unclear if they agree","33":"NaN","34":"1","35":"3","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"4","42":"1","43":"NaN","44":"NaN","45":"1","46":"Mainly I identified what seemed like an important contradiction between debaters and resolving that meant that I knew the answer. B tried to deflect without being clear.","47":"NaN","48":"Julian Michael","49":"Jessica Li","50":"Julian Michael","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Of the following situations, what was the toughest for Evelyn to handle?","57":"63862","58":"0.4","59":"3","60":"0.4000000","61":"3.400000","62":"FALSE","63":"2023-03-07 21:04:25.130","64":"2023-04-28 17:01:26.086","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.3333333","73":"1.0","74":"0.5000000","75":"1.0","76":"1.0","77":"1","78":"0.5000000","79":"NA","80":"0.80","81":"0.800","_rn_":"677"},{"1":"Vishakh Padmakumar","2":"the-air-of-castor-oil-","3":"the-air-of-castor-oil-4","4":"1680552962919","5":"Judge","6":"FALSE","7":"TRUE","8":"2","9":"0.75","10":"NaN","11":"NaN","12":"NA","13":"2","14":"2","15":"NaN","16":"NaN","17":"3","18":"2","19":"NaN","20":"NaN","21":"2","22":"It fit a common pattern where the incorrect answer is kind of a dumbed down version of the more complex but correct answer. I had earlier asked the dishonest debater to clap back against what would've been an extraordinary lie and they failed to do so, which made my decision easier.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"I definitely dropped the ball here and got back to judging the debate after a few weeks. I think my reasoning was fine but I would maybe have asked for another turn if I was doing this in sync","29":"NaN","30":"3","31":"1","32":"NA","33":"NaN","34":"2","35":"3","36":"3","37":"2","38":"NA","39":"NA","40":"NA","41":"3","42":"0","43":"NaN","44":"NaN","45":"2","46":"NA","47":"NaN","48":"Jessica Li","49":"Salsabila Mahdi","50":"Salsabila Mahdi","51":"Jessica Li","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"Why was the main character daydreaming about being a war-time pilot?","57":"51688","58":"0.2","59":"2","60":"0.2000000","61":"2.333333","62":"FALSE","63":"2023-06-22 21:37:32.757","64":"2023-06-22 21:37:32.757","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.2500000","73":"0.5","74":"0.2500000","75":"0.5","76":"0.5","77":"1","78":"0.3333333","79":"NA","80":"0.75","81":"0.375","_rn_":"679"},{"1":"Vishakh Padmakumar","2":"the-desert-and-the-stars-","3":"the-desert-and-the-stars-2","4":"1677792315334","5":"Judge","6":"FALSE","7":"TRUE","8":"3","9":"0.75","10":"NaN","11":"NaN","12":"NA","13":"2","14":"1","15":"NaN","16":"NaN","17":"3","18":"1","19":"NaN","20":"NaN","21":"4","22":"It was pretty clear after 3 rounds that the dishonest debater was clutching at strings.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"I sensed towards the end that the dishonest debater was getting a bit desperate, it influenced me to finish the debate and not take another turn.","29":"NaN","30":"3","31":"1","32":"NA","33":"NaN","34":"2","35":"3","36":"4","37":"2","38":"NA","39":"NA","40":"NA","41":"4","42":"2","43":"NaN","44":"NaN","45":"3","46":"Mostly understanding the semantics and evidence from both sides and confirming that I've understood them correctly.","47":"NaN","48":"Julian Michael","49":"Salsabila Mahdi","50":"Julian Michael","51":"Salsabila Mahdi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is the style of the Corps' note to the Aga Kaga?","57":"61285","58":"0.4","59":"2","60":"0.4000000","61":"2.000000","62":"FALSE","63":"2023-03-07 17:00:26.966","64":"2023-04-28 17:38:19.697","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"1.0000000","73":"1.0","74":"1.0000000","75":"1.0","76":"1.0","77":"1","78":"1.0000000","79":"NA","80":"0.75","81":"0.750","_rn_":"680"},{"1":"Vishakh Padmakumar","2":"the-monster-maker-","3":"the-monster-maker-5","4":"1681159292566","5":"Judge","6":"FALSE","7":"TRUE","8":"5","9":"0.80","10":"NaN","11":"NaN","12":"NA","13":"0","14":"3","15":"NaN","16":"NaN","17":"0","18":"3","19":"NaN","20":"NaN","21":"3","22":"I think the factor which convinces me is that the evidence presented seems compelling that the monsters just could not be captured on film. B told me in the recap that the monsters were projections created by Gunther. That itself seems like distorting technology. I don't think there is much evidence that the camera 'malfunctioned' whereas c.3692 is quite clear.\\nI'm honestly unsure about where to go with the guns, but the debate just seems to be frustrating me more at this point.\\nI'm going with A, but I think A did not do a good job presenting a coherent argument at all.","23":"NA","24":"NaN","25":"NaN","26":"NaN","27":"NaN","28":"NA","29":"NaN","30":"4","31":"2","32":"NA","33":"NaN","34":"1","35":"3","36":"1","37":"3","38":"NA","39":"NA","40":"NA","41":"1","42":"3","43":"NaN","44":"NaN","45":"3","46":"NA","47":"NaN","48":"Anuj Jain","49":"Shreeram Modi","50":"Anuj Jain","51":"Shreeram Modi","52":"FALSE","53":"TRUE","54":"Human Debate","55":"Human Debate","56":"What is not a type technology that is used in this story?","57":"62569","58":"0.4","59":"3","60":"0.4000000","61":"3.000000","62":"FALSE","63":"2023-04-21 11:01:01.503","64":"2023-06-12 16:05:11.888","65":"TRUE","66":"FALSE","67":"FALSE","68":"TRUE","69":"FALSE","70":"TRUE","71":"TRUE","72":"0.5000000","73":"0.5","74":"0.5000000","75":"0.5","76":"0.5","77":"1","78":"1.0000000","79":"NA","80":"0.80","81":"0.400","_rn_":"683"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code># Fit the random intercept model and only remove missing values for &#39;Dishonest debater&#39;
+<pre class="r foldable"><code># Fit the random intercept model and only remove missing values for &#39;Dishonest debater&#39;
 random_intercept_model &lt;- lmer(`Final probability correct` ~ (1|`Dishonest debater`), 
                                 data = dishonest, 
                                 REML = TRUE)
@@ -3046,7 +3052,7 @@ summary(random_intercept_model)</code></pre>
 ## (Intercept)  0.78325    0.01719 7.54926   45.58 0.000000000172 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>dishonest$random.intercept.preds = predict(random_intercept_model)
+<pre class="r foldable"><code>dishonest$random.intercept.preds = predict(random_intercept_model)
 plot(dishonest$random.intercept.preds, dishonest$`Final probability correct`)</code></pre>
 <p><img src="debate-2309_files/figure-html/unnamed-chunk-3-9.png" width="672" /></p>
 <div id="debater-experience-ratings---how-many-wins"
@@ -3064,13 +3070,13 @@ class="section level3" number="3.3.1">
 <h3><span class="header-section-number">3.3.4</span> possibly
 unnessary</h3>
 <p>Finally, these are how many we get correct in each setting</p>
-<pre class="r"><code>judgments_online &lt;- py$judgments_online
+<pre class="r foldable"><code>judgments_online &lt;- py$judgments_online
 table(judgments_online$Final_Accuracy, judgments_online$Final_Setting)</code></pre>
 <pre><code>##        
 ##         AI Consultancy AI Debate Human Consultancy Human Debate
 ##   FALSE             18        19                32           25
 ##   TRUE              75        68                75          130</code></pre>
-<pre class="r"><code>table(judgments_online$Final_Accuracy, judgments_online$Setting)</code></pre>
+<pre class="r foldable"><code>table(judgments_online$Final_Accuracy, judgments_online$Setting)</code></pre>
 <pre><code>##        
 ##         AI Consultancy Dishonest AI Consultancy Honest AI Debate
 ##   FALSE                        5                    13        19
@@ -3079,7 +3085,7 @@ table(judgments_online$Final_Accuracy, judgments_online$Final_Setting)</code></p
 ##         Human Consultancy Dishonest Human Consultancy Honest Human Debate
 ##   FALSE                          26                        6           25
 ##   TRUE                           33                       42          130</code></pre>
-<pre class="r"><code>ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
+<pre class="r foldable"><code>ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
   geom_bar(position = &quot;fill&quot;) +
   scale_fill_manual(values = c(&quot;TRUE&quot; = &quot;green&quot;, &quot;FALSE&quot; = &quot;red&quot;)) +
   labs(title = &quot;Judgments by Setting, overall&quot;, x = &quot;Setting&quot;, y = &quot;Proportion&quot;, fill = &quot;Final_Accuracy&quot;) +
@@ -3088,7 +3094,7 @@ table(judgments_online$Final_Accuracy, judgments_online$Final_Setting)</code></p
 <p><img src="debate-2309_files/figure-html/quick%20ori%20acc%20stats-1.png" width="100%" /></p>
 <p>Sneak peak of accuracy differences between judges, but we won’t get
 to that again until models</p>
-<pre class="r"><code>ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
+<pre class="r foldable"><code>ggplot(judgments_online, aes(x = Final_Setting, fill = Final_Accuracy)) +
   geom_bar(position = &quot;fill&quot;) +
   scale_fill_manual(values = c(&quot;TRUE&quot; = &quot;green&quot;, &quot;FALSE&quot; = &quot;red&quot;)) +
   labs(title = &quot;Judgments by Setting, per judge&quot;, x = &quot;Setting&quot;, y = &quot;Proportion&quot;, fill = &quot;Final_Accuracy&quot;) +

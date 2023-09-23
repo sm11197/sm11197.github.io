@@ -1,6 +1,8 @@
 ---
 title: 'Results'
 output:
+  pdf_document: 
+    keep_tex: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -8,13 +10,11 @@ output:
     toc_depth: 3
     number_sections: true
     toc_float: true
-  pdf_document: 
-    keep_tex: yes
 ---
 >Notes:  
-- Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python    
+- Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python 
 - Some of this won't make it to the paper. You can probably skip preprocessing unless you want to check certain things, example: did we make sure to remove judgments based on X condition
-- If you want to clarify/comment anything do so at https://github.com/sm11197/sm11197.github.io/blob/main/analysis/debate-0923.Rmd) or message me elsewhere
+- If you want to clarify/comment anything do so at https://github.com/sm11197/sm11197.github.io/blob/main/debate-0923.Rmd) or message me elsewhere
 
 
 ```{r setup, include=FALSE}
@@ -22,18 +22,18 @@ knitr::opts_chunk$set(class.source = "foldable")
 lib_path <- "/Users/bila/git/sm11197.github.io/sm11197.github.io/library"
 .libPaths(lib_path)
 options(scipen = 999)
-library(tinytex)
-library(reticulate)
+
+library(reticulate) #for interop with Python
 reticulate::use_virtualenv("/Users/bila/git/sm11197.github.io/sm11197.github.io/.venv")
 library(ggplot2) #graphs
 library(dplyr) #data manipulation
-library(survey) #weighted chi
+library(survey) #weighted statistics
+library(sjstats) #weighted statistics (2)
 library(lme4) #linear mixed models
 library(lmerTest) #tests for the above
 library(brms) #bayesian regression models
 library(boot) #bootstrap resampling for confidence intervals
-library(purrr) #data manipulation - loops
-library(sjstats)
+library(purrr) #data manipulation - efficient loops
 ```
 
 # Preprocessing
@@ -49,10 +49,13 @@ import re
 pd.options.mode.chained_assignment = None  # default='warn'
 
 # Load summaries that can be downloaded from the interface
-debates = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/debates.csv", keep_default_na=True)
-sessions = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/sessions.csv", keep_default_na=True)
-turns = pd.read_csv("/Users/bila/git/for-debate/debate/save/official/summaries/turns.csv", keep_default_na=True)
-print(f' {debates.shape} - Debates') ;print(f'{sessions.shape} - Sessions, which has multiple rows (of participants) for each debate') ; print(f'{turns.shape} - and Turns, which has multiple rows (of participant turns) for each debate')
+data_path = "/Users/bila/git/for-debate/debate/save/official/summaries/"
+debates = pd.read_csv(data_path + "debates.csv", keep_default_na=True)
+sessions = pd.read_csv(data_path + "sessions.csv", keep_default_na=True)
+turns = pd.read_csv(data_path + "turns.csv", keep_default_na=True)
+print(f' {debates.shape} - Debates') ;
+print(f'{sessions.shape} - Sessions, which has multiple rows (of participants) for each debate') ;
+print(f'{turns.shape} - and Turns, which has multiple rows (of participant turns) for each debate')
 
 # Only include debates within a given period
 debates["Start time"] = pd.to_datetime(debates["Start time"], unit="ms")
@@ -120,9 +123,10 @@ print(f'After merging debates with sessions, we have the following participant c
 judgments = source[source['Final probability correct'].notnull()]
 print(f'After filtering to judges that have finalized their judgment, we have the following judgments per role:\n{judgments["Role"].value_counts()}\nfor a total of {len(judgments)} judgments.')
 
+print(f'Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):\n{judgments["Setting"].value_counts()}')
+
 judgments['Final_Accuracy'] = judgments['Final probability correct'] > 0.5
 
-print(f'Of those judgments, we have this much for each setting (not consolidating honest - dishonest consultancies):\n{judgments["Setting"].value_counts()}')
 print(f'Of those judgments, we have this much for each setting (aggregated):\n{judgments.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
 
 # Remove judges who see the story more than once
@@ -139,14 +143,14 @@ print(f'2. We\'ll make a copy of the online judgments only leaving us with the f
 
 judgments_online = judgments_online[judgments_online['Untimed annotator context bins'].isin(['2', '3', '4'])]
 
-print(f'3. We then filter to judgments which require more than a sentence or two, and now we have this much for each setting (aggregated):\n{judgments_online.groupby(["Final_Setting"])["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'3. We then filter to judgments which require more than a sentence or two, and now we have this much for each setting (aggregated):\n{judgments_online.groupby(["Final_Setting"])["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}\nThis is where debate accuracy drops')
 
 pd.set_option('display.max_columns', None)
 total_counts_for_setting = judgments_online.groupby('Final_Setting').size()
 result = judgments_online.groupby(["Final_Setting", "Untimed annotator context bins"]).agg(
     Proportion_True=pd.NamedAgg(column='Final_Accuracy', aggfunc=lambda x: x.mean()),
     Context_Count=pd.NamedAgg(column='Final_Accuracy', aggfunc='size'),
-    Proportion_Context=pd.NamedAgg(column='Final_Setting', aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
+    Proportion_All_Context=pd.NamedAgg(column='Final_Setting', aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
 )
 print(f'Are the difficult questions equally enough distributed amongst settings?:\n{result}')
 pd.reset_option('display.max_columns')
@@ -299,21 +303,22 @@ def balance_debates(df, sample_setting, random_state):
 # Run the sampling to balance the consultancies
 judgments_online = balance_debates(judgments_online, 'Human Debate', random_state = 123)
 judgments_online = balance_debates(judgments_online, 'AI Debate', random_state = 123)
-# Create one sample column for easier indexing, create mask
-sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
-consultancy_sample_columns = [col for col in judgments_online.columns if 'Consultancy Sample' in col]
 
-judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
-judgments_online['Consultancy Sample'] = judgments_online[sample_columns].any(axis=1)
-
-consultancy_balanced = (~judgments_online['Setting'].str.contains('Consultancy', case=False, na=False)) | (judgments_online['Sample'] == True)
-
-print(f'Accuracy after balancing consultancies:\n{judgments_online.groupby(["Final_Setting"])["Sample"].value_counts()}')
 ```
 
 ### Question weights
 
 ```{python question weights}
+# Create one sample column for easier indexing, create mask
+sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
+consultancy_sample_columns = [col for col in judgments_online.columns if 'Consultancy Sample' in col]
+judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
+judgments_online['Consultancy Sample'] = judgments_online[consultancy_sample_columns].any(axis=1)
+consultancy_balanced = (~judgments_online['Setting'].str.contains('Consultancy', case=False, na=False)) | (judgments_online['Consultancy Sample'] == True)
+
+print(f'Accuracy per setting (aggregated) after balancing:\n{judgments_online[consultancy_balanced].groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+
+
 def question_weights(data, columns, weight_column_name, consultancy_sample=None, debate_sample=None):
     # 0. Make a copy of the original data for weight calculations
     working_data = data.copy()
@@ -404,7 +409,7 @@ judgments_online = question_weights(
 )
 ```
 
-Note: we are not balancing *between settings*, and some of the counts of the debate settings are on the same questions
+Note: we are not balancing between settings, and some of the counts of the debate settings are on the same questions
 
 ## Load into R environment
 
@@ -440,6 +445,7 @@ table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_deb
 ### Difference in proportions
 
 ```{r weighted chi}
+# Make a function to easily try out different weights
 acc_diff_test <- function(design, Setting){
   print(design)
   freq_table <- svytable(~Final_Setting+Final_Accuracy, design)
@@ -466,7 +472,9 @@ acc_diff_test(svydesign(ids = ~1, data = judgments_online, weights = ~sampled_co
 design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
 acc_diff_test(design)
 
+print("Now trying manually tests that aren't pairwise + cobfidence intervals for the table")
 
+## To maybe do: refactor this into function?
 
 final_table <- svytable(~Final_Setting+Final_Accuracy, 
                         design = svydesign(ids = ~1, 
@@ -503,7 +511,7 @@ knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
              col.names = c("# Incorrect (weighted)", "# Correct (weighted)", "Accuracy", "Difference", "95% CI Lower Limit","95% CI Upper Limit","p-value"))
 
 
-
+print("Second table, human settings only")
 
 human_only <- subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting))
 human_only$Setting <- droplevels(human_only$Setting)
@@ -542,15 +550,27 @@ final_table
 # Display the updated table using knitr::kable
 knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
              col.names = c("# Incorrect (weighted)", "# Correct (weighted)", "Accuracy", "Difference", "95% CI Lower Limit","95% CI Upper Limit","p-value"))
-
-prop_table <- svytable(~Final_Setting+Final_Accuracy, design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)),weights = ~sampled_consultancies_all_debates_weights))
-#prop_table <- svytable(~Final_Setting+Final_Accuracy, design = svydesign(ids = ~1, data = subset(judgments_online, !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
-prop_table
-print(prop.test(c(prop_table["Human Consultancy","TRUE"],prop_table["Human Debate","TRUE"]),c(prop_table["Human Consultancy", "TRUE"]+prop_table["Human Consultancy", "FALSE"], prop_table["Human Debate", "TRUE"]+prop_table["Human Debate", "FALSE"])))
 ```
 
 ```{r final probability correct}
 judgments_online$fpc <- judgments_online$`Final probability correct`
+
+# Weighted Kruskal-Wallis
+svyranktest(fpc~Final_Setting, svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
+# Test Human Settings only
+svyranktest(fpc~Final_Setting, 
+            svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting),
+            test = "wilcoxon")
+svyranktest(fpc~Final_Setting, 
+            svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting),
+            test = "median")
+# TODO: check test for human consultancy & human debate, make table. Might have to rebuild package to get CIs
+# see calibration for confident mistakes
+# Note: see publication in help page for more
+
+
+
+# The rest is stuff i tried
 judgments_online %>%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = fpc)) +
@@ -580,15 +600,8 @@ svyranktest(fpc~Final_Setting, consultancy_design, test = "vanderWaerden")
 weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
 
 
-data(efc)
-str(efc)
-efc$weight <- abs(rnorm(nrow(efc), 1, .3))
-weighted_mannwhitney(c12hour ~ c161sex + weight, efc)
-weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
-wilcox.test(efc$c12hour,efc$c161sex)
 
-judgments_online$fpcw <- judgments_online$fpc *judgments_online$sampled_consultancies_all_debates_weights_grouped_setting
-wilcox.test(fpcw~Final_Setting, subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), conf.int=T)
+weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
 ```
 ### Logistic regression
 
@@ -1174,6 +1187,57 @@ subset(judgments_online, judgments_online['Setting'] == 'Human Debate') %>%
 ### Calibration
 
 S: (1) debaters didnt learn calibration -\> calibration over time? S: (2) dishonest debater tricks
+```{r confident mistakes}
+library(ggplot2)
+library(dplyr)
+
+correctColor = "#008000"
+incorrectColor = "#DC143C"
+
+# Segregate confidently correct and confidently wrong
+judgments_online$confidence_label <- case_when(
+  judgments_online$`Final probability correct` > 0.95 ~ "Confidently Correct",
+  judgments_online$`Final probability correct` < 0.05 ~ "Confidently Wrong",
+  TRUE ~ "Neutral"
+)
+
+# Filter out only the rows with confidently correct and confidently wrong labels
+filtered_data <- judgments_online %>%
+  filter(confidence_label != "Neutral")
+
+# Count the occurrences for each setting and confidence label
+count_data <- filtered_data %>%
+  group_by(`Final_Setting`, confidence_label) %>%
+  summarise(count = n())
+
+# Plot
+ggplot(count_data, aes(x = `Final_Setting`, y = count, fill = confidence_label)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("Confidently Correct" = correctColor, "Confidently Wrong" = incorrectColor)) +
+  labs(title = "Confident Mistakes and Correct by Setting", y = "Count", x = "Setting") +
+  theme_minimal()
+
+
+
+
+
+# Calculate the color value for each row
+judgments_online$color_value <- log2(judgments_online$`Final probability correct`) - (0.05 * judgments_online$`Number of judge continues`)
+
+# Count the occurrences for each setting and 'Final probability correct' value
+count_data <- judgments_online %>%
+  group_by(`Final_Setting`, `Final probability correct`, color_value) %>%
+  summarise(count = n())
+
+# Plot
+ggplot(count_data, aes(x = `Final_Setting`, y = count, fill = color_value, group = `Final probability correct`)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_gradient(low = "#DC143C", high = "#008000") +  # Adjust as needed
+  labs(title = "Distribution of Final Probabilities by Setting", y = "Count", x = "Setting") +
+  theme_minimal()
+
+```
+
 
 ```{python calibration, out.width = "100%", dpi = 300}
 import pandas as pd

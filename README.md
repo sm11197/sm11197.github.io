@@ -29,6 +29,6 @@ Rscript _setup_rmarkdown.R
 Rscript _run_rmarkdown.R
 ```
 OR
-Directly run in RStudio, no need for _run_rmarkdown.R
+Directly run in RStudio, no need for _run_rmarkdown.R (don't forget to set the library)
 
 The result will be name_of_rmd.html (or whatever name/output extension you chose)
