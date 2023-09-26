@@ -18,10 +18,12 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(class.source = "foldable")
 lib_path <- "/Users/bila/git/sm11197.github.io/sm11197.github.io/library"
-.libPaths(lib_path)
-options(scipen = 999)
+.libPaths(lib_path) #run first before knitting so it realizes you do have the packages
+
+options(scipen = 999) #prevents scientific notation unless int wide
+knitr::opts_chunk$set(class.source = "foldable") #folds code so only results show in HTML
+knitr::opts_chunk$set(cache = TRUE) #so the same output isn't rerun
 
 library(reticulate) #for interop with Python
 reticulate::use_virtualenv("/Users/bila/git/sm11197.github.io/sm11197.github.io/.venv")
@@ -655,7 +657,7 @@ ranova(random.intercept.model)
 ### Quotes %, caveats
 
 ```{python quote_length}
-characters = turns.merge(
+debater_turns = turns.merge(
         debates[["Room name", "Question", "Story length",
                  "Untimed annotator context","Untimed annotator context bins",
                  "Setting", "Final_Setting", "Final_Accuracy",
@@ -667,7 +669,7 @@ characters = turns.merge(
 
 
 # Filtering for specific roles
-characters = characters[characters['Role (honest/dishonest)'].isin(['Honest debater', 'Dishonest debater'])]
+debater_turns = debater_turns[debater_turns['Role (honest/dishonest)'].isin(['Honest debater', 'Dishonest debater'])]
 
 # Extracting the spans
 def extract_spans(span_str):
@@ -699,9 +701,9 @@ def merge_overlapping_spans(span_str):
 def custom_join(series):
     return ' '.join(filter(lambda x: isinstance(x, str), series))
 
-# Identify questions with more than one setting and filter out the characters dataframe
-questions_with_multi_settings = characters.groupby("Question").filter(lambda x: len(x["Setting"].unique()) > 1)["Question"].unique()
-filtered_characters = characters[characters["Question"].isin(questions_with_multi_settings)]
+# Identify questions with more than one setting and filter out the debater_turns dataframe
+questions_with_multi_settings = debater_turns.groupby("Question").filter(lambda x: len(x["Setting"].unique()) > 1)["Question"].unique()
+debater_turns_filtered = debater_turns[debater_turns["Question"].isin(questions_with_multi_settings)]
 
 # Aggregating data
 aggregates = {
@@ -711,16 +713,16 @@ aggregates = {
     'Participant quote span': custom_join
 }
 # Grouping by 'Room name' and aggregating
-characters_agg_by_room = filtered_characters.groupby('Room name').agg(aggregates).reset_index()
+debater_turns_filtered_by_room = debater_turns_filtered.groupby('Room name').agg(aggregates).reset_index()
 
 # Merging the aggregated results with the original data to reintroduce the desired columns
-characters_agg = characters_agg_by_room.merge(
-    filtered_characters[['Room name', 'Setting', 'Final_Setting', 'Question', 'Untimed annotator context bins','Final_Accuracy']].drop_duplicates(),
+debater_turns_agg = debater_turns_filtered_by_room.merge(
+    debater_turns_filtered[['Room name', 'Setting', 'Final_Setting', 'Question', 'Untimed annotator context bins','Final_Accuracy']].drop_duplicates(),
     on='Room name'
 )
 
 # Merge overlapping spans after the aggregation
-characters_agg["merged_quote_spans"] = characters_agg["Participant quote span"].apply(merge_overlapping_spans)
+debater_turns_agg["merged_quote_spans"] = debater_turns_agg["Participant quote span"].apply(merge_overlapping_spans)
 
 # Functions to compute and compare spans across settings
 def extract_numbers_from_span(span_str):
@@ -737,12 +739,12 @@ def quote_length(span_str):
     numbers.update(range(int(start), int(end)))
   return numbers
 
-characters_agg["quote_length"] = characters_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
-#characters_agg["merged_quote_length"] = characters_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
-#print(characters_agg["merged_quote_length"][1])
-#print((characters_agg["merged_quote_length"]==characters_agg["quote_length"]).value_counts())
+debater_turns_agg["quote_length"] = debater_turns_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
+#debater_turns_agg["merged_quote_length"] = debater_turns_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
+#print(debater_turns_agg["merged_quote_length"][1])
+#print((debater_turns_agg["merged_quote_length"]==debater_turns_agg["quote_length"]).value_counts())
 
-#print((characters_agg['quote_length'].fillna(0)/characters_agg['Story length'].fillna(0)).describe())
+#print((debater_turns_agg['quote_length'].fillna(0)/debater_turns_agg['Story length'].fillna(0)).describe())
 
 
 def convert_to_span_format(numbers):
@@ -784,7 +786,7 @@ def compute_span_differences(dataframe):
                     differences[key] = value
     return differences
 
-span_differences_all = compute_span_differences(characters_agg)
+span_differences_all = compute_span_differences(debater_turns_agg)
 
 #print(span_differences_all.keys())
 #for span in span_differences_all[('Why were Jorgenson and Ganti not put to death?', 'Human Consultancy Dishonest', 'Human Consultancy Honest')]:
@@ -843,13 +845,13 @@ print(filtered_no_outliers.groupby(['Setting 2','Acc_1','Acc_2'])['Span Differen
 ```
 
 ```{r quote_length graph, out.width = "100%", dpi = 300}
-characters<- py$characters_agg
+debater_turns<- py$debater_turns_agg
 span_difference_debate_consultancies<-py$filtered_df
 ggplot(span_difference_debate_consultancies) +
   geom_boxplot(aes(x = `Setting 2`, y = `Span Difference Count`))
 
 
-filtered_outliers <- characters %>%
+filtered_outliers <- debater_turns %>%
   group_by(Final_Setting) %>%
   mutate(Q1 = quantile(quote_length, 0.25),
          Q3 = quantile(quote_length, 0.75),
@@ -857,11 +859,11 @@ filtered_outliers <- characters %>%
          lower_bound = Q1 - 1.5 * IQR,
          upper_bound = Q3 + 1.5 * IQR)
 
-ggplot(characters) +
+ggplot(debater_turns) +
   geom_boxplot(aes(x = Final_Setting, y = `Quote length`)) +
-  labs(y = "Total Quote Length (characters)")+
+  labs(y = "Total Quote Length (debater_turns)")+
   theme_minimal()
-filtered <- characters %>%
+filtered <- debater_turns %>%
   group_by(Final_Setting) %>%
   mutate(Q1 = quantile(quote_length, 0.25),
          Q3 = quantile(quote_length, 0.75),
@@ -875,7 +877,7 @@ filtered %>%
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
   theme_minimal()
-characters %>%
+debater_turns %>%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
@@ -884,23 +886,23 @@ pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
 
 
 filtered %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
-characters %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
+debater_turns %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
 ```
 
 ```{r rounds graph, out.width = "100%", dpi = 300}
-characters <- characters %>%
+debater_turns <- debater_turns %>%
   group_by(`Room name`,) %>%
   mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %>%
   ungroup()
-ggplot(characters) +
+ggplot(debater_turns) +
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
   labs(y = 'Max Judging Rounds') +
   theme_minimal() 
 
-pairwise.t.test(characters$`Max judge rounds by room`, characters$Final_Setting)
+pairwise.t.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)
 
 
-filtered <- characters %>%
+filtered <- debater_turns %>%
   group_by(Final_Setting) %>%
   mutate(Q1 = quantile(`Max judge rounds by room`, 0.25),
          Q3 = quantile(`Max judge rounds by room`, 0.75),
@@ -914,7 +916,7 @@ filtered %>%
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`), outlier.shape = NA) +
   labs(y = "Rounds", x = "Setting")+
   theme_minimal()
-characters %>%
+debater_turns %>%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
   labs(y = "Rounds", x = "Setting")+
@@ -928,42 +930,24 @@ filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(`Max judge ro
 ### Length of debates, stratified
 
 ```{python strat, out.width = "100%", dpi = 300}
-per_turn = turns.merge(
+all_turns = turns.merge(
         debates[["Room name", "Honest debater", "Dishonest debater", "Question", "Article ID",
                  "Speed annotator accuracy","Untimed annotator context","Untimed annotator context bins","Is offline","Final_Setting", "Setting","Final_Accuracy"]],
         how="left",
         on="Room name",
     )
 
-print(per_turn.groupby('Final_Setting')['Num previous judging rounds'].mean())
+print(all_turns.groupby('Final_Setting')['Num previous judging rounds'].mean())
 
-# Calculate the IQR and bounds for each group in 'Setting 2'
-grouped = per_turn.groupby('Setting')['Num previous judging rounds']
-
-Q1 = grouped.quantile(0.25)
-Q3 = grouped.quantile(0.75)
-IQR = Q3 - Q1
-
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
-
-# Filter out the outliers based on the computed bounds
-filtered_no_outliers = per_turn[
-    (per_turn['Setting'].map(lower_bound) <= per_turn['Num previous judging rounds']) &
-    (per_turn['Setting'].map(upper_bound) >= per_turn['Num previous judging rounds'])
-]
-
-filtered_no_outliers
-
-for setting in filtered_no_outliers['Setting'].unique():
-  per_turn_setting = filtered_no_outliers[filtered_no_outliers['Setting']==setting]
+for setting in all_turns['Setting'].unique():
+  all_turns_setting = all_turns[all_turns['Setting']==setting]
   print(setting)
   # Calculate the maximum 'Num previous judging rounds' for each combination of 'Room name' and 'Participant'
-  per_turn_setting['Max judge rounds by room'] = per_turn_setting.groupby(['Room name', 'Participant'])['Num previous judging rounds'].transform('max')
+  all_turns_setting['Max judge rounds by room'] = all_turns_setting.groupby(['Room name', 'Participant'])['Num previous judging rounds'].transform('max')
   ## Just based on the number of rounds
   
-  for i in range(1, per_turn_setting['Max judge rounds by room'].max() + 1):
-      max_rounds = per_turn_setting[(per_turn_setting['Max judge rounds by room'] == i) & (per_turn_setting['Untimed annotator context'] > 0)]
+  for i in range(1, all_turns_setting['Max judge rounds by room'].max() + 1):
+      max_rounds = all_turns_setting[(all_turns_setting['Max judge rounds by room'] == i) & (all_turns_setting['Untimed annotator context'] > 0)]
       print(len(max_rounds))
       # Group by 'Num previous judging rounds' and calculate the mean of 'Probability correct'
       average_pc_per_round = max_rounds.groupby('Num previous judging rounds')['Probability correct'].mean()
@@ -985,7 +969,7 @@ for setting in filtered_no_outliers['Setting'].unique():
 
 
 ```{r strat ggplot, width='100%', dpi=300}
-strat <- py$per_turn
+strat <- py$all_turns
 strat <- strat %>%
   group_by(`Room name`, Participant) %>%
   mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %>%
@@ -997,19 +981,22 @@ strat <- strat %>%
                                       include.lowest = TRUE, 
                                       right = FALSE))
 
+bootstrap_mean <- function(data, indices) {
+  return(mean(data[indices], na.rm = TRUE))
+}
+
 # Plot using ggplot2
 strat %>%
   group_by(Setting, `Num previous judging rounds`, `Max judge rounds bin`) %>%
-  summarize(
-    `Average Probability Correct` = mean(`Probability correct`, na.rm = TRUE),
-    n = n(),
-    se = sqrt(`Average Probability Correct` * (1 - `Average Probability Correct`) / n)
-  ) %>%
-  mutate(
-    lower_ci = `Average Probability Correct` - 1.96 * se,
-    upper_ci = `Average Probability Correct` + 1.96 * se
-  ) %>%
-  ggplot(aes(x = `Num previous judging rounds`, y = `Average Probability Correct`, col = as.factor(`Max judge rounds bin`))) +
+  do({
+    boot_result <- boot(data = .$`Probability correct`, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = `Num previous judging rounds`, y = mean_accuracy, col = as.factor(`Max judge rounds bin`))) +
   geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = as.factor(`Max judge rounds bin`), group = as.factor(`Max judge rounds bin`), color = NULL), alpha = 0.15) +
   labs(title = "Average Probability Correct Each Round, \nstratified by Max Round Binned",
        x = "Round", 

@@ -2185,7 +2185,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters }\OperatorTok{=}\NormalTok{ turns.merge(}
+\NormalTok{debater\_turns }\OperatorTok{=}\NormalTok{ turns.merge(}
 \NormalTok{        debates[[}\StringTok{"Room name"}\NormalTok{, }\StringTok{"Question"}\NormalTok{, }\StringTok{"Story length"}\NormalTok{,}
                  \StringTok{"Untimed annotator context"}\NormalTok{,}\StringTok{"Untimed annotator context bins"}\NormalTok{,}
                  \StringTok{"Setting"}\NormalTok{, }\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Final\_Accuracy"}\NormalTok{,}
@@ -2197,7 +2197,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 
 \CommentTok{\# Filtering for specific roles}
-\NormalTok{characters }\OperatorTok{=}\NormalTok{ characters[characters[}\StringTok{\textquotesingle{}Role (honest/dishonest)\textquotesingle{}}\NormalTok{].isin([}\StringTok{\textquotesingle{}Honest debater\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Dishonest debater\textquotesingle{}}\NormalTok{])]}
+\NormalTok{debater\_turns }\OperatorTok{=}\NormalTok{ debater\_turns[debater\_turns[}\StringTok{\textquotesingle{}Role (honest/dishonest)\textquotesingle{}}\NormalTok{].isin([}\StringTok{\textquotesingle{}Honest debater\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Dishonest debater\textquotesingle{}}\NormalTok{])]}
 
 \CommentTok{\# Extracting the spans}
 \KeywordTok{def}\NormalTok{ extract\_spans(span\_str):}
@@ -2229,9 +2229,9 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \KeywordTok{def}\NormalTok{ custom\_join(series):}
     \ControlFlowTok{return} \StringTok{\textquotesingle{} \textquotesingle{}}\NormalTok{.join(}\BuiltInTok{filter}\NormalTok{(}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{isinstance}\NormalTok{(x, }\BuiltInTok{str}\NormalTok{), series))}
 
-\CommentTok{\# Identify questions with more than one setting and filter out the characters dataframe}
-\NormalTok{questions\_with\_multi\_settings }\OperatorTok{=}\NormalTok{ characters.groupby(}\StringTok{"Question"}\NormalTok{).}\BuiltInTok{filter}\NormalTok{(}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x[}\StringTok{"Setting"}\NormalTok{].unique()) }\OperatorTok{\textgreater{}} \DecValTok{1}\NormalTok{)[}\StringTok{"Question"}\NormalTok{].unique()}
-\NormalTok{filtered\_characters }\OperatorTok{=}\NormalTok{ characters[characters[}\StringTok{"Question"}\NormalTok{].isin(questions\_with\_multi\_settings)]}
+\CommentTok{\# Identify questions with more than one setting and filter out the debater\_turns dataframe}
+\NormalTok{questions\_with\_multi\_settings }\OperatorTok{=}\NormalTok{ debater\_turns.groupby(}\StringTok{"Question"}\NormalTok{).}\BuiltInTok{filter}\NormalTok{(}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x[}\StringTok{"Setting"}\NormalTok{].unique()) }\OperatorTok{\textgreater{}} \DecValTok{1}\NormalTok{)[}\StringTok{"Question"}\NormalTok{].unique()}
+\NormalTok{debater\_turns\_filtered }\OperatorTok{=}\NormalTok{ debater\_turns[debater\_turns[}\StringTok{"Question"}\NormalTok{].isin(questions\_with\_multi\_settings)]}
 
 \CommentTok{\# Aggregating data}
 \NormalTok{aggregates }\OperatorTok{=}\NormalTok{ \{}
@@ -2241,16 +2241,16 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
     \StringTok{\textquotesingle{}Participant quote span\textquotesingle{}}\NormalTok{: custom\_join}
 \NormalTok{\}}
 \CommentTok{\# Grouping by \textquotesingle{}Room name\textquotesingle{} and aggregating}
-\NormalTok{characters\_agg\_by\_room }\OperatorTok{=}\NormalTok{ filtered\_characters.groupby(}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{).agg(aggregates).reset\_index()}
+\NormalTok{debater\_turns\_filtered\_by\_room }\OperatorTok{=}\NormalTok{ debater\_turns\_filtered.groupby(}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{).agg(aggregates).reset\_index()}
 
 \CommentTok{\# Merging the aggregated results with the original data to reintroduce the desired columns}
-\NormalTok{characters\_agg }\OperatorTok{=}\NormalTok{ characters\_agg\_by\_room.merge(}
-\NormalTok{    filtered\_characters[[}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Untimed annotator context bins\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{]].drop\_duplicates(),}
+\NormalTok{debater\_turns\_agg }\OperatorTok{=}\NormalTok{ debater\_turns\_filtered\_by\_room.merge(}
+\NormalTok{    debater\_turns\_filtered[[}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Untimed annotator context bins\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{]].drop\_duplicates(),}
 \NormalTok{    on}\OperatorTok{=}\StringTok{\textquotesingle{}Room name\textquotesingle{}}
 \NormalTok{)}
 
 \CommentTok{\# Merge overlapping spans after the aggregation}
-\NormalTok{characters\_agg[}\StringTok{"merged\_quote\_spans"}\NormalTok{] }\OperatorTok{=}\NormalTok{ characters\_agg[}\StringTok{"Participant quote span"}\NormalTok{].}\BuiltInTok{apply}\NormalTok{(merge\_overlapping\_spans)}
+\NormalTok{debater\_turns\_agg[}\StringTok{"merged\_quote\_spans"}\NormalTok{] }\OperatorTok{=}\NormalTok{ debater\_turns\_agg[}\StringTok{"Participant quote span"}\NormalTok{].}\BuiltInTok{apply}\NormalTok{(merge\_overlapping\_spans)}
 
 \CommentTok{\# Functions to compute and compare spans across settings}
 \KeywordTok{def}\NormalTok{ extract\_numbers\_from\_span(span\_str):}
@@ -2267,12 +2267,12 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \NormalTok{    numbers.update(}\BuiltInTok{range}\NormalTok{(}\BuiltInTok{int}\NormalTok{(start), }\BuiltInTok{int}\NormalTok{(end)))}
   \ControlFlowTok{return}\NormalTok{ numbers}
 
-\NormalTok{characters\_agg[}\StringTok{"quote\_length"}\NormalTok{] }\OperatorTok{=}\NormalTok{ characters\_agg[}\StringTok{"Participant quote span"}\NormalTok{].}\BuiltInTok{apply}\NormalTok{(}\KeywordTok{lambda}\NormalTok{ row: }\BuiltInTok{len}\NormalTok{(quote\_length(row)))}
-\CommentTok{\#characters\_agg["merged\_quote\_length"] = characters\_agg["Participant quote span"].apply(lambda row: len(quote\_length(row)))}
-\CommentTok{\#print(characters\_agg["merged\_quote\_length"][1])}
-\CommentTok{\#print((characters\_agg["merged\_quote\_length"]==characters\_agg["quote\_length"]).value\_counts())}
+\NormalTok{debater\_turns\_agg[}\StringTok{"quote\_length"}\NormalTok{] }\OperatorTok{=}\NormalTok{ debater\_turns\_agg[}\StringTok{"Participant quote span"}\NormalTok{].}\BuiltInTok{apply}\NormalTok{(}\KeywordTok{lambda}\NormalTok{ row: }\BuiltInTok{len}\NormalTok{(quote\_length(row)))}
+\CommentTok{\#debater\_turns\_agg["merged\_quote\_length"] = debater\_turns\_agg["Participant quote span"].apply(lambda row: len(quote\_length(row)))}
+\CommentTok{\#print(debater\_turns\_agg["merged\_quote\_length"][1])}
+\CommentTok{\#print((debater\_turns\_agg["merged\_quote\_length"]==debater\_turns\_agg["quote\_length"]).value\_counts())}
 
-\CommentTok{\#print((characters\_agg[\textquotesingle{}quote\_length\textquotesingle{}].fillna(0)/characters\_agg[\textquotesingle{}Story length\textquotesingle{}].fillna(0)).describe())}
+\CommentTok{\#print((debater\_turns\_agg[\textquotesingle{}quote\_length\textquotesingle{}].fillna(0)/debater\_turns\_agg[\textquotesingle{}Story length\textquotesingle{}].fillna(0)).describe())}
 
 
 \KeywordTok{def}\NormalTok{ convert\_to\_span\_format(numbers):}
@@ -2314,7 +2314,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 \NormalTok{                    differences[key] }\OperatorTok{=}\NormalTok{ value}
     \ControlFlowTok{return}\NormalTok{ differences}
 
-\NormalTok{span\_differences\_all }\OperatorTok{=}\NormalTok{ compute\_span\_differences(characters\_agg)}
+\NormalTok{span\_differences\_all }\OperatorTok{=}\NormalTok{ compute\_span\_differences(debater\_turns\_agg)}
 
 \CommentTok{\#print(span\_differences\_all.keys())}
 \CommentTok{\#for span in span\_differences\_all[(\textquotesingle{}Why were Jorgenson and Ganti not put to death?\textquotesingle{}, \textquotesingle{}Human Consultancy Dishonest\textquotesingle{}, \textquotesingle{}Human Consultancy Honest\textquotesingle{})]:}
@@ -2471,7 +2471,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters}\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{characters\_agg}
+\NormalTok{debater\_turns}\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{debater\_turns\_agg}
 \NormalTok{span\_difference\_debate\_consultancies}\OtherTok{\textless{}{-}}\NormalTok{py}\SpecialCharTok{$}\NormalTok{filtered\_df}
 \FunctionTok{ggplot}\NormalTok{(span\_difference\_debate\_consultancies) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Setting 2}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Span Difference Count}\StringTok{\textasciigrave{}}\NormalTok{))}
@@ -2482,7 +2482,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{filtered\_outliers }\OtherTok{\textless{}{-}}\NormalTok{ characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{filtered\_outliers }\OtherTok{\textless{}{-}}\NormalTok{ debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Q1 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.25}\NormalTok{),}
          \AttributeTok{Q3 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.75}\NormalTok{),}
@@ -2490,9 +2490,9 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
          \AttributeTok{lower\_bound =}\NormalTok{ Q1 }\SpecialCharTok{{-}} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR,}
          \AttributeTok{upper\_bound =}\NormalTok{ Q3 }\SpecialCharTok{+} \FloatTok{1.5} \SpecialCharTok{*}\NormalTok{ IQR)}
 
-\FunctionTok{ggplot}\NormalTok{(characters) }\SpecialCharTok{+}
+\FunctionTok{ggplot}\NormalTok{(debater\_turns) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Quote length}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length (characters)"}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length (debater\_turns)"}\NormalTok{)}\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{()}
 \end{Highlighting}
 \end{Shaded}
@@ -2501,7 +2501,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{filtered }\OtherTok{\textless{}{-}}\NormalTok{ characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{filtered }\OtherTok{\textless{}{-}}\NormalTok{ debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Q1 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.25}\NormalTok{),}
          \AttributeTok{Q3 =} \FunctionTok{quantile}\NormalTok{(quote\_length, }\FloatTok{0.75}\NormalTok{),}
@@ -2522,7 +2522,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =}\NormalTok{ quote\_length)) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Total Quote Length in a Debate/Consultancy (unique tokens)"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
@@ -2570,7 +2570,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{avground =} \FunctionTok{median}\NormalTok{(quote\_length))}
+\NormalTok{debater\_turns }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{avground =} \FunctionTok{median}\NormalTok{(quote\_length))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -2586,11 +2586,11 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters }\OtherTok{\textless{}{-}}\NormalTok{ characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{debater\_turns }\OtherTok{\textless{}{-}}\NormalTok{ debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Room name}\StringTok{\textasciigrave{}}\NormalTok{,) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{max}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ungroup}\NormalTok{()}
-\FunctionTok{ggplot}\NormalTok{(characters) }\SpecialCharTok{+}
+\FunctionTok{ggplot}\NormalTok{(debater\_turns) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{\textquotesingle{}Max Judging Rounds\textquotesingle{}}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{() }
@@ -2601,7 +2601,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{pairwise.t.test}\NormalTok{(characters}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, characters}\SpecialCharTok{$}\NormalTok{Final\_Setting)}
+\FunctionTok{pairwise.t.test}\NormalTok{(debater\_turns}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, debater\_turns}\SpecialCharTok{$}\NormalTok{Final\_Setting)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -2609,7 +2609,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 ## 
 ##  Pairwise comparisons using t tests with pooled SD 
 ## 
-## data:  characters$`Max judge rounds by room` and characters$Final_Setting 
+## data:  debater_turns$`Max judge rounds by room` and debater_turns$Final_Setting 
 ## 
 ##                   AI Consultancy AI Debate Human Consultancy
 ## AI Debate         0.137          -         -                
@@ -2621,7 +2621,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{filtered }\OtherTok{\textless{}{-}}\NormalTok{ characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{filtered }\OtherTok{\textless{}{-}}\NormalTok{ debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(Final\_Setting) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Q1 =} \FunctionTok{quantile}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, }\FloatTok{0.25}\NormalTok{),}
          \AttributeTok{Q3 =} \FunctionTok{quantile}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, }\FloatTok{0.75}\NormalTok{),}
@@ -2642,7 +2642,7 @@ Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{characters }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{debater\_turns }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Final\_Setting, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{y =} \StringTok{"Rounds"}\NormalTok{, }\AttributeTok{x =} \StringTok{"Setting"}\NormalTok{)}\SpecialCharTok{+}
@@ -2693,14 +2693,14 @@ stratified}\label{length-of-debates-stratified}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{per\_turn }\OperatorTok{=}\NormalTok{ turns.merge(}
+\NormalTok{all\_turns }\OperatorTok{=}\NormalTok{ turns.merge(}
 \NormalTok{        debates[[}\StringTok{"Room name"}\NormalTok{, }\StringTok{"Honest debater"}\NormalTok{, }\StringTok{"Dishonest debater"}\NormalTok{, }\StringTok{"Question"}\NormalTok{, }\StringTok{"Article ID"}\NormalTok{,}
                  \StringTok{"Speed annotator accuracy"}\NormalTok{,}\StringTok{"Untimed annotator context"}\NormalTok{,}\StringTok{"Untimed annotator context bins"}\NormalTok{,}\StringTok{"Is offline"}\NormalTok{,}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Setting"}\NormalTok{,}\StringTok{"Final\_Accuracy"}\NormalTok{]],}
 \NormalTok{        how}\OperatorTok{=}\StringTok{"left"}\NormalTok{,}
 \NormalTok{        on}\OperatorTok{=}\StringTok{"Room name"}\NormalTok{,}
 \NormalTok{    )}
 
-\BuiltInTok{print}\NormalTok{(per\_turn.groupby(}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].mean())}
+\BuiltInTok{print}\NormalTok{(all\_turns.groupby(}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].mean())}
 \end{Highlighting}
 \end{Shaded}
 
@@ -2715,54 +2715,15 @@ stratified}\label{length-of-debates-stratified}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Calculate the IQR and bounds for each group in \textquotesingle{}Setting 2\textquotesingle{}}
-\NormalTok{grouped }\OperatorTok{=}\NormalTok{ per\_turn.groupby(}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{]}
-
-\NormalTok{Q1 }\OperatorTok{=}\NormalTok{ grouped.quantile(}\FloatTok{0.25}\NormalTok{)}
-\NormalTok{Q3 }\OperatorTok{=}\NormalTok{ grouped.quantile(}\FloatTok{0.75}\NormalTok{)}
-\NormalTok{IQR }\OperatorTok{=}\NormalTok{ Q3 }\OperatorTok{{-}}\NormalTok{ Q1}
-
-\NormalTok{lower\_bound }\OperatorTok{=}\NormalTok{ Q1 }\OperatorTok{{-}} \FloatTok{1.5} \OperatorTok{*}\NormalTok{ IQR}
-\NormalTok{upper\_bound }\OperatorTok{=}\NormalTok{ Q3 }\OperatorTok{+} \FloatTok{1.5} \OperatorTok{*}\NormalTok{ IQR}
-
-\CommentTok{\# Filter out the outliers based on the computed bounds}
-\NormalTok{filtered\_no\_outliers }\OperatorTok{=}\NormalTok{ per\_turn[}
-\NormalTok{    (per\_turn[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].}\BuiltInTok{map}\NormalTok{(lower\_bound) }\OperatorTok{\textless{}=}\NormalTok{ per\_turn[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{]) }\OperatorTok{\&}
-\NormalTok{    (per\_turn[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].}\BuiltInTok{map}\NormalTok{(upper\_bound) }\OperatorTok{\textgreater{}=}\NormalTok{ per\_turn[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{])}
-\NormalTok{]}
-
-\NormalTok{filtered\_no\_outliers}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##                            Room name  ...  Final_Accuracy
-## 0                         ambition-8  ...            True
-## 1                         ambition-8  ...            True
-## 2                         ambition-8  ...            True
-## 3                         ambition-8  ...            True
-## 4                         ambition-8  ...            True
-## ...                              ...  ...             ...
-## 6013                   break-a-leg-3  ...            True
-## 6014                   break-a-leg-3  ...            True
-## 6015  the-absurdity-of-family-love-2  ...            True
-## 6016  the-absurdity-of-family-love-2  ...            True
-## 6017  the-absurdity-of-family-love-2  ...            True
-## 
-## [5875 rows x 27 columns]
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ControlFlowTok{for}\NormalTok{ setting }\KeywordTok{in}\NormalTok{ filtered\_no\_outliers[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].unique():}
-\NormalTok{  per\_turn\_setting }\OperatorTok{=}\NormalTok{ filtered\_no\_outliers[filtered\_no\_outliers[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{]}\OperatorTok{==}\NormalTok{setting]}
+\ControlFlowTok{for}\NormalTok{ setting }\KeywordTok{in}\NormalTok{ all\_turns[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].unique():}
+\NormalTok{  all\_turns\_setting }\OperatorTok{=}\NormalTok{ all\_turns[all\_turns[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{]}\OperatorTok{==}\NormalTok{setting]}
   \BuiltInTok{print}\NormalTok{(setting)}
   \CommentTok{\# Calculate the maximum \textquotesingle{}Num previous judging rounds\textquotesingle{} for each combination of \textquotesingle{}Room name\textquotesingle{} and \textquotesingle{}Participant\textquotesingle{}}
-\NormalTok{  per\_turn\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ per\_turn\_setting.groupby([}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Participant\textquotesingle{}}\NormalTok{])[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].transform(}\StringTok{\textquotesingle{}max\textquotesingle{}}\NormalTok{)}
+\NormalTok{  all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ all\_turns\_setting.groupby([}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Participant\textquotesingle{}}\NormalTok{])[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].transform(}\StringTok{\textquotesingle{}max\textquotesingle{}}\NormalTok{)}
   \CommentTok{\#\# Just based on the number of rounds}
   
-  \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(}\DecValTok{1}\NormalTok{, per\_turn\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{].}\BuiltInTok{max}\NormalTok{() }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
-\NormalTok{      max\_rounds }\OperatorTok{=}\NormalTok{ per\_turn\_setting[(per\_turn\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ i) }\OperatorTok{\&}\NormalTok{ (per\_turn\_setting[}\StringTok{\textquotesingle{}Untimed annotator context\textquotesingle{}}\NormalTok{] }\OperatorTok{\textgreater{}} \DecValTok{0}\NormalTok{)]}
+  \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(}\DecValTok{1}\NormalTok{, all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{].}\BuiltInTok{max}\NormalTok{() }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
+\NormalTok{      max\_rounds }\OperatorTok{=}\NormalTok{ all\_turns\_setting[(all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ i) }\OperatorTok{\&}\NormalTok{ (all\_turns\_setting[}\StringTok{\textquotesingle{}Untimed annotator context\textquotesingle{}}\NormalTok{] }\OperatorTok{\textgreater{}} \DecValTok{0}\NormalTok{)]}
       \BuiltInTok{print}\NormalTok{(}\BuiltInTok{len}\NormalTok{(max\_rounds))}
       \CommentTok{\# Group by \textquotesingle{}Num previous judging rounds\textquotesingle{} and calculate the mean of \textquotesingle{}Probability correct\textquotesingle{}}
 \NormalTok{      average\_pc\_per\_round }\OperatorTok{=}\NormalTok{ max\_rounds.groupby(}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Probability correct\textquotesingle{}}\NormalTok{].mean()}
@@ -2791,7 +2752,7 @@ stratified}\label{length-of-debates-stratified}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{per\_turn}
+\NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{all\_turns}
 \NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ strat }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Room name}\StringTok{\textasciigrave{}}\NormalTok{, Participant) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{max}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
@@ -2803,19 +2764,22 @@ stratified}\label{length-of-debates-stratified}
                                       \AttributeTok{include.lowest =} \ConstantTok{TRUE}\NormalTok{, }
                                       \AttributeTok{right =} \ConstantTok{FALSE}\NormalTok{))}
 
+\NormalTok{bootstrap\_mean }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(data, indices) \{}
+  \FunctionTok{return}\NormalTok{(}\FunctionTok{mean}\NormalTok{(data[indices], }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\NormalTok{\}}
+
 \CommentTok{\# Plot using ggplot2}
 \NormalTok{strat }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(Setting, }\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarize}\NormalTok{(}
-    \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{mean}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Probability correct}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
-    \AttributeTok{n =} \FunctionTok{n}\NormalTok{(),}
-    \AttributeTok{se =} \FunctionTok{sqrt}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}} \SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}}\NormalTok{) }\SpecialCharTok{/}\NormalTok{ n)}
-\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}
-    \AttributeTok{lower\_ci =} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}} \SpecialCharTok{{-}} \FloatTok{1.96} \SpecialCharTok{*}\NormalTok{ se,}
-    \AttributeTok{upper\_ci =} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}} \SpecialCharTok{+} \FloatTok{1.96} \SpecialCharTok{*}\NormalTok{ se}
-\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =} \StringTok{\textasciigrave{}}\AttributeTok{Average Probability Correct}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{col =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{+}
+  \FunctionTok{do}\NormalTok{(\{}
+\NormalTok{    boot\_result }\OtherTok{\textless{}{-}} \FunctionTok{boot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ .}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Probability correct}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{statistic =}\NormalTok{ bootstrap\_mean, }\AttributeTok{R =} \DecValTok{1000}\NormalTok{)}
+    \FunctionTok{data.frame}\NormalTok{(}
+      \AttributeTok{mean\_accuracy =} \FunctionTok{mean}\NormalTok{(boot\_result}\SpecialCharTok{$}\NormalTok{t, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+      \AttributeTok{lower\_ci =} \FunctionTok{quantile}\NormalTok{(boot\_result}\SpecialCharTok{$}\NormalTok{t, }\FloatTok{0.025}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+      \AttributeTok{upper\_ci =} \FunctionTok{quantile}\NormalTok{(boot\_result}\SpecialCharTok{$}\NormalTok{t, }\FloatTok{0.975}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    )}
+\NormalTok{  \}) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ mean\_accuracy, }\AttributeTok{col =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{+}
   \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lower\_ci, }\AttributeTok{ymax =}\NormalTok{ upper\_ci, }\AttributeTok{fill =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{group =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{), }\AttributeTok{alpha =} \FloatTok{0.15}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Average Probability Correct Each Round, }\SpecialCharTok{\textbackslash{}n}\StringTok{stratified by Max Round Binned"}\NormalTok{,}
        \AttributeTok{x =} \StringTok{"Round"}\NormalTok{, }
@@ -2826,11 +2790,6 @@ stratified}\label{length-of-debates-stratified}
   \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
-
-\begin{verbatim}
-## `summarise()` has grouped output by 'Setting', 'Num previous judging rounds'.
-## You can override using the `.groups` argument.
-\end{verbatim}
 
 \includegraphics{debate-2309_files/figure-latex/strat ggplot-13.pdf}
 
