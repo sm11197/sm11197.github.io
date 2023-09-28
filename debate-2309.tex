@@ -145,6 +145,8 @@ We have 3 sets of data from the interface:
 \begin{Highlighting}[]
 \ImportTok{import}\NormalTok{ pandas }\ImportTok{as}\NormalTok{ pd}
 \ImportTok{import}\NormalTok{ numpy }\ImportTok{as}\NormalTok{ np}
+\ImportTok{import}\NormalTok{ altair }\ImportTok{as}\NormalTok{ alt}
+\ImportTok{import}\NormalTok{ math }\ImportTok{as}\NormalTok{ math}
 \ImportTok{import}\NormalTok{ matplotlib.pyplot }\ImportTok{as}\NormalTok{ plt}
 \ImportTok{import}\NormalTok{ re}
 \NormalTok{pd.options.mode.chained\_assignment }\OperatorTok{=} \VariableTok{None}  \CommentTok{\# default=\textquotesingle{}warn\textquotesingle{}}
@@ -209,12 +211,16 @@ We have 3 sets of data from the interface:
 \CommentTok{\# Secondary analysis: Question Difficulty}
 \CommentTok{\# Create new columns with bin labels}
 \NormalTok{debates[}\StringTok{\textquotesingle{}Untimed annotator context bins\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ pd.cut(debates[}\StringTok{\textquotesingle{}Untimed annotator context\textquotesingle{}}\NormalTok{].}\BuiltInTok{round}\NormalTok{(), bins}\OperatorTok{=}\NormalTok{[}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{], labels}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}2\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}3\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}4\textquotesingle{}}\NormalTok{], right}\OperatorTok{=}\VariableTok{True}\NormalTok{)}
-\NormalTok{debates[}\StringTok{\textquotesingle{}Speed annotator accuracy bins\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ pd.cut(debates[}\StringTok{\textquotesingle{}Speed annotator accuracy\textquotesingle{}}\NormalTok{], bins}\OperatorTok{=}\NormalTok{[}\OperatorTok{{-}}\FloatTok{0.999}\NormalTok{, }\FloatTok{0.001}\NormalTok{, }\FloatTok{0.201}\NormalTok{, }\FloatTok{0.401}\NormalTok{], labels}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}0\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}0.2\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}0.4\textquotesingle{}}\NormalTok{])}
+\CommentTok{\#print(debates[\textquotesingle{}Untimed annotator context\textquotesingle{}].round().value\_counts()) \#check}
+\CommentTok{\#print(debates[\textquotesingle{}Untimed annotator context bins\textquotesingle{}].value\_counts()) \#check}
+\NormalTok{debates[}\StringTok{\textquotesingle{}Speed annotator accuracy bins\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ pd.cut(debates[}\StringTok{\textquotesingle{}Speed annotator accuracy\textquotesingle{}}\NormalTok{].}\BuiltInTok{round}\NormalTok{(}\DecValTok{1}\NormalTok{), bins}\OperatorTok{=}\NormalTok{[}\DecValTok{0}\NormalTok{, }\FloatTok{0.1}\NormalTok{, }\FloatTok{0.2}\NormalTok{, }\FloatTok{0.3}\NormalTok{, }\FloatTok{0.4}\NormalTok{, }\FloatTok{0.5}\NormalTok{,}\FloatTok{0.6}\NormalTok{], labels}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}0\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}0.1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}0.2\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}0.3\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}0.4\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}0.5\textquotesingle{}}\NormalTok{], right}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
 \CommentTok{\#\# respectively, those speed annotator accuracies probably mean 0 right, 1 right, 2 right}
+\CommentTok{\#print(debates[\textquotesingle{}Speed annotator accuracy\textquotesingle{}].round(1).value\_counts().sort\_index()) \#check \#0.5 acc? }
+\CommentTok{\#print(debates[\textquotesingle{}Speed annotator accuracy bins\textquotesingle{}].value\_counts().sort\_index()) \#check}
 
 \NormalTok{debates[}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ debates[}\StringTok{\textquotesingle{}Final probability correct\textquotesingle{}}\NormalTok{] }\OperatorTok{\textgreater{}} \FloatTok{0.5}
 
-\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Average accuracy per context required by question:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{debates}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Untimed annotator context bins"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Average accuracy per context required by question:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{debates}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Untimed annotator context bins"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\CharTok{\textbackslash{}n}\SpecialStringTok{Overall accuracy goes down the more context is required\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -226,6 +232,7 @@ We have 3 sets of data from the interface:
 ## 2                                      0.711382          246
 ## 3                                      0.702857          175
 ## 4                                      0.632653           98
+## Overall accuracy goes down the more context is required
 ## 
 ## <string>:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
 \end{verbatim}
@@ -241,8 +248,11 @@ We have 3 sets of data from the interface:
 ##                                Proportion_True  Total_Count
 ## Speed annotator accuracy bins                              
 ## 0                                     0.728682          129
+## 0.1                                        NaN            0
 ## 0.2                                   0.697509          281
-## 0.4                                   0.694118          170
+## 0.3                                   0.666667            3
+## 0.4                                   0.694611          167
+## 0.5                                   0.666667            3
 ## Hm, this seems less likely to be a good indicator of question difficulty
 ## 
 ## <string>:2: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
@@ -343,7 +353,7 @@ judgments}\label{merging-filtering-for-judgments}
 \begin{Highlighting}[]
 \NormalTok{judgments[}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ judgments[}\StringTok{\textquotesingle{}Final probability correct\textquotesingle{}}\NormalTok{] }\OperatorTok{\textgreater{}} \FloatTok{0.5}
 
-\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Of those judgments, we have this much for each setting (aggregated):}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Of those judgments, we have this much for each setting (aggregated):}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{.}\NormalTok{sort\_index()}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -363,7 +373,7 @@ judgments}\label{merging-filtering-for-judgments}
 \NormalTok{judgments[}\StringTok{\textquotesingle{}base\_room\_name\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ judgments[}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{].}\BuiltInTok{str}\NormalTok{.extract(}\StringTok{\textquotesingle{}(.*)\textbackslash{}d+$\textquotesingle{}}\NormalTok{, expand}\OperatorTok{=}\VariableTok{False}\NormalTok{).fillna(judgments[}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{])}
 \NormalTok{judgments }\OperatorTok{=}\NormalTok{ judgments.sort\_values(by}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}base\_room\_name\textquotesingle{}}\NormalTok{,}\StringTok{\textquotesingle{}End time\textquotesingle{}}\NormalTok{]).groupby([}\StringTok{\textquotesingle{}Participant\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}base\_room\_name\textquotesingle{}}\NormalTok{]).first().reset\_index()}
 
-\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}1. We then filter to judgments where the judge has only seen a story once, and now we have this much for each setting (aggregated):}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}1. We then filter to judgments where the judge has only seen a story once, and now we have this much for each setting (aggregated):}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{.}\NormalTok{sort\_index()}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -381,7 +391,7 @@ judgments}\label{merging-filtering-for-judgments}
 \begin{Highlighting}[]
 \CommentTok{\# Filter to online judges only}
 \NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ judgments[judgments[}\StringTok{"Role"}\NormalTok{] }\OperatorTok{==} \StringTok{"Judge"}\NormalTok{]}
-\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}2. We}\CharTok{\textbackslash{}\textquotesingle{}}\SpecialStringTok{ll make a copy of the online judgments only leaving us with the following judgments:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments\_online}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}2. We}\CharTok{\textbackslash{}\textquotesingle{}}\SpecialStringTok{ll make a copy of the online judgments only leaving us with the following judgments:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments\_online}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{) }\CommentTok{\#halves the data}
 \end{Highlighting}
 \end{Shaded}
 
@@ -418,82 +428,54 @@ judgments}\label{merging-filtering-for-judgments}
 \begin{Highlighting}[]
 \NormalTok{pd.set\_option(}\StringTok{\textquotesingle{}display.max\_columns\textquotesingle{}}\NormalTok{, }\VariableTok{None}\NormalTok{)}
 \NormalTok{total\_counts\_for\_setting }\OperatorTok{=}\NormalTok{ judgments\_online.groupby(}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{).size()}
-\NormalTok{result }\OperatorTok{=}\NormalTok{ judgments\_online.groupby([}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Untimed annotator context bins"}\NormalTok{]).agg(}
+\NormalTok{result }\OperatorTok{=}\NormalTok{ judgments\_online.groupby([}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Untimed annotator context bins"}\NormalTok{], observed}\OperatorTok{=}\VariableTok{False}\NormalTok{).agg(}
 \NormalTok{    Proportion\_True}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean()),}
-\NormalTok{    Context\_Count}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\StringTok{\textquotesingle{}size\textquotesingle{}}\NormalTok{),}
-\NormalTok{    Proportion\_All\_Context}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x) }\OperatorTok{/}\NormalTok{ total\_counts\_for\_setting[x.mode()])}
+\NormalTok{    Count}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Accuracy\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\StringTok{\textquotesingle{}size\textquotesingle{}}\NormalTok{),}
+\NormalTok{    Proportion\_Count}\OperatorTok{=}\NormalTok{pd.NamedAgg(column}\OperatorTok{=}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{, aggfunc}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: }\BuiltInTok{len}\NormalTok{(x) }\OperatorTok{/}\NormalTok{ total\_counts\_for\_setting[x.mode()])}
 \NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## <string>:1: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Are the difficult questions equally enough distributed amongst settings?:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{result}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ## Are the difficult questions equally enough distributed amongst settings?:
-##                                                   Proportion_True  \
+##                                                   Proportion_True  Count  \
+## Final_Setting     Untimed annotator context bins                           
+## AI Consultancy    1                                           NaN      0   
+##                   2                                      0.823529     51   
+##                   3                                      0.826087     23   
+##                   4                                      0.736842     19   
+## AI Debate         1                                           NaN      0   
+##                   2                                      0.777778     45   
+##                   3                                      0.772727     22   
+##                   4                                      0.800000     20   
+## Human Consultancy 1                                           NaN      0   
+##                   2                                      0.634146     41   
+##                   3                                      0.708333     48   
+##                   4                                      0.833333     18   
+## Human Debate      1                                           NaN      0   
+##                   2                                      0.890411     73   
+##                   3                                      0.816667     60   
+##                   4                                      0.727273     22   
+## 
+##                                                   Proportion_Count  
 ## Final_Setting     Untimed annotator context bins                    
-## AI Consultancy    1                                           NaN   
-##                   2                                      0.823529   
-##                   3                                      0.826087   
-##                   4                                      0.736842   
-## AI Debate         1                                           NaN   
-##                   2                                      0.777778   
-##                   3                                      0.772727   
-##                   4                                      0.800000   
-## Human Consultancy 1                                           NaN   
-##                   2                                      0.634146   
-##                   3                                      0.708333   
-##                   4                                      0.833333   
-## Human Debate      1                                           NaN   
-##                   2                                      0.890411   
-##                   3                                      0.816667   
-##                   4                                      0.727273   
-## 
-##                                                   Context_Count  \
-## Final_Setting     Untimed annotator context bins                  
-## AI Consultancy    1                                           0   
-##                   2                                          51   
-##                   3                                          23   
-##                   4                                          19   
-## AI Debate         1                                           0   
-##                   2                                          45   
-##                   3                                          22   
-##                   4                                          20   
-## Human Consultancy 1                                           0   
-##                   2                                          41   
-##                   3                                          48   
-##                   4                                          18   
-## Human Debate      1                                           0   
-##                   2                                          73   
-##                   3                                          60   
-##                   4                                          22   
-## 
-##                                                   Proportion_All_Context  
-## Final_Setting     Untimed annotator context bins                          
-## AI Consultancy    1                                                  NaN  
-##                   2                                             0.548387  
-##                   3                                             0.247312  
-##                   4                                             0.204301  
-## AI Debate         1                                                  NaN  
-##                   2                                             0.517241  
-##                   3                                             0.252874  
-##                   4                                             0.229885  
-## Human Consultancy 1                                                  NaN  
-##                   2                                             0.383178  
-##                   3                                             0.448598  
-##                   4                                             0.168224  
-## Human Debate      1                                                  NaN  
-##                   2                                             0.470968  
-##                   3                                             0.387097  
-##                   4                                             0.141935
+## AI Consultancy    1                                            NaN  
+##                   2                                       0.548387  
+##                   3                                       0.247312  
+##                   4                                       0.204301  
+## AI Debate         1                                            NaN  
+##                   2                                       0.517241  
+##                   3                                       0.252874  
+##                   4                                       0.229885  
+## Human Consultancy 1                                            NaN  
+##                   2                                       0.383178  
+##                   3                                       0.448598  
+##                   4                                       0.168224  
+## Human Debate      1                                            NaN  
+##                   2                                       0.470968  
+##                   3                                       0.387097  
+##                   4                                       0.141935
 \end{verbatim}
 
 \begin{Shaded}
@@ -504,7 +486,8 @@ judgments}\label{merging-filtering-for-judgments}
 
 So question difficulty isn't perfectly balanced\ldots{} but
 consultancies have a different relationship with question difficulty
-anyway? \textbf{need a second opinion}
+anyway? \textbf{need a second opinion} We might at least want to ratio
+it better for AI settings\ldots{}
 
 \subsection{Trying to balance the
 data}\label{trying-to-balance-the-data}
@@ -605,15 +588,15 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 
 \CommentTok{\#from statsmodels.stats.proportion import proportions\_ztest}
 
-\KeywordTok{def}\NormalTok{ run\_experiment(judgments\_online):}
-\NormalTok{    judgments\_online[}\StringTok{\textquotesingle{}Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{=} \VariableTok{False}
-\NormalTok{    judgments\_online }\OperatorTok{=}\NormalTok{ balance\_consultancies(judgments\_online, }\StringTok{\textquotesingle{}Human Consultancy\textquotesingle{}}\NormalTok{)}
-\NormalTok{    judgments\_online }\OperatorTok{=}\NormalTok{ balance\_consultancies(judgments\_online, }\StringTok{\textquotesingle{}AI Consultancy\textquotesingle{}}\NormalTok{)}
-\NormalTok{    sample\_columns }\OperatorTok{=}\NormalTok{ [col }\ControlFlowTok{for}\NormalTok{ col }\KeywordTok{in}\NormalTok{ judgments\_online.columns }\ControlFlowTok{if} \StringTok{\textquotesingle{}Sample\textquotesingle{}} \KeywordTok{in}\NormalTok{ col]}
-\NormalTok{    judgments\_online[}\StringTok{\textquotesingle{}Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ judgments\_online[sample\_columns].}\BuiltInTok{any}\NormalTok{(axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
-\NormalTok{    consultancy\_balanced }\OperatorTok{=}\NormalTok{ (}\OperatorTok{\textasciitilde{}}\NormalTok{judgments\_online[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].}\BuiltInTok{str}\NormalTok{.contains(}\StringTok{\textquotesingle{}Consultancy\textquotesingle{}}\NormalTok{, case}\OperatorTok{=}\VariableTok{False}\NormalTok{, na}\OperatorTok{=}\VariableTok{False}\NormalTok{)) }\OperatorTok{|}\NormalTok{ (judgments\_online[}\StringTok{\textquotesingle{}Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{==} \VariableTok{True}\NormalTok{)}
-\NormalTok{    result }\OperatorTok{=}\NormalTok{ judgments\_online[consultancy\_balanced].groupby([}\StringTok{"Final\_Setting"}\NormalTok{])[}\StringTok{"Final\_Accuracy"}\NormalTok{].agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(), Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}
-    \ControlFlowTok{return}\NormalTok{ result}
+\CommentTok{\#def run\_experiment(judgments\_online):}
+\CommentTok{\#    judgments\_online[\textquotesingle{}Sample\textquotesingle{}] = False}
+\CommentTok{\#    judgments\_online = balance\_consultancies(judgments\_online, \textquotesingle{}Human Consultancy\textquotesingle{})}
+\CommentTok{\#    judgments\_online = balance\_consultancies(judgments\_online, \textquotesingle{}AI Consultancy\textquotesingle{})}
+\CommentTok{\#    sample\_columns = [col for col in judgments\_online.columns if \textquotesingle{}Sample\textquotesingle{} in col]}
+\CommentTok{\#    judgments\_online[\textquotesingle{}Sample\textquotesingle{}] = judgments\_online[sample\_columns].any(axis=1)}
+\CommentTok{\#    consultancy\_balanced = (\textasciitilde{}judgments\_online[\textquotesingle{}Setting\textquotesingle{}].str.contains(\textquotesingle{}Consultancy\textquotesingle{}, case=False, na=False)) | (judgments\_online[\textquotesingle{}Sample\textquotesingle{}] == True)}
+\CommentTok{\#    result = judgments\_online[consultancy\_balanced].groupby(["Final\_Setting"])["Final\_Accuracy"].agg(Proportion\_True=lambda x: x.mean(), Total\_Count="size")}
+\CommentTok{\#    return result}
 
 \CommentTok{\# Number of iterations}
 \CommentTok{\#num\_iterations = 1000}
@@ -642,7 +625,8 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 \end{Highlighting}
 \end{Shaded}
 
-\subsubsection{Balance debates}\label{balance-debates}
+\subsubsection{Balance debates? (not actually
+used)}\label{balance-debates-not-actually-used}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -678,7 +662,7 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 \NormalTok{judgments\_online[}\StringTok{\textquotesingle{}Consultancy Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ judgments\_online[consultancy\_sample\_columns].}\BuiltInTok{any}\NormalTok{(axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
 \NormalTok{consultancy\_balanced }\OperatorTok{=}\NormalTok{ (}\OperatorTok{\textasciitilde{}}\NormalTok{judgments\_online[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].}\BuiltInTok{str}\NormalTok{.contains(}\StringTok{\textquotesingle{}Consultancy\textquotesingle{}}\NormalTok{, case}\OperatorTok{=}\VariableTok{False}\NormalTok{, na}\OperatorTok{=}\VariableTok{False}\NormalTok{)) }\OperatorTok{|}\NormalTok{ (judgments\_online[}\StringTok{\textquotesingle{}Consultancy Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{==} \VariableTok{True}\NormalTok{)}
 
-\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Accuracy per setting (aggregated) after balancing:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments\_online[consultancy\_balanced]}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\SpecialStringTok{\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f\textquotesingle{}Accuracy per setting (aggregated) after balancing:}\CharTok{\textbackslash{}n}\SpecialCharTok{\{}\NormalTok{judgments\_online[consultancy\_balanced]}\SpecialCharTok{.}\NormalTok{groupby(}\StringTok{"Final\_Setting"}\NormalTok{)[}\StringTok{"Final\_Accuracy"}\NormalTok{]}\SpecialCharTok{.}\NormalTok{agg(Proportion\_True}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ x: x.mean(),Total\_Count}\OperatorTok{=}\StringTok{"size"}\NormalTok{)}\SpecialCharTok{\}}\CharTok{\textbackslash{}n}\SpecialStringTok{Accuracies remain pretty similar\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -690,6 +674,7 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 ## AI Debate                 0.781609           87
 ## Human Consultancy         0.707317           82
 ## Human Debate              0.838710          155
+## Accuracies remain pretty similar
 \end{verbatim}
 
 \begin{Shaded}
@@ -737,18 +722,18 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 \KeywordTok{def}\NormalTok{ print\_weight\_summary\_by\_setting(df, weight\_column, consultancy\_sample}\OperatorTok{=}\VariableTok{None}\NormalTok{):}
 \NormalTok{    consultancy\_condition }\OperatorTok{=}\NormalTok{ df[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].}\BuiltInTok{str}\NormalTok{.contains(}\StringTok{\textquotesingle{}Consultancy\textquotesingle{}}\NormalTok{, case}\OperatorTok{=}\VariableTok{False}\NormalTok{, na}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
     \ControlFlowTok{if}\NormalTok{ consultancy\_sample }\KeywordTok{is} \KeywordTok{not} \VariableTok{None}\NormalTok{:}
-\NormalTok{        consultancy\_condition }\OperatorTok{\&=}\NormalTok{ (df[}\StringTok{\textquotesingle{}Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ consultancy\_sample)}
-    \ControlFlowTok{for}\NormalTok{ setting }\KeywordTok{in}\NormalTok{ df[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].unique():}
+\NormalTok{        consultancy\_condition }\OperatorTok{\&=}\NormalTok{ (df[}\StringTok{\textquotesingle{}Consultancy Sample\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ consultancy\_sample)}
+    \ControlFlowTok{for}\NormalTok{ setting }\KeywordTok{in} \BuiltInTok{sorted}\NormalTok{(df[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].unique()):}
 \NormalTok{        total\_weight }\OperatorTok{=}\NormalTok{ df[df[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ setting][weight\_column].}\BuiltInTok{sum}\NormalTok{()}
         \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Total }\SpecialCharTok{\{}\NormalTok{weight\_column}\SpecialCharTok{\}}\SpecialStringTok{ for }\SpecialCharTok{\{}\NormalTok{setting}\SpecialCharTok{\}}\SpecialStringTok{: }\SpecialCharTok{\{}\NormalTok{total\_weight}\SpecialCharTok{:.2f\}}\SpecialStringTok{"}\NormalTok{)}
     \BuiltInTok{print}\NormalTok{(}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
 
-\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Unsampled (initial) weights, by group setting\textquotesingle{}}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Unsampled consultancies/debates (initial) weights, by group setting\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## Unsampled (initial) weights, by group setting
+## Unsampled consultancies/debates (initial) weights, by group setting
 \end{verbatim}
 
 \begin{Shaded}
@@ -759,11 +744,11 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 
 \begin{verbatim}
 ## Total initial_question_weights_grouped_setting for AI Consultancy Dishonest: 32.50
-## Total initial_question_weights_grouped_setting for Human Debate: 107.00
+## Total initial_question_weights_grouped_setting for AI Consultancy Honest: 49.50
 ## Total initial_question_weights_grouped_setting for AI Debate: 75.00
 ## Total initial_question_weights_grouped_setting for Human Consultancy Dishonest: 34.67
 ## Total initial_question_weights_grouped_setting for Human Consultancy Honest: 26.33
-## Total initial_question_weights_grouped_setting for AI Consultancy Honest: 49.50
+## Total initial_question_weights_grouped_setting for Human Debate: 107.00
 \end{verbatim}
 
 \begin{Shaded}
@@ -777,22 +762,22 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 \NormalTok{)}
 \NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
 \NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
-\NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{], }
-\NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_all\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{,}
-\NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}
-\NormalTok{)}
-\NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
-\NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
 \NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{], }
 \NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_all\_debates\_weights\_setting\textquotesingle{}}\NormalTok{,}
 \NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}
 \NormalTok{)}
-\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Consultancy balanced weights, by no/yes group setting\textquotesingle{}}\NormalTok{)}
+\NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
+\NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
+\NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{], }
+\NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_all\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{,}
+\NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}
+\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Consultancy balanced weights, not grouped {-} (not balanced, would have to change balancing function...\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## Consultancy balanced weights, by no/yes group setting
+## Consultancy balanced weights, not grouped - (not balanced, would have to change balancing function...
 \end{verbatim}
 
 \begin{Shaded}
@@ -803,26 +788,21 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 
 \begin{verbatim}
 ## Total sampled_consultancies_all_debates_weights for AI Consultancy Dishonest: 28.07
-## Total sampled_consultancies_all_debates_weights for Human Debate: 82.48
-## Total sampled_consultancies_all_debates_weights for AI Debate: 66.52
-## Total sampled_consultancies_all_debates_weights for Human Consultancy Honest: 16.52
-## Total sampled_consultancies_all_debates_weights for Human Consultancy Dishonest: 16.00
 ## Total sampled_consultancies_all_debates_weights for AI Consultancy Honest: 36.42
+## Total sampled_consultancies_all_debates_weights for AI Debate: 66.52
+## Total sampled_consultancies_all_debates_weights for Human Consultancy Dishonest: 16.00
+## Total sampled_consultancies_all_debates_weights for Human Consultancy Honest: 16.52
+## Total sampled_consultancies_all_debates_weights for Human Debate: 82.48
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{print\_weight\_summary\_by\_setting(judgments\_online[consultancy\_balanced], }\StringTok{\textquotesingle{}sampled\_consultancies\_all\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{, consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{)}
+\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Consultancy balanced weights, grouped by Setting {-} see that the consultancies are balanced between those with honest or dishonest consultant\textquotesingle{}}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Dishonest: 38.00
-## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Debate: 107.00
-## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Debate: 75.00
-## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Honest: 30.50
-## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Dishonest: 30.50
-## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Honest: 38.00
+## Consultancy balanced weights, grouped by Setting - see that the consultancies are balanced between those with honest or dishonest consultant
 \end{verbatim}
 
 \begin{Shaded}
@@ -833,23 +813,42 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 
 \begin{verbatim}
 ## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Dishonest: 38.00
-## Total sampled_consultancies_all_debates_weights_setting for Human Debate: 107.00
-## Total sampled_consultancies_all_debates_weights_setting for AI Debate: 75.00
-## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Honest: 41.00
-## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Dishonest: 41.00
 ## Total sampled_consultancies_all_debates_weights_setting for AI Consultancy Honest: 38.00
+## Total sampled_consultancies_all_debates_weights_setting for AI Debate: 75.00
+## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Dishonest: 41.00
+## Total sampled_consultancies_all_debates_weights_setting for Human Consultancy Honest: 41.00
+## Total sampled_consultancies_all_debates_weights_setting for Human Debate: 107.00
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{print}\NormalTok{(}\StringTok{\textquotesingle{}Consultancy balanced weights, grouped by Final Setting\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Consultancy balanced weights, grouped by Final Setting
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{print\_weight\_summary\_by\_setting(judgments\_online[consultancy\_balanced], }\StringTok{\textquotesingle{}sampled\_consultancies\_all\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{, consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Dishonest: 38.00
+## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Consultancy Honest: 38.00
+## Total sampled_consultancies_all_debates_weights_grouped_setting for AI Debate: 75.00
+## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Dishonest: 30.50
+## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Consultancy Honest: 30.50
+## Total sampled_consultancies_all_debates_weights_grouped_setting for Human Debate: 107.00
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 
-\NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
-\NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
-\NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{], }
-\NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{,}
-\NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{,}
-\NormalTok{    debate\_sample}\OperatorTok{=}\VariableTok{True}
-\NormalTok{)}
+
 \NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
 \NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
 \NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{], }
@@ -857,54 +856,43 @@ consultancies}\label{balancing-honest-dishonest-consultancies}
 \NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{,}
 \NormalTok{    debate\_sample}\OperatorTok{=}\VariableTok{True}
 \NormalTok{)}
+\NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
+\NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
+\NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{], }
+\NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_debates\_weights\_setting\textquotesingle{}}\NormalTok{,}
+\NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{,}
+\NormalTok{    debate\_sample}\OperatorTok{=}\VariableTok{True}
+\NormalTok{)}
+\NormalTok{judgments\_online }\OperatorTok{=}\NormalTok{ question\_weights(}
+\NormalTok{    data}\OperatorTok{=}\NormalTok{judgments\_online, }
+\NormalTok{    columns}\OperatorTok{=}\NormalTok{[}\StringTok{\textquotesingle{}Article ID\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Question\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{], }
+\NormalTok{    weight\_column\_name}\OperatorTok{=}\StringTok{\textquotesingle{}sampled\_consultancies\_debates\_weights\_grouped\_setting\textquotesingle{}}\NormalTok{,}
+\NormalTok{    consultancy\_sample}\OperatorTok{=}\VariableTok{True}\NormalTok{,}
+\NormalTok{    debate\_sample}\OperatorTok{=}\VariableTok{True}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-Note: we are not balancing between settings, and some of the counts of
-the debate settings are on the same questions
+Note: we are not balancing between settings(?), and more counts of the
+human debate settings are on the same questions..?
 
 \subsection{Load into R environment}\label{load-into-r-environment}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\CommentTok{\# Read in objects from Python with py$}
 \NormalTok{judgments }\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{judgments}
 \NormalTok{judgments\_online }\OtherTok{\textless{}{-}}\NormalTok{ py}\SpecialCharTok{$}\NormalTok{judgments\_online}
-\CommentTok{\# Convert the Accuracy column to a factor for better plotting}
-\NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Accuracy\_char }\OtherTok{\textless{}{-}} \FunctionTok{as.logical.factor}\NormalTok{(}\FunctionTok{as.character}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Accuracy))}
+\CommentTok{\# Change type into factor so it is read as categories which can be manipulated instead of characters}
 \NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{Participant }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Participant)}
 \NormalTok{judgments\_online}\SpecialCharTok{$}\NormalTok{Setting }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Setting)}
 
-
+\CommentTok{\# Doing some sanity checks}
 \NormalTok{subset\_dishonest }\OtherTok{\textless{}{-}}\NormalTok{ judgments\_online[judgments\_online}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{\&}\NormalTok{ judgments\_online}\SpecialCharTok{$}\NormalTok{Setting }\SpecialCharTok{==} \StringTok{\textquotesingle{}Human Consultancy Dishonest\textquotesingle{}}\NormalTok{, }\FunctionTok{c}\NormalTok{(}\StringTok{"sampled\_consultancies\_all\_debates\_weights\_grouped\_setting"}\NormalTok{,}\StringTok{"Final\_Accuracy"}\NormalTok{)]}
 \NormalTok{subset\_honest }\OtherTok{\textless{}{-}}\NormalTok{ judgments\_online[judgments\_online}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{\&}\NormalTok{ judgments\_online}\SpecialCharTok{$}\NormalTok{Setting }\SpecialCharTok{==} \StringTok{\textquotesingle{}Human Consultancy Honest\textquotesingle{}}\NormalTok{, }\FunctionTok{c}\NormalTok{(}\StringTok{"sampled\_consultancies\_all\_debates\_weights\_grouped\_setting"}\NormalTok{,}\StringTok{"Final\_Accuracy"}\NormalTok{)]}
-\FunctionTok{table}\NormalTok{(subset\_dishonest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_dishonest}\SpecialCharTok{$}\NormalTok{Final\_Accuracy)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##      
-##       FALSE TRUE
-##   0.5    11   10
-##   1       7   13
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(subset\_honest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_honest}\SpecialCharTok{$}\NormalTok{Final\_Accuracy)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##      
-##       FALSE TRUE
-##   0.5     5   16
-##   1       1   19
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(subset\_dishonest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
+\CommentTok{\#Are the question weights equal for human consultancies?"}
+\FunctionTok{table}\NormalTok{(subset\_dishonest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting) ; }\FunctionTok{table}\NormalTok{(subset\_honest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -914,12 +902,6 @@ the debate settings are on the same questions
 ##  21  20
 \end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(subset\_honest}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
-\end{Highlighting}
-\end{Shaded}
-
 \begin{verbatim}
 ## 
 ## 0.5   1 
@@ -928,21 +910,16 @@ the debate settings are on the same questions
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{subset\_human\_consultancies }\OtherTok{\textless{}{-}}\NormalTok{ judgments\_online[judgments\_online}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{\&}\NormalTok{ judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting }\SpecialCharTok{==} \StringTok{\textquotesingle{}Human Consultancy\textquotesingle{}}\NormalTok{, }\FunctionTok{c}\NormalTok{(}\StringTok{"sampled\_consultancies\_all\_debates\_weights\_grouped\_setting"}\NormalTok{,}\StringTok{"Final\_Accuracy"}\NormalTok{)]}
-\FunctionTok{table}\NormalTok{(subset\_human\_consultancies}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_human\_consultancies}\SpecialCharTok{$}\NormalTok{Final\_Accuracy)}
-\end{Highlighting}
-\end{Shaded}
+\CommentTok{\#What does the accuracy look like for those question weights?}
+\CommentTok{\#table(subset\_dishonest$sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_dishonest$Final\_Accuracy)}
+\CommentTok{\#table(subset\_honest$sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_honest$Final\_Accuracy)}
 
-\begin{verbatim}
-##      
-##       FALSE TRUE
-##   0.5    16   26
-##   1       8   32
-\end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
+
+\CommentTok{\#subset\_human\_consultancies \textless{}{-} judgments\_online[judgments\_online$\textasciigrave{}Human Consultancy Sample\textasciigrave{} == TRUE \& judgments\_online$Final\_Setting == \textquotesingle{}Human Consultancy\textquotesingle{}, c("sampled\_consultancies\_all\_debates\_weights\_grouped\_setting","Final\_Accuracy")]}
+\CommentTok{\#table(subset\_human\_consultancies$sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, subset\_human\_consultancies$Final\_Accuracy)}
+\CommentTok{\#Difference between grouping and not grouping question weights}
+\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting) ; }\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -955,19 +932,98 @@ the debate settings are on the same questions
 ##   Human Debate       0  96 59
 \end{verbatim}
 
+\begin{verbatim}
+##                    
+##                      0 0.166666666666667 0.2 0.25 0.333333333333333 0.5  1
+##   AI Consultancy    17                 2   7    5                 0   1 61
+##   AI Debate          0                 4  13    7                 0   3 60
+##   Human Consultancy 25                 2   8   21                22  22  7
+##   Human Debate       0                 4   7   19                26  64 35
+\end{verbatim}
+
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{table}\NormalTok{(judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_debates\_weights)}
+\CommentTok{\# Balanced consultancies difference between grouping and not grouping question weights}
+\NormalTok{consultancy\_condition }\OtherTok{\textless{}{-}}\NormalTok{ (judgments\_online}\SpecialCharTok{$}\NormalTok{Sample }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{|}\NormalTok{ (}\SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, judgments\_online}\SpecialCharTok{$}\NormalTok{Final\_Setting))}
+\FunctionTok{table}\NormalTok{(judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting, judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{Final\_Accuracy)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## , ,  = FALSE
+## 
+##                    
+##                     0.5  1
+##   AI Consultancy      0 14
+##   AI Debate           7 12
+##   Human Consultancy  16  8
+##   Human Debate       17  8
+## 
+## , ,  = TRUE
+## 
+##                    
+##                     0.5  1
+##   AI Consultancy      0 62
+##   AI Debate          17 51
+##   Human Consultancy  26 32
+##   Human Debate       79 51
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_all\_debates\_weights, judgments\_online[consultancy\_condition, ]}\SpecialCharTok{$}\NormalTok{Final\_Accuracy)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## , ,  = FALSE
+## 
+##                    
+##                     0.166666666666667 0.2 0.25 0.333333333333333 0.5  1
+##   AI Consultancy                    0   1    0                 0   0 13
+##   AI Debate                         1   3    1                 0   2 12
+##   Human Consultancy                 0   1    8                 5   8  2
+##   Human Debate                      1   3    3                 7   8  3
+## 
+## , ,  = TRUE
+## 
+##                    
+##                     0.166666666666667 0.2 0.25 0.333333333333333 0.5  1
+##   AI Consultancy                    2   6    5                 0   1 48
+##   AI Debate                         3  10    6                 0   1 48
+##   Human Consultancy                 2   7   13                17  14  5
+##   Human Debate                      3   4   16                19  56 32
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Sampled data (balanced consultancies and sampled debates) difference between grouping and not grouping question weights}
+\FunctionTok{table}\NormalTok{(judgments\_online[judgments\_online}\SpecialCharTok{$}\NormalTok{Sample }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{, ]}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online[judgments\_online}\SpecialCharTok{$}\NormalTok{Sample }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{, ]}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_debates\_weights\_grouped\_setting)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ##                    
-##                      0 0.2 0.25 0.333333333333333 0.5  1
-##   AI Consultancy    17   1    9                 4   1 61
-##   AI Debate         12   1    9                 3   1 61
-##   Human Consultancy 25   2    9                32  32  7
-##   Human Debate      48   1    9                15  20 62
+##                     0.5   1
+##   AI Consultancy      0  76
+##   AI Debate           0  75
+##   Human Consultancy  42  40
+##   Human Debate        0 107
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(judgments\_online[judgments\_online}\SpecialCharTok{$}\NormalTok{Sample }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{, ]}\SpecialCharTok{$}\NormalTok{Final\_Setting, judgments\_online[judgments\_online}\SpecialCharTok{$}\NormalTok{Sample }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{, ]}\SpecialCharTok{$}\NormalTok{sampled\_consultancies\_debates\_weights)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                    
+##                     0.2 0.25 0.333333333333333 0.5  1
+##   AI Consultancy      1    9                 4   1 61
+##   AI Debate           1    9                 3   1 61
+##   Human Consultancy   2    9                32  32  7
+##   Human Debate        1    9                15  20 62
 \end{verbatim}
 
 \section{Results}\label{results}
@@ -1087,12 +1143,12 @@ proportions}\label{difference-in-proportions}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{print}\NormalTok{(}\StringTok{"Balanced consultancies"}\NormalTok{)}
+\FunctionTok{print}\NormalTok{(}\StringTok{"Balanced consultancies, NO weights"}\NormalTok{) }\CommentTok{\# still sig}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "Balanced consultancies"
+## [1] "Balanced consultancies, NO weights"
 \end{verbatim}
 
 \begin{Shaded}
@@ -1179,6 +1235,16 @@ proportions}\label{difference-in-proportions}
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"Balanced \# consultancies, question weights"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Balanced # consultancies, question weights"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \FunctionTok{acc\_diff\_test}\NormalTok{(}\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights))}
 \end{Highlighting}
 \end{Shaded}
@@ -1208,6 +1274,54 @@ proportions}\label{difference-in-proportions}
 ## AI Debate         14.016667 52.50000 78.92759
 ## Human Consultancy  9.866667 22.65000 69.65659
 ## Human Debate      10.850000 71.63333 86.84583
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"Balanced consultancies sampled debates, NO weights"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Balanced consultancies sampled debates, NO weights"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{acc\_diff\_test}\NormalTok{(}\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in svydesign.default(ids = ~1, data = subset(judgments_online, Sample
+## == : No weights or probabilities supplied, assuming equal probability
+\end{verbatim}
+
+\begin{verbatim}
+## Independent Sampling design (with replacement)
+## print(design)
+## 
+##  Pearson's X^2: Rao & Scott adjustment
+## 
+## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
+## X-squared = 6.1384, df = 3, p-value = 0.1059
+## 
+## 
+##  Pairwise comparisons using Pairwise comparison of proportions 
+## 
+## data:  freq_table 
+## 
+##                   AI Consultancy AI Debate Human Consultancy
+## AI Debate         0.968          -         -                
+## Human Consultancy 0.159          0.247     -                
+## Human Debate      0.673          0.489     0.027            
+## 
+## P value adjustment method: none 
+##                   FALSE TRUE Accuracy
+## AI Consultancy       14   62 81.57895
+## AI Debate            15   60 80.00000
+## Human Consultancy    24   58 70.73171
+## Human Debate         16   91 85.04673
 \end{verbatim}
 
 \begin{Shaded}
@@ -1255,67 +1369,37 @@ proportions}\label{difference-in-proportions}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{acc\_diff\_test}\NormalTok{(}\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ judgments\_online, }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_debates\_weights\_grouped\_setting))}
+\FunctionTok{svytable}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, }\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{)))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## Independent Sampling design (with replacement)
-## print(design)
-## 
-##  Pearson's X^2: Rao & Scott adjustment
-## 
-## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 4.5119, df = 3, p-value = 0.3283
-## 
-## 
-##  Pairwise comparisons using Pairwise comparison of proportions 
-## 
-## data:  freq_table 
-## 
-##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         0.97           -         -                
-## Human Consultancy 0.37           0.51      -                
-## Human Debate      0.67           0.49      0.11             
-## 
-## P value adjustment method: none 
-##                   FALSE TRUE Accuracy
-## AI Consultancy       14   62 81.57895
-## AI Debate            15   60 80.00000
-## Human Consultancy    16   45 73.77049
-## Human Debate         16   91 85.04673
+## Warning in svydesign.default(ids = ~1, data = subset(judgments_online, Sample
+## == : No weights or probabilities supplied, assuming equal probability
+\end{verbatim}
+
+\begin{verbatim}
+##                    Final_Accuracy
+## Final_Setting       FALSE TRUE
+##   AI Consultancy       14   62
+##   AI Debate            15   60
+##   Human Consultancy    24   58
+##   Human Debate         16   91
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{design }\OtherTok{=} \FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"AI"}\NormalTok{, Final\_Setting)), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting)}
-\FunctionTok{acc\_diff\_test}\NormalTok{(design)}
+\FunctionTok{svytable}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, }\FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{), }\AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_debates\_weights\_grouped\_setting))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## Independent Sampling design (with replacement)
-## svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == 
-##     TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", 
-##     Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
-## 
-##  Pearson's X^2: Rao & Scott adjustment
-## 
-## data:  svychisq(~Final_Setting + Final_Accuracy, design, statistic = "Chisq")
-## X-squared = 4.104, df = 1, p-value = 0.05155
-## 
-## 
-##  Pairwise comparisons using Pairwise comparison of proportions 
-## 
-## data:  freq_table 
-## 
-##              Human Consultancy
-## Human Debate 0.13             
-## 
-## P value adjustment method: none 
-##                   FALSE TRUE Accuracy
-## Human Consultancy  16.0 45.0 73.77049
-## Human Debate       16.5 90.5 84.57944
+##                    Final_Accuracy
+## Final_Setting       FALSE TRUE
+##   AI Consultancy       14   62
+##   AI Debate            15   60
+##   Human Consultancy    16   45
+##   Human Debate         16   91
 \end{verbatim}
 
 \begin{Shaded}
@@ -1330,240 +1414,309 @@ proportions}\label{difference-in-proportions}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\DocumentationTok{\#\# To maybe do: refactor this into function?}
-
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, }
-                        \AttributeTok{design =} \FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }
-                                           \AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)),}
-                                           \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting))}
-\NormalTok{final\_table}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##                    Final_Accuracy
-## Final_Setting       FALSE TRUE
-##   AI Consultancy     14.0 62.0
-##   AI Debate          15.5 59.5
-##   Human Consultancy  16.0 45.0
-##   Human Debate       16.5 90.5
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Add accuracy}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, }\AttributeTok{Accuracy =}\NormalTok{ (final\_table[,}\DecValTok{2}\NormalTok{] }\SpecialCharTok{/}\NormalTok{ (final\_table[,}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[,}\DecValTok{2}\NormalTok{]))}\SpecialCharTok{*}\DecValTok{100}\NormalTok{)}
-\CommentTok{\# Calculate the difference in accuracy for each row compared to "Human Debate"}
-\NormalTok{difference\_with\_debate }\OtherTok{\textless{}{-}}\NormalTok{ final\_table[,}\StringTok{"Accuracy"}\NormalTok{] }\SpecialCharTok{{-}}\NormalTok{ final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"Accuracy"}\NormalTok{]}
-\CommentTok{\# Bind the difference column to the final\_table}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, difference\_with\_debate)}
-
-\CommentTok{\# Loop through each setting}
-\NormalTok{ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\NormalTok{ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\NormalTok{p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\CommentTok{\# Loop through each setting}
-\ControlFlowTok{for}\NormalTok{ (setting }\ControlFlowTok{in} \FunctionTok{rownames}\NormalTok{(final\_table)) \{}
-  \CommentTok{\# Use prop.test to compare the setting\textquotesingle{}s accuracy with "Human Debate"}
-\NormalTok{  results }\OtherTok{\textless{}{-}} \FunctionTok{prop.test}\NormalTok{(}\FunctionTok{c}\NormalTok{(final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{], final\_table[setting, }\StringTok{"TRUE"}\NormalTok{]), }\FunctionTok{c}\NormalTok{((final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"FALSE"}\NormalTok{]), (final\_table[setting, }\StringTok{"TRUE"}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[setting, }\StringTok{"FALSE"}\NormalTok{])))}
-  
-  \CommentTok{\# Extract the confidence interval and store it as a string in the format "lower {-} upper"}
-\NormalTok{  ci\_lower }\OtherTok{\textless{}{-}}\NormalTok{ results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}  \CommentTok{\# Multiply by 100 to convert to percentage}
-\NormalTok{  ci\_upper }\OtherTok{\textless{}{-}}\NormalTok{ results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}  \CommentTok{\# Multiply by 100 to convert to percentage}
-\NormalTok{  ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_lowers, ci\_lower)}
-\NormalTok{  ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_uppers, ci\_upper)}
-\NormalTok{  p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(p\_values, results}\SpecialCharTok{$}\NormalTok{p.value)}
+\NormalTok{process\_table }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(svy\_table, round\_by) \{}
+  \CommentTok{\# Ensure that the input is a svytable object}
+  \ControlFlowTok{if}\NormalTok{ (}\SpecialCharTok{!}\FunctionTok{inherits}\NormalTok{(svy\_table, }\StringTok{"svytable"}\NormalTok{)) \{}
+    \FunctionTok{stop}\NormalTok{(}\StringTok{"Input must be a svytable object"}\NormalTok{)}
+\NormalTok{  \}}
+  \CommentTok{\# Add accuracy}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(svy\_table, }\AttributeTok{Accuracy =}\NormalTok{ (svy\_table[,}\DecValTok{2}\NormalTok{] }\SpecialCharTok{/}\NormalTok{ (svy\_table[,}\DecValTok{1}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ svy\_table[,}\DecValTok{2}\NormalTok{])) }\SpecialCharTok{*} \DecValTok{100}\NormalTok{)}
+  \CommentTok{\# Calculate the difference in accuracy for each row compared to "Human Debate"}
+\NormalTok{  difference\_with\_debate }\OtherTok{\textless{}{-}}\NormalTok{ svy\_table[,}\StringTok{"Accuracy"}\NormalTok{] }\SpecialCharTok{{-}}\NormalTok{ svy\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"Accuracy"}\NormalTok{]}
+  \CommentTok{\# Bind the difference column to the svy\_table}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(svy\_table, }\StringTok{\textasciigrave{}}\AttributeTok{Difference with Debate}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ difference\_with\_debate)}
+  \CommentTok{\# Initialize vectors to store confidence interval bounds and p{-}values}
+\NormalTok{  ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{() ; ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{() ; p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
+  \CommentTok{\# Loop through each setting}
+  \ControlFlowTok{for}\NormalTok{ (setting }\ControlFlowTok{in} \FunctionTok{rownames}\NormalTok{(svy\_table)) \{}
+    \CommentTok{\# Use prop.test to compare the setting\textquotesingle{}s accuracy with "Human Debate"}
+\NormalTok{    results }\OtherTok{\textless{}{-}} \FunctionTok{prop.test}\NormalTok{(}
+      \AttributeTok{x =} \FunctionTok{c}\NormalTok{(svy\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{], svy\_table[setting, }\StringTok{"TRUE"}\NormalTok{]),}
+      \AttributeTok{n =} \FunctionTok{c}\NormalTok{((svy\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ svy\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"FALSE"}\NormalTok{]), (svy\_table[setting, }\StringTok{"TRUE"}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ svy\_table[setting, }\StringTok{"FALSE"}\NormalTok{]))}
+\NormalTok{    )}
+    \CommentTok{\# Extract the confidence interval and store it as a string in the format "lower {-} upper"}
+\NormalTok{    ci\_lower }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,round\_by)  }\CommentTok{\# Multiply by 100 to convert to percentage}
+\NormalTok{    ci\_upper }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}\NormalTok{,round\_by)  }\CommentTok{\# Multiply by 100 to convert to percentage}
+\NormalTok{    ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_lowers, ci\_lower)}
+\NormalTok{    ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_uppers, ci\_upper)}
+\NormalTok{    p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(p\_values, results}\SpecialCharTok{$}\NormalTok{p.value)}
+\NormalTok{  \}}
+  \CommentTok{\# Change to wanted format (judgments summed, split counts removed)}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(}\StringTok{"n Judgments (weighted)"} \OtherTok{=}\NormalTok{ (svy\_table[,}\StringTok{"FALSE"}\NormalTok{] }\SpecialCharTok{+}\NormalTok{ svy\_table[,}\StringTok{"TRUE"}\NormalTok{]), svy\_table)}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}}\NormalTok{ svy\_table[ , }\SpecialCharTok{!}\NormalTok{(}\FunctionTok{colnames}\NormalTok{(svy\_table) }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"FALSE"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{))]}
+  \CommentTok{\# Concatenate the CI bounds into a single string}
+\NormalTok{  ci\_strings }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(}\StringTok{"["}\NormalTok{, ci\_lowers, }\StringTok{", "}\NormalTok{, ci\_uppers, }\StringTok{"]"}\NormalTok{)}
+  \CommentTok{\# Convert svy\_table to a data.frame so adding the strings doesn\textquotesingle{}t change the data type for entire matrix}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(svy\_table)}
+  \CommentTok{\# Bind the confidence interval bounds and p{-}values to the svy\_table}
+\NormalTok{  svy\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(svy\_table, }\StringTok{\textasciigrave{}}\AttributeTok{95\% CI [lower, upper]}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ ci\_strings, }\StringTok{\textasciigrave{}}\AttributeTok{p val}\StringTok{\textasciigrave{}} \OtherTok{=}\NormalTok{ p\_values)}
+  \FunctionTok{return}\NormalTok{(svy\_table)}
 \NormalTok{\}}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, ci\_lowers, ci\_uppers, p\_values)}
+
+\CommentTok{\# First table, all data accuracy}
+\NormalTok{svy\_table\_input }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}
+  \SpecialCharTok{\textasciitilde{}}\NormalTok{Setting }\SpecialCharTok{+}\NormalTok{ Final\_Accuracy, }
+  \AttributeTok{design =} \FunctionTok{svydesign}\NormalTok{(}
+    \AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }
+    \AttributeTok{data =} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)),}
+    \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Call the function}
+\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{process\_table}\NormalTok{(svy\_table\_input, }\AttributeTok{round\_by =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \NormalTok{final\_table}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-##                   FALSE TRUE Accuracy difference_with_debate ci_lowers
-## AI Consultancy     14.0 62.0 81.57895              -3.000492 -9.205452
-## AI Debate          15.5 59.5 79.33333              -5.246106 -7.324725
-## Human Consultancy  16.0 45.0 73.77049             -10.808947 -3.465654
-## Human Debate       16.5 90.5 84.57944               0.000000 -9.677288
-##                   ci_uppers  p_values
-## AI Consultancy    15.206436 0.7372949
-## AI Debate         17.816936 0.4731832
-## Human Consultancy 25.083549 0.1329563
-## Human Debate       9.677288 1.0000000
+##                             n Judgments (weighted) Accuracy
+## AI Consultancy Dishonest                      38.0 86.84211
+## AI Consultancy Honest                         38.0 76.31579
+## AI Debate                                     75.0 79.33333
+## Human Consultancy Dishonest                   30.5 59.01639
+## Human Consultancy Honest                      30.5 88.52459
+## Human Debate                                 107.0 84.57944
+##                             Difference with Debate 95% CI [lower, upper]
+## AI Consultancy Dishonest                  2.262666         [-16.8, 12.3]
+## AI Consultancy Honest                    -8.263650          [-8.7, 25.2]
+## AI Debate                                -5.246106          [-7.3, 17.8]
+## Human Consultancy Dishonest             -25.563046           [4.7, 46.4]
+## Human Consultancy Honest                  3.945151         [-19.3, 11.4]
+## Human Debate                              0.000000           [-9.7, 9.7]
+##                                   p val
+## AI Consultancy Dishonest    0.943029144
+## AI Consultancy Honest       0.367365381
+## AI Debate                   0.473183236
+## Human Consultancy Dishonest 0.005091626
+## Human Consultancy Honest    0.799453469
+## Human Debate                1.000000000
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Display the updated table using knitr::kable}
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(final\_table, }\AttributeTok{booktab =} \ConstantTok{TRUE}\NormalTok{,  }\AttributeTok{digits =} \FunctionTok{c}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{6}\NormalTok{),}\DecValTok{3}\NormalTok{),}
-             \AttributeTok{col.names =} \FunctionTok{c}\NormalTok{(}\StringTok{"\# Incorrect (weighted)"}\NormalTok{, }\StringTok{"\# Correct (weighted)"}\NormalTok{, }\StringTok{"Accuracy"}\NormalTok{, }\StringTok{"Difference"}\NormalTok{, }\StringTok{"95\% CI Lower Limit"}\NormalTok{,}\StringTok{"95\% CI Upper Limit"}\NormalTok{,}\StringTok{"p{-}value"}\NormalTok{))}
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(final\_table, }\AttributeTok{booktab =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{digits =} \FunctionTok{c}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{),}\ConstantTok{NA}\NormalTok{,}\DecValTok{3}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1406}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1797}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1641}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0703}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0859}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1484}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1484}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0625}}@{}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2523}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2072}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0811}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2072}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1982}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0541}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\# Incorrect (weighted)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\# Correct (weighted)
+n Judgments (weighted)
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 Accuracy
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Difference
+Difference with Debate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+95\% CI {[}lower, upper{]}
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-95\% CI Lower Limit
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-95\% CI Upper Limit
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p-value
+p val
 \end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-AI Consultancy & 14.0 & 62.0 & 81.6 & -3.0 & -9.2 & 15.2 & 0.737 \\
-AI Debate & 15.5 & 59.5 & 79.3 & -5.2 & -7.3 & 17.8 & 0.473 \\
-Human Consultancy & 16.0 & 45.0 & 73.8 & -10.8 & -3.5 & 25.1 & 0.133 \\
-Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
+AI Consultancy Dishonest & 38.0 & 86.8 & 2.3 & {[}-16.8, 12.3{]} &
+0.943 \\
+AI Consultancy Honest & 38.0 & 76.3 & -8.3 & {[}-8.7, 25.2{]} & 0.367 \\
+AI Debate & 75.0 & 79.3 & -5.2 & {[}-7.3, 17.8{]} & 0.473 \\
+Human Consultancy Dishonest & 30.5 & 59.0 & -25.6 & {[}4.7, 46.4{]} &
+0.005 \\
+Human Consultancy Honest & 30.5 & 88.5 & 3.9 & {[}-19.3, 11.4{]} &
+0.799 \\
+Human Debate & 107.0 & 84.6 & 0.0 & {[}-9.7, 9.7{]} & 1.000 \\
 \end{longtable}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{print}\NormalTok{(}\StringTok{"Second table, human settings only"}\NormalTok{)}
+\CommentTok{\# Possible table?, high confidence accuracy}
+\NormalTok{high\_conf\_data }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(judgments\_online, }
+                         \StringTok{\textasciigrave{}}\AttributeTok{Final probability correct}\StringTok{\textasciigrave{}} \SpecialCharTok{\textless{}=} \FloatTok{0.01} \SpecialCharTok{|} \StringTok{\textasciigrave{}}\AttributeTok{Final probability correct}\StringTok{\textasciigrave{}} \SpecialCharTok{\textgreater{}=} \FloatTok{0.99}\NormalTok{)}
+
+\CommentTok{\# Create the svytable object for high confidence accuracy}
+\NormalTok{svy\_table\_high\_conf }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}
+  \SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting }\SpecialCharTok{+}\NormalTok{ Final\_Accuracy, }
+  \AttributeTok{design =} \FunctionTok{svydesign}\NormalTok{(}
+    \AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }
+    \AttributeTok{data =} \FunctionTok{subset}\NormalTok{(high\_conf\_data, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)),}
+    \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Call the function for high confidence accuracy}
+\NormalTok{high\_conf\_table }\OtherTok{\textless{}{-}} \FunctionTok{process\_table}\NormalTok{(svy\_table\_high\_conf, }\AttributeTok{round\_by =} \DecValTok{1}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## [1] "Second table, human settings only"
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{human\_only }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(judgments\_online, }\StringTok{\textasciigrave{}}\AttributeTok{Human Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting) }\SpecialCharTok{\&} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"AI"}\NormalTok{, Final\_Setting))}
-\NormalTok{human\_only}\SpecialCharTok{$}\NormalTok{Setting }\OtherTok{\textless{}{-}} \FunctionTok{droplevels}\NormalTok{(human\_only}\SpecialCharTok{$}\NormalTok{Setting)}
-\FunctionTok{table}\NormalTok{(human\_only}\SpecialCharTok{$}\NormalTok{Setting)}
+\NormalTok{high\_conf\_table}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## 
-## Human Consultancy Dishonest    Human Consultancy Honest 
-##                          41                          41 
-##                Human Debate 
-##                         155
+##                   n Judgments (weighted) Accuracy Difference with Debate
+## AI Consultancy                      48.0 85.41667              -4.057018
+## AI Debate                           50.5 85.14851              -4.325169
+## Human Consultancy                   17.5 80.00000              -9.473684
+## Human Debate                        47.5 89.47368               0.000000
+##                   95% CI [lower, upper]     p val
+## AI Consultancy            [-11.3, 19.4] 0.7723289
+## AI Debate                 [-10.8, 19.5] 0.7349818
+## Human Consultancy         [-15.1, 34.1] 0.5550842
+## Human Debate              [-12.3, 12.3] 1.0000000
 \end{verbatim}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Setting}\SpecialCharTok{+}\NormalTok{Final\_Accuracy, }
-                        \AttributeTok{design =} \FunctionTok{svydesign}\NormalTok{(}\AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }
-                                           \AttributeTok{data =}\NormalTok{ human\_only,}
-                                           \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_setting))}
-\NormalTok{final\_table}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##                              Final_Accuracy
-## Setting                       FALSE TRUE
-##   Human Consultancy Dishonest  18.0 23.0
-##   Human Consultancy Honest      6.0 35.0
-##   Human Debate                 16.5 90.5
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Add accuracy}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, }\AttributeTok{Accuracy =}\NormalTok{ (final\_table[,}\DecValTok{2}\NormalTok{] }\SpecialCharTok{/}\NormalTok{ (final\_table[,}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[,}\DecValTok{2}\NormalTok{]))}\SpecialCharTok{*}\DecValTok{100}\NormalTok{)}
-\CommentTok{\# Calculate the difference in accuracy for each row compared to "Human Debate"}
-\NormalTok{difference\_with\_debate }\OtherTok{\textless{}{-}}\NormalTok{ final\_table[,}\StringTok{"Accuracy"}\NormalTok{] }\SpecialCharTok{{-}}\NormalTok{ final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"Accuracy"}\NormalTok{]}
-\CommentTok{\# Bind the difference column to the final\_table}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, difference\_with\_debate)}
-
-\CommentTok{\# Loop through each setting}
-\NormalTok{ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\NormalTok{ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\NormalTok{p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{()}
-\CommentTok{\# Loop through each setting}
-\ControlFlowTok{for}\NormalTok{ (setting }\ControlFlowTok{in} \FunctionTok{rownames}\NormalTok{(final\_table)) \{}
-  \CommentTok{\# Use prop.test to compare the setting\textquotesingle{}s accuracy with "Human Debate"}
-\NormalTok{  results }\OtherTok{\textless{}{-}} \FunctionTok{prop.test}\NormalTok{(}\FunctionTok{c}\NormalTok{(final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{], final\_table[setting, }\StringTok{"TRUE"}\NormalTok{]), }\FunctionTok{c}\NormalTok{((final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"TRUE"}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[}\StringTok{"Human Debate"}\NormalTok{, }\StringTok{"FALSE"}\NormalTok{]), (final\_table[setting, }\StringTok{"TRUE"}\NormalTok{]}\SpecialCharTok{+}\NormalTok{final\_table[setting, }\StringTok{"FALSE"}\NormalTok{])))}
-  
-  \CommentTok{\# Extract the confidence interval and store it as a string in the format "lower {-} upper"}
-\NormalTok{  ci\_lower }\OtherTok{\textless{}{-}}\NormalTok{ results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}  \CommentTok{\# Multiply by 100 to convert to percentage}
-\NormalTok{  ci\_upper }\OtherTok{\textless{}{-}}\NormalTok{ results}\SpecialCharTok{$}\NormalTok{conf.int[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{*} \DecValTok{100}  \CommentTok{\# Multiply by 100 to convert to percentage}
-\NormalTok{  ci\_lowers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_lowers, ci\_lower)}
-\NormalTok{  ci\_uppers }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(ci\_uppers, ci\_upper)}
-\NormalTok{  p\_values }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(p\_values, results}\SpecialCharTok{$}\NormalTok{p.value)}
-\NormalTok{\}}
-\NormalTok{final\_table }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(final\_table, ci\_lowers, ci\_uppers, p\_values)}
-\NormalTok{final\_table}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##                             FALSE TRUE Accuracy difference_with_debate
-## Human Consultancy Dishonest  18.0 23.0 56.09756            -28.4818783
-## Human Consultancy Honest      6.0 35.0 85.36585              0.7864144
-## Human Debate                 16.5 90.5 84.57944              0.0000000
-##                              ci_lowers ci_uppers     p_values
-## Human Consultancy Dishonest  10.134444 46.829313 0.0005598759
-## Human Consultancy Honest    -14.374115 12.801286 1.0000000000
-## Human Debate                 -9.677288  9.677288 1.0000000000
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Display the updated table using knitr::kable}
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(final\_table, }\AttributeTok{booktab =} \ConstantTok{TRUE}\NormalTok{,  }\AttributeTok{digits =} \FunctionTok{c}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{6}\NormalTok{),}\DecValTok{3}\NormalTok{),}
-             \AttributeTok{col.names =} \FunctionTok{c}\NormalTok{(}\StringTok{"\# Incorrect (weighted)"}\NormalTok{, }\StringTok{"\# Correct (weighted)"}\NormalTok{, }\StringTok{"Accuracy"}\NormalTok{, }\StringTok{"Difference"}\NormalTok{, }\StringTok{"95\% CI Lower Limit"}\NormalTok{,}\StringTok{"95\% CI Upper Limit"}\NormalTok{,}\StringTok{"p{-}value"}\NormalTok{))}
+\CommentTok{\# Render the high confidence accuracy table}
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(high\_conf\_table, }\AttributeTok{booktab =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{digits =} \FunctionTok{c}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{),}\ConstantTok{NA}\NormalTok{,}\DecValTok{3}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2029}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1667}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1522}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0652}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0797}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1377}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1377}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0580}}@{}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1782}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2277}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0891}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2277}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2178}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0594}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\# Incorrect (weighted)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-\# Correct (weighted)
+n Judgments (weighted)
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
 Accuracy
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Difference
+Difference with Debate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+95\% CI {[}lower, upper{]}
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-95\% CI Lower Limit
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-95\% CI Upper Limit
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p-value
+p val
 \end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Human Consultancy Dishonest & 18.0 & 23.0 & 56.1 & -28.5 & 10.1 & 46.8 &
-0.001 \\
-Human Consultancy Honest & 6.0 & 35.0 & 85.4 & 0.8 & -14.4 & 12.8 &
-1.000 \\
-Human Debate & 16.5 & 90.5 & 84.6 & 0.0 & -9.7 & 9.7 & 1.000 \\
+AI Consultancy & 48.0 & 85.4 & -4.1 & {[}-11.3, 19.4{]} & 0.772 \\
+AI Debate & 50.5 & 85.1 & -4.3 & {[}-10.8, 19.5{]} & 0.735 \\
+Human Consultancy & 17.5 & 80.0 & -9.5 & {[}-15.1, 34.1{]} & 0.555 \\
+Human Debate & 47.5 & 89.5 & 0.0 & {[}-12.3, 12.3{]} & 1.000 \\
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Possible table?, high confidence accuracy}
+\NormalTok{low\_conf\_data }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(judgments\_online, }
+                         \StringTok{\textasciigrave{}}\AttributeTok{Final probability correct}\StringTok{\textasciigrave{}} \SpecialCharTok{\textgreater{}=} \FloatTok{0.30} \SpecialCharTok{\&} \StringTok{\textasciigrave{}}\AttributeTok{Final probability correct}\StringTok{\textasciigrave{}} \SpecialCharTok{\textless{}=} \FloatTok{0.70}\NormalTok{)}
+
+\CommentTok{\# Create the svytable object for high confidence accuracy}
+\NormalTok{svy\_table\_low\_conf }\OtherTok{\textless{}{-}} \FunctionTok{svytable}\NormalTok{(}
+  \SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting }\SpecialCharTok{+}\NormalTok{ Final\_Accuracy, }
+  \AttributeTok{design =} \FunctionTok{svydesign}\NormalTok{(}
+    \AttributeTok{ids =} \SpecialCharTok{\textasciitilde{}}\DecValTok{1}\NormalTok{, }
+    \AttributeTok{data =} \FunctionTok{subset}\NormalTok{(low\_conf\_data, }\StringTok{\textasciigrave{}}\AttributeTok{Consultancy Sample}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \ConstantTok{TRUE} \SpecialCharTok{|} \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Consultancy"}\NormalTok{, Final\_Setting)),}
+    \AttributeTok{weights =} \SpecialCharTok{\textasciitilde{}}\NormalTok{sampled\_consultancies\_all\_debates\_weights\_grouped\_setting}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Call the function for high confidence accuracy}
+\NormalTok{low\_conf\_table }\OtherTok{\textless{}{-}} \FunctionTok{process\_table}\NormalTok{(svy\_table\_low\_conf, }\AttributeTok{round\_by =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
+
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
+
+## Warning in prop.test(x = c(svy_table["Human Debate", "TRUE"],
+## svy_table[setting, : Chi-squared approximation may be incorrect
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{low\_conf\_table}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                   n Judgments (weighted) Accuracy Difference with Debate
+## AI Consultancy                       9.0 66.66667               0.000000
+## AI Debate                            7.0 64.28571              -2.380952
+## Human Consultancy                    8.5 58.82353              -7.843137
+## Human Debate                        10.5 66.66667               0.000000
+##                   95% CI [lower, upper] p val
+## AI Consultancy                [-42, 42]     1
+## AI Debate                 [-45.5, 50.3]     1
+## Human Consultancy         [-43.7, 59.4]     1
+## Human Debate              [-40.3, 40.3]     1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Render the high confidence accuracy table}
+\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(low\_conf\_table, }\AttributeTok{booktab =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{digits =} \FunctionTok{c}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{),}\ConstantTok{NA}\NormalTok{,}\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1782}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2277}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0891}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2277}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2178}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0594}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+n Judgments (weighted)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Accuracy
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Difference with Debate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+95\% CI {[}lower, upper{]}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p val
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+AI Consultancy & 9.0 & 66.7 & 0.0 & {[}-42, 42{]} & 1 \\
+AI Debate & 7.0 & 64.3 & -2.4 & {[}-45.5, 50.3{]} & 1 \\
+Human Consultancy & 8.5 & 58.8 & -7.8 & {[}-43.7, 59.4{]} & 1 \\
+Human Debate & 10.5 & 66.7 & 0.0 & {[}-40.3, 40.3{]} & 1 \\
 \end{longtable}
 
 \begin{Shaded}
@@ -2695,60 +2848,12 @@ stratified}\label{length-of-debates-stratified}
 \begin{Highlighting}[]
 \NormalTok{all\_turns }\OperatorTok{=}\NormalTok{ turns.merge(}
 \NormalTok{        debates[[}\StringTok{"Room name"}\NormalTok{, }\StringTok{"Honest debater"}\NormalTok{, }\StringTok{"Dishonest debater"}\NormalTok{, }\StringTok{"Question"}\NormalTok{, }\StringTok{"Article ID"}\NormalTok{,}
-                 \StringTok{"Speed annotator accuracy"}\NormalTok{,}\StringTok{"Untimed annotator context"}\NormalTok{,}\StringTok{"Untimed annotator context bins"}\NormalTok{,}\StringTok{"Is offline"}\NormalTok{,}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Setting"}\NormalTok{,}\StringTok{"Final\_Accuracy"}\NormalTok{]],}
+                 \StringTok{"Speed annotator accuracy"}\NormalTok{,}\StringTok{"Untimed annotator context"}\NormalTok{,}\StringTok{"Untimed annotator context bins"}\NormalTok{,}\StringTok{"Is offline"}\NormalTok{,}\StringTok{"Final\_Setting"}\NormalTok{, }\StringTok{"Setting"}\NormalTok{]],}
 \NormalTok{        how}\OperatorTok{=}\StringTok{"left"}\NormalTok{,}
 \NormalTok{        on}\OperatorTok{=}\StringTok{"Room name"}\NormalTok{,}
 \NormalTok{    )}
-
-\BuiltInTok{print}\NormalTok{(all\_turns.groupby(}\StringTok{\textquotesingle{}Final\_Setting\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].mean())}
 \end{Highlighting}
 \end{Shaded}
-
-\begin{verbatim}
-## Final_Setting
-## AI Consultancy       4.173252
-## AI Debate            2.986231
-## Human Consultancy    2.759310
-## Human Debate         1.475072
-## Name: Num previous judging rounds, dtype: float64
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ControlFlowTok{for}\NormalTok{ setting }\KeywordTok{in}\NormalTok{ all\_turns[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{].unique():}
-\NormalTok{  all\_turns\_setting }\OperatorTok{=}\NormalTok{ all\_turns[all\_turns[}\StringTok{\textquotesingle{}Setting\textquotesingle{}}\NormalTok{]}\OperatorTok{==}\NormalTok{setting]}
-  \BuiltInTok{print}\NormalTok{(setting)}
-  \CommentTok{\# Calculate the maximum \textquotesingle{}Num previous judging rounds\textquotesingle{} for each combination of \textquotesingle{}Room name\textquotesingle{} and \textquotesingle{}Participant\textquotesingle{}}
-\NormalTok{  all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{=}\NormalTok{ all\_turns\_setting.groupby([}\StringTok{\textquotesingle{}Room name\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}Participant\textquotesingle{}}\NormalTok{])[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{].transform(}\StringTok{\textquotesingle{}max\textquotesingle{}}\NormalTok{)}
-  \CommentTok{\#\# Just based on the number of rounds}
-  
-  \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(}\DecValTok{1}\NormalTok{, all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{].}\BuiltInTok{max}\NormalTok{() }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
-\NormalTok{      max\_rounds }\OperatorTok{=}\NormalTok{ all\_turns\_setting[(all\_turns\_setting[}\StringTok{\textquotesingle{}Max judge rounds by room\textquotesingle{}}\NormalTok{] }\OperatorTok{==}\NormalTok{ i) }\OperatorTok{\&}\NormalTok{ (all\_turns\_setting[}\StringTok{\textquotesingle{}Untimed annotator context\textquotesingle{}}\NormalTok{] }\OperatorTok{\textgreater{}} \DecValTok{0}\NormalTok{)]}
-      \BuiltInTok{print}\NormalTok{(}\BuiltInTok{len}\NormalTok{(max\_rounds))}
-      \CommentTok{\# Group by \textquotesingle{}Num previous judging rounds\textquotesingle{} and calculate the mean of \textquotesingle{}Probability correct\textquotesingle{}}
-\NormalTok{      average\_pc\_per\_round }\OperatorTok{=}\NormalTok{ max\_rounds.groupby(}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}Probability correct\textquotesingle{}}\NormalTok{].mean()}
-  
-      \CommentTok{\# Create a new DataFrame with \textquotesingle{}Num previous judging rounds\textquotesingle{} and \textquotesingle{}Average pc per round\textquotesingle{}}
-\NormalTok{      probability\_correct\_round }\OperatorTok{=}\NormalTok{ pd.DataFrame(\{}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{: average\_pc\_per\_round.index,}
-                                                \StringTok{\textquotesingle{}Average pc per round\textquotesingle{}}\NormalTok{: average\_pc\_per\_round.values\})}
-  
-      \CommentTok{\# Plotting the data with label for the line}
-\NormalTok{      plt.plot(probability\_correct\_round[}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{], probability\_correct\_round[}\StringTok{\textquotesingle{}Average pc per round\textquotesingle{}}\NormalTok{], label}\OperatorTok{=}\SpecialStringTok{f"Max Rounds: }\SpecialCharTok{\{}\NormalTok{i}\SpecialCharTok{\}}\SpecialStringTok{"}\NormalTok{)}
-  
-\NormalTok{  plt.title(}\SpecialStringTok{f"Probability Correct for Setting: }\SpecialCharTok{\{}\NormalTok{setting}\SpecialCharTok{\}}\SpecialStringTok{"}\NormalTok{) }
-\NormalTok{  plt.xlabel(}\StringTok{\textquotesingle{}Num previous judging rounds\textquotesingle{}}\NormalTok{)}
-\NormalTok{  plt.ylabel(}\StringTok{\textquotesingle{}Average pc per round\textquotesingle{}}\NormalTok{)}
-\NormalTok{  plt.legend()}
-\NormalTok{  plt.show()}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-1}
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-2}
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-3}
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-4}
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-5}
-\includegraphics[width=1\linewidth]{debate-2309_files/figure-latex/strat-6}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2757,20 +2862,59 @@ stratified}\label{length-of-debates-stratified}
   \FunctionTok{group\_by}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Room name}\StringTok{\textasciigrave{}}\NormalTok{, Participant) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{max}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ungroup}\NormalTok{()}
+
+\NormalTok{generate\_bins }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(start, end, step) \{}
+\NormalTok{  breaks }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(start, end }\SpecialCharTok{+} \DecValTok{1}\NormalTok{, }\AttributeTok{by =}\NormalTok{ step)  }\CommentTok{\# Extend the sequence to end + 1 to include the end point}
+\NormalTok{  labels }\OtherTok{\textless{}{-}} \FunctionTok{sapply}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\NormalTok{(}\FunctionTok{length}\NormalTok{(breaks) }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{), }\ControlFlowTok{function}\NormalTok{(i) \{}
+\NormalTok{    lower\_bound }\OtherTok{=}\NormalTok{ breaks[i]}\SpecialCharTok{+}\DecValTok{1}
+\NormalTok{    upper\_bound }\OtherTok{=}\NormalTok{ breaks[i}\SpecialCharTok{+}\DecValTok{1}\NormalTok{]}
+    \FunctionTok{return}\NormalTok{(}\FunctionTok{paste0}\NormalTok{(lower\_bound, }\StringTok{"{-}"}\NormalTok{, upper\_bound))  }\CommentTok{\# Return the range string}
+\NormalTok{  \})}
+\NormalTok{  breaks }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, breaks, }\ConstantTok{Inf}\NormalTok{)  }\CommentTok{\# Extend the breaks vector to include Inf}
+\NormalTok{  labels }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"0"}\NormalTok{, labels, }\FunctionTok{paste0}\NormalTok{(end}\SpecialCharTok{+}\DecValTok{1}\NormalTok{,}\StringTok{"+"}\NormalTok{))}
+  \FunctionTok{return}\NormalTok{(}\FunctionTok{list}\NormalTok{(}\AttributeTok{breaks =}\NormalTok{ breaks, }\AttributeTok{labels =}\NormalTok{ labels))}
+\NormalTok{\}}
+
+\CommentTok{\# Now use this function to generate the breaks and labels:}
+\NormalTok{bins }\OtherTok{\textless{}{-}} \FunctionTok{generate\_bins}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{3}\NormalTok{)}
+
+\CommentTok{\# Now use these dynamically generated values in your mutate function:}
+\NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ strat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{cut}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{,}
+                                       \AttributeTok{breaks =}\NormalTok{ bins}\SpecialCharTok{$}\NormalTok{breaks,}
+                                       \AttributeTok{labels =}\NormalTok{ bins}\SpecialCharTok{$}\NormalTok{labels,}
+                                       \AttributeTok{right =} \ConstantTok{TRUE}\NormalTok{,}
+                                       \AttributeTok{include.lowest =} \ConstantTok{TRUE}\NormalTok{))}
 \NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ strat }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{cut}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, }
-                                      \AttributeTok{breaks =} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FunctionTok{max}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+} \DecValTok{3}\NormalTok{, }\AttributeTok{by =} \DecValTok{3}\NormalTok{), }
-                                      \AttributeTok{labels =} \ConstantTok{FALSE}\NormalTok{, }
-                                      \AttributeTok{include.lowest =} \ConstantTok{TRUE}\NormalTok{, }
-                                      \AttributeTok{right =} \ConstantTok{FALSE}\NormalTok{))}
-
+                                       \AttributeTok{breaks =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{9}\NormalTok{, }\DecValTok{12}\NormalTok{, }\DecValTok{15}\NormalTok{, }\ConstantTok{Inf}\NormalTok{),}
+                                       \AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"0"}\NormalTok{, }\StringTok{"1{-}3"}\NormalTok{, }\StringTok{"4{-}6"}\NormalTok{, }\StringTok{"7{-}9"}\NormalTok{, }\StringTok{"10{-}12"}\NormalTok{, }\StringTok{"13{-}15"}\NormalTok{, }\StringTok{"16+"}\NormalTok{),}
+                                       \AttributeTok{right =} \ConstantTok{TRUE}\NormalTok{, }
+                                       \AttributeTok{include.lowest =} \ConstantTok{TRUE}\NormalTok{))}
+\CommentTok{\# Bootstrap mean function}
 \NormalTok{bootstrap\_mean }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(data, indices) \{}
   \FunctionTok{return}\NormalTok{(}\FunctionTok{mean}\NormalTok{(data[indices], }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
 \NormalTok{\}}
 
-\CommentTok{\# Plot using ggplot2}
+\CommentTok{\# deprecated, keep original max round except if above cutoff}
+\NormalTok{strat }\OtherTok{\textless{}{-}}\NormalTok{ strat }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{ifelse}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}} \SpecialCharTok{\textgreater{}} \DecValTok{5}\NormalTok{, }\StringTok{"6+"}\NormalTok{, }\FunctionTok{as.character}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds by room}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{, }
+                                        \AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"0"}\NormalTok{, }\StringTok{"1"}\NormalTok{, }\StringTok{"2"}\NormalTok{, }\StringTok{"3"}\NormalTok{, }\StringTok{"4"}\NormalTok{, }\StringTok{"5"}\NormalTok{),}
+                                         \AttributeTok{ordered =} \ConstantTok{TRUE}\NormalTok{))}
+
+\CommentTok{\# Extract unique bin values}
+\NormalTok{unique\_bins }\OtherTok{\textless{}{-}} \FunctionTok{levels}\NormalTok{(strat}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{)[}\DecValTok{2}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(}\FunctionTok{levels}\NormalTok{(strat}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{))]}
+
+\CommentTok{\# Create a decreasing sequence of alpha values}
+\NormalTok{alpha\_values }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{, }\FloatTok{0.1}\NormalTok{, }\AttributeTok{length.out =} \FunctionTok{length}\NormalTok{(unique\_bins))}
+
+\CommentTok{\# Create a named vector for mapping}
+\NormalTok{alpha\_map }\OtherTok{\textless{}{-}} \FunctionTok{setNames}\NormalTok{(alpha\_values, unique\_bins)}
+
 \NormalTok{strat }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_by}\NormalTok{(Setting, }\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}} \SpecialCharTok{!=} \StringTok{"0"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# Remove entries with "0" bin}
+  \FunctionTok{group\_by}\NormalTok{(Final\_Setting, }\StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{do}\NormalTok{(\{}
 \NormalTok{    boot\_result }\OtherTok{\textless{}{-}} \FunctionTok{boot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ .}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Probability correct}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{statistic =}\NormalTok{ bootstrap\_mean, }\AttributeTok{R =} \DecValTok{1000}\NormalTok{)}
     \FunctionTok{data.frame}\NormalTok{(}
@@ -2779,19 +2923,20 @@ stratified}\label{length-of-debates-stratified}
       \AttributeTok{upper\_ci =} \FunctionTok{quantile}\NormalTok{(boot\_result}\SpecialCharTok{$}\NormalTok{t, }\FloatTok{0.975}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
 \NormalTok{    )}
 \NormalTok{  \}) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ mean\_accuracy, }\AttributeTok{col =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{))) }\SpecialCharTok{+}
-  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lower\_ci, }\AttributeTok{ymax =}\NormalTok{ upper\_ci, }\AttributeTok{fill =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{group =} \FunctionTok{as.factor}\NormalTok{(}\StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{), }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{), }\AttributeTok{alpha =} \FloatTok{0.15}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Average Probability Correct Each Round, }\SpecialCharTok{\textbackslash{}n}\StringTok{stratified by Max Round Binned"}\NormalTok{,}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{Num previous judging rounds}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ mean\_accuracy, }\AttributeTok{col =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ lower\_ci, }\AttributeTok{ymax =}\NormalTok{ upper\_ci, }\AttributeTok{fill =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{group =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{color =} \ConstantTok{NULL}\NormalTok{), }\AttributeTok{alpha =} \FloatTok{0.25}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Average Probability Correct by Round, }\SpecialCharTok{\textbackslash{}n}\StringTok{Stratified by binned Max Round"}\NormalTok{,}
        \AttributeTok{x =} \StringTok{"Round"}\NormalTok{, }
        \AttributeTok{y =} \StringTok{"Average Intermediate Probability Correct"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Setting) }\SpecialCharTok{+}
-  \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
+  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{alpha =} \StringTok{\textasciigrave{}}\AttributeTok{Max judge rounds bin}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_alpha\_manual}\NormalTok{(}\AttributeTok{values =}\NormalTok{ alpha\_map) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Final\_Setting) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"bottom"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{debate-2309_files/figure-latex/strat ggplot-13.pdf}
+\includegraphics{debate-2309_files/figure-latex/strat ggplot-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2819,7 +2964,7 @@ stratified}\label{length-of-debates-stratified}
 ## Warning: Removed 10 rows containing missing values (`geom_line()`).
 \end{verbatim}
 
-\includegraphics{debate-2309_files/figure-latex/strat ggplot-14.pdf}
+\includegraphics{debate-2309_files/figure-latex/strat ggplot-2.pdf}
 
 \subsubsection{Time (offline judging..?)}\label{time-offline-judging..}
 
@@ -3724,22 +3869,26 @@ time? S: (2) dishonest debater tricks
 ## 146                                 0.5000000
 ## 214                                 0.2500000
 ## 289                                 0.3333333
-##     sampled_consultancies_all_debates_weights_grouped_setting
-## 146                                                       0.5
-## 214                                                       0.5
-## 289                                                       0.5
 ##     sampled_consultancies_all_debates_weights_setting
 ## 146                                               0.5
 ## 214                                               0.5
 ## 289                                               0.5
-##     sampled_consultancies_debates_weights_grouped_setting
-## 146                                                     0
-## 214                                                     1
-## 289                                                     1
-##     sampled_consultancies_debates_weights Final_Accuracy_char  fpc
-## 146                             0.0000000                  NA 0.33
-## 214                             0.3333333                  NA 0.01
-## 289                             0.5000000                  NA 0.01
+##     sampled_consultancies_all_debates_weights_grouped_setting
+## 146                                                       0.5
+## 214                                                       0.5
+## 289                                                       0.5
+##     sampled_consultancies_debates_weights
+## 146                             0.0000000
+## 214                             0.3333333
+## 289                             0.5000000
+##     sampled_consultancies_debates_weights_setting
+## 146                                             0
+## 214                                             1
+## 289                                             1
+##     sampled_consultancies_debates_weights_grouped_setting  fpc
+## 146                                                     0 0.33
+## 214                                                     1 0.01
+## 289                                                     1 0.01
 ##      confidence_label color_value
 ## 146           Neutral   -1.849462
 ## 214 Confidently Wrong   -6.743856
@@ -6037,77 +6186,6 @@ time? S: (2) dishonest debater tricks
 ## 679                                 0.2500000
 ## 680                                 1.0000000
 ## 683                                 0.5000000
-##     sampled_consultancies_all_debates_weights_grouped_setting
-## 21                                                        0.5
-## 43                                                        0.5
-## 78                                                        0.5
-## 81                                                        0.5
-## 91                                                        1.0
-## 94                                                        0.5
-## 99                                                        0.5
-## 113                                                       0.5
-## 136                                                       0.5
-## 140                                                       1.0
-## 149                                                       0.5
-## 177                                                       0.5
-## 179                                                       0.5
-## 185                                                       1.0
-## 186                                                       0.5
-## 191                                                       0.5
-## 202                                                       0.5
-## 211                                                       0.5
-## 215                                                       1.0
-## 216                                                       0.5
-## 219                                                       1.0
-## 236                                                       0.5
-## 240                                                       0.5
-## 241                                                       0.5
-## 254                                                       0.5
-## 270                                                       1.0
-## 276                                                       0.5
-## 290                                                       0.5
-## 306                                                       0.5
-## 324                                                       0.5
-## 331                                                       0.5
-## 332                                                       0.5
-## 338                                                       0.5
-## 342                                                       0.5
-## 348                                                       1.0
-## 356                                                       1.0
-## 366                                                       0.5
-## 378                                                       0.5
-## 387                                                       0.5
-## 401                                                       0.5
-## 411                                                       0.5
-## 414                                                       0.5
-## 421                                                       1.0
-## 424                                                       0.5
-## 425                                                       0.5
-## 429                                                       0.5
-## 431                                                       1.0
-## 433                                                       1.0
-## 436                                                       1.0
-## 439                                                       0.5
-## 448                                                       1.0
-## 510                                                       1.0
-## 533                                                       1.0
-## 538                                                       0.5
-## 544                                                       1.0
-## 550                                                       1.0
-## 561                                                       0.5
-## 598                                                       0.5
-## 602                                                       1.0
-## 606                                                       0.5
-## 626                                                       0.5
-## 637                                                       0.5
-## 641                                                       0.5
-## 647                                                       0.5
-## 648                                                       0.5
-## 658                                                       1.0
-## 677                                                       1.0
-## 679                                                       0.5
-## 680                                                       1.0
-## 683                                                       0.5
 ##     sampled_consultancies_all_debates_weights_setting
 ## 21                                                0.5
 ## 43                                                0.5
@@ -6179,148 +6257,290 @@ time? S: (2) dishonest debater tricks
 ## 679                                               0.5
 ## 680                                               1.0
 ## 683                                               0.5
-##     sampled_consultancies_debates_weights_grouped_setting
-## 21                                                      0
-## 43                                                      0
-## 78                                                      0
-## 81                                                      0
-## 91                                                      1
-## 94                                                      0
-## 99                                                      0
-## 113                                                     0
-## 136                                                     0
-## 140                                                     1
-## 149                                                     0
-## 177                                                     0
-## 179                                                     0
-## 185                                                     1
-## 186                                                     0
-## 191                                                     0
-## 202                                                     0
-## 211                                                     1
-## 215                                                     1
-## 216                                                     0
-## 219                                                     1
-## 236                                                     0
-## 240                                                     0
-## 241                                                     0
-## 254                                                     0
-## 270                                                     1
-## 276                                                     1
-## 290                                                     1
-## 306                                                     0
-## 324                                                     1
-## 331                                                     1
-## 332                                                     1
-## 338                                                     1
-## 342                                                     0
-## 348                                                     1
-## 356                                                     1
-## 366                                                     0
-## 378                                                     1
-## 387                                                     0
-## 401                                                     0
-## 411                                                     0
-## 414                                                     1
-## 421                                                     1
-## 424                                                     1
-## 425                                                     1
-## 429                                                     0
-## 431                                                     1
-## 433                                                     1
-## 436                                                     1
-## 439                                                     1
-## 448                                                     1
-## 510                                                     1
-## 533                                                     1
-## 538                                                     1
-## 544                                                     1
-## 550                                                     1
-## 561                                                     1
-## 598                                                     1
-## 602                                                     1
-## 606                                                     1
-## 626                                                     1
-## 637                                                     1
-## 641                                                     1
-## 647                                                     1
-## 648                                                     1
-## 658                                                     1
-## 677                                                     1
-## 679                                                     1
-## 680                                                     1
-## 683                                                     1
-##     sampled_consultancies_debates_weights Final_Accuracy_char  fpc
-## 21                              0.0000000                  NA 0.70
-## 43                              0.0000000                  NA 0.90
-## 78                              0.0000000                  NA 0.99
-## 81                              0.0000000                  NA 0.99
-## 91                              0.2500000                  NA 0.98
-## 94                              0.0000000                  NA 0.99
-## 99                              0.0000000                  NA 0.85
-## 113                             0.0000000                  NA 0.99
-## 136                             0.0000000                  NA 0.99
-## 140                             1.0000000                  NA 0.99
-## 149                             0.0000000                  NA 0.85
-## 177                             0.0000000                  NA 0.85
-## 179                             0.0000000                  NA 0.90
-## 185                             1.0000000                  NA 0.99
-## 186                             0.0000000                  NA 0.95
-## 191                             0.0000000                  NA 0.95
-## 202                             0.0000000                  NA 0.90
-## 211                             1.0000000                  NA 0.95
-## 215                             1.0000000                  NA 0.80
-## 216                             0.0000000                  NA 0.99
-## 219                             0.2500000                  NA 0.80
-## 236                             0.0000000                  NA 0.99
-## 240                             0.0000000                  NA 0.90
-## 241                             0.0000000                  NA 0.99
-## 254                             0.0000000                  NA 0.95
-## 270                             1.0000000                  NA 0.70
-## 276                             1.0000000                  NA 0.99
-## 290                             0.3333333                  NA 0.99
-## 306                             0.0000000                  NA 0.99
-## 324                             1.0000000                  NA 0.99
-## 331                             0.5000000                  NA 0.99
-## 332                             1.0000000                  NA 0.99
-## 338                             1.0000000                  NA 0.99
-## 342                             0.0000000                  NA 0.99
-## 348                             1.0000000                  NA 0.85
-## 356                             0.5000000                  NA 0.85
-## 366                             0.0000000                  NA 0.95
-## 378                             0.5000000                  NA 0.98
-## 387                             0.0000000                  NA 0.88
-## 401                             0.0000000                  NA 0.96
-## 411                             0.0000000                  NA 0.99
-## 414                             1.0000000                  NA 0.99
-## 421                             1.0000000                  NA 0.99
-## 424                             1.0000000                  NA 0.99
-## 425                             0.5000000                  NA 0.99
-## 429                             0.0000000                  NA 0.99
-## 431                             1.0000000                  NA 0.99
-## 433                             0.5000000                  NA 0.99
-## 436                             1.0000000                  NA 0.99
-## 439                             0.3333333                  NA 0.95
-## 448                             0.3333333                  NA 0.99
-## 510                             0.2500000                  NA 0.99
-## 533                             0.5000000                  NA 0.98
-## 538                             1.0000000                  NA 0.90
-## 544                             1.0000000                  NA 0.98
-## 550                             0.2500000                  NA 0.99
-## 561                             0.5000000                  NA 0.95
-## 598                             0.2500000                  NA 0.94
-## 602                             0.5000000                  NA 0.91
-## 606                             1.0000000                  NA 0.86
-## 626                             0.3333333                  NA 0.97
-## 637                             0.5000000                  NA 0.95
-## 641                             0.5000000                  NA 0.99
-## 647                             1.0000000                  NA 0.99
-## 648                             0.3333333                  NA 0.99
-## 658                             0.5000000                  NA 0.99
-## 677                             0.5000000                  NA 0.80
-## 679                             0.3333333                  NA 0.75
-## 680                             1.0000000                  NA 0.75
-## 683                             1.0000000                  NA 0.80
+##     sampled_consultancies_all_debates_weights_grouped_setting
+## 21                                                        0.5
+## 43                                                        0.5
+## 78                                                        0.5
+## 81                                                        0.5
+## 91                                                        1.0
+## 94                                                        0.5
+## 99                                                        0.5
+## 113                                                       0.5
+## 136                                                       0.5
+## 140                                                       1.0
+## 149                                                       0.5
+## 177                                                       0.5
+## 179                                                       0.5
+## 185                                                       1.0
+## 186                                                       0.5
+## 191                                                       0.5
+## 202                                                       0.5
+## 211                                                       0.5
+## 215                                                       1.0
+## 216                                                       0.5
+## 219                                                       1.0
+## 236                                                       0.5
+## 240                                                       0.5
+## 241                                                       0.5
+## 254                                                       0.5
+## 270                                                       1.0
+## 276                                                       0.5
+## 290                                                       0.5
+## 306                                                       0.5
+## 324                                                       0.5
+## 331                                                       0.5
+## 332                                                       0.5
+## 338                                                       0.5
+## 342                                                       0.5
+## 348                                                       1.0
+## 356                                                       1.0
+## 366                                                       0.5
+## 378                                                       0.5
+## 387                                                       0.5
+## 401                                                       0.5
+## 411                                                       0.5
+## 414                                                       0.5
+## 421                                                       1.0
+## 424                                                       0.5
+## 425                                                       0.5
+## 429                                                       0.5
+## 431                                                       1.0
+## 433                                                       1.0
+## 436                                                       1.0
+## 439                                                       0.5
+## 448                                                       1.0
+## 510                                                       1.0
+## 533                                                       1.0
+## 538                                                       0.5
+## 544                                                       1.0
+## 550                                                       1.0
+## 561                                                       0.5
+## 598                                                       0.5
+## 602                                                       1.0
+## 606                                                       0.5
+## 626                                                       0.5
+## 637                                                       0.5
+## 641                                                       0.5
+## 647                                                       0.5
+## 648                                                       0.5
+## 658                                                       1.0
+## 677                                                       1.0
+## 679                                                       0.5
+## 680                                                       1.0
+## 683                                                       0.5
+##     sampled_consultancies_debates_weights
+## 21                              0.0000000
+## 43                              0.0000000
+## 78                              0.0000000
+## 81                              0.0000000
+## 91                              0.2500000
+## 94                              0.0000000
+## 99                              0.0000000
+## 113                             0.0000000
+## 136                             0.0000000
+## 140                             1.0000000
+## 149                             0.0000000
+## 177                             0.0000000
+## 179                             0.0000000
+## 185                             1.0000000
+## 186                             0.0000000
+## 191                             0.0000000
+## 202                             0.0000000
+## 211                             1.0000000
+## 215                             1.0000000
+## 216                             0.0000000
+## 219                             0.2500000
+## 236                             0.0000000
+## 240                             0.0000000
+## 241                             0.0000000
+## 254                             0.0000000
+## 270                             1.0000000
+## 276                             1.0000000
+## 290                             0.3333333
+## 306                             0.0000000
+## 324                             1.0000000
+## 331                             0.5000000
+## 332                             1.0000000
+## 338                             1.0000000
+## 342                             0.0000000
+## 348                             1.0000000
+## 356                             0.5000000
+## 366                             0.0000000
+## 378                             0.5000000
+## 387                             0.0000000
+## 401                             0.0000000
+## 411                             0.0000000
+## 414                             1.0000000
+## 421                             1.0000000
+## 424                             1.0000000
+## 425                             0.5000000
+## 429                             0.0000000
+## 431                             1.0000000
+## 433                             0.5000000
+## 436                             1.0000000
+## 439                             0.3333333
+## 448                             0.3333333
+## 510                             0.2500000
+## 533                             0.5000000
+## 538                             1.0000000
+## 544                             1.0000000
+## 550                             0.2500000
+## 561                             0.5000000
+## 598                             0.2500000
+## 602                             0.5000000
+## 606                             1.0000000
+## 626                             0.3333333
+## 637                             0.5000000
+## 641                             0.5000000
+## 647                             1.0000000
+## 648                             0.3333333
+## 658                             0.5000000
+## 677                             0.5000000
+## 679                             0.3333333
+## 680                             1.0000000
+## 683                             1.0000000
+##     sampled_consultancies_debates_weights_setting
+## 21                                              0
+## 43                                              0
+## 78                                              0
+## 81                                              0
+## 91                                              1
+## 94                                              0
+## 99                                              0
+## 113                                             0
+## 136                                             0
+## 140                                             1
+## 149                                             0
+## 177                                             0
+## 179                                             0
+## 185                                             1
+## 186                                             0
+## 191                                             0
+## 202                                             0
+## 211                                             1
+## 215                                             1
+## 216                                             0
+## 219                                             1
+## 236                                             0
+## 240                                             0
+## 241                                             0
+## 254                                             0
+## 270                                             1
+## 276                                             1
+## 290                                             1
+## 306                                             0
+## 324                                             1
+## 331                                             1
+## 332                                             1
+## 338                                             1
+## 342                                             0
+## 348                                             1
+## 356                                             1
+## 366                                             0
+## 378                                             1
+## 387                                             0
+## 401                                             0
+## 411                                             0
+## 414                                             1
+## 421                                             1
+## 424                                             1
+## 425                                             1
+## 429                                             0
+## 431                                             1
+## 433                                             1
+## 436                                             1
+## 439                                             1
+## 448                                             1
+## 510                                             1
+## 533                                             1
+## 538                                             1
+## 544                                             1
+## 550                                             1
+## 561                                             1
+## 598                                             1
+## 602                                             1
+## 606                                             1
+## 626                                             1
+## 637                                             1
+## 641                                             1
+## 647                                             1
+## 648                                             1
+## 658                                             1
+## 677                                             1
+## 679                                             1
+## 680                                             1
+## 683                                             1
+##     sampled_consultancies_debates_weights_grouped_setting  fpc
+## 21                                                      0 0.70
+## 43                                                      0 0.90
+## 78                                                      0 0.99
+## 81                                                      0 0.99
+## 91                                                      1 0.98
+## 94                                                      0 0.99
+## 99                                                      0 0.85
+## 113                                                     0 0.99
+## 136                                                     0 0.99
+## 140                                                     1 0.99
+## 149                                                     0 0.85
+## 177                                                     0 0.85
+## 179                                                     0 0.90
+## 185                                                     1 0.99
+## 186                                                     0 0.95
+## 191                                                     0 0.95
+## 202                                                     0 0.90
+## 211                                                     1 0.95
+## 215                                                     1 0.80
+## 216                                                     0 0.99
+## 219                                                     1 0.80
+## 236                                                     0 0.99
+## 240                                                     0 0.90
+## 241                                                     0 0.99
+## 254                                                     0 0.95
+## 270                                                     1 0.70
+## 276                                                     1 0.99
+## 290                                                     1 0.99
+## 306                                                     0 0.99
+## 324                                                     1 0.99
+## 331                                                     1 0.99
+## 332                                                     1 0.99
+## 338                                                     1 0.99
+## 342                                                     0 0.99
+## 348                                                     1 0.85
+## 356                                                     1 0.85
+## 366                                                     0 0.95
+## 378                                                     1 0.98
+## 387                                                     0 0.88
+## 401                                                     0 0.96
+## 411                                                     0 0.99
+## 414                                                     1 0.99
+## 421                                                     1 0.99
+## 424                                                     1 0.99
+## 425                                                     1 0.99
+## 429                                                     0 0.99
+## 431                                                     1 0.99
+## 433                                                     1 0.99
+## 436                                                     1 0.99
+## 439                                                     1 0.95
+## 448                                                     1 0.99
+## 510                                                     1 0.99
+## 533                                                     1 0.98
+## 538                                                     1 0.90
+## 544                                                     1 0.98
+## 550                                                     1 0.99
+## 561                                                     1 0.95
+## 598                                                     1 0.94
+## 602                                                     1 0.91
+## 606                                                     1 0.86
+## 626                                                     1 0.97
+## 637                                                     1 0.95
+## 641                                                     1 0.99
+## 647                                                     1 0.99
+## 648                                                     1 0.99
+## 658                                                     1 0.99
+## 677                                                     1 0.80
+## 679                                                     1 0.75
+## 680                                                     1 0.75
+## 683                                                     1 0.80
 ##        confidence_label color_value
 ## 21              Neutral -0.71457317
 ## 43              Neutral -0.25200309

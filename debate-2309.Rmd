@@ -1,8 +1,6 @@
 ---
 title: 'Results'
 output:
-  pdf_document: 
-    keep_tex: yes
   html_document:
     code_folding: hide
     df_print: paged
@@ -23,7 +21,7 @@ lib_path <- "/Users/bila/git/sm11197.github.io/sm11197.github.io/library"
 
 options(scipen = 999) #prevents scientific notation unless int wide
 knitr::opts_chunk$set(class.source = "foldable") #folds code so only results show in HTML
-knitr::opts_chunk$set(cache = TRUE) #so the same output isn't rerun
+#knitr::opts_chunk$set(cache = TRUE) #so the same output isn't rerun
 
 library(reticulate) #for interop with Python
 reticulate::use_virtualenv("/Users/bila/git/sm11197.github.io/sm11197.github.io/.venv")
@@ -35,7 +33,6 @@ library(lme4) #linear mixed models
 library(lmerTest) #tests for the above
 library(brms) #bayesian regression models
 library(boot) #bootstrap resampling for confidence intervals
-library(purrr) #data manipulation - efficient loops
 ```
 
 # Preprocessing
@@ -46,6 +43,8 @@ We have 3 sets of data from the interface:
 ```{python preprocessing 1}
 import pandas as pd
 import numpy as np
+import altair as alt
+import math as math
 import matplotlib.pyplot as plt
 import re
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -76,12 +75,16 @@ print(f'We have {len(debates)} debates when filtering out the initial pilots las
 # Secondary analysis: Question Difficulty
 # Create new columns with bin labels
 debates['Untimed annotator context bins'] = pd.cut(debates['Untimed annotator context'].round(), bins=[0, 1, 2, 3, 4], labels=['1', '2', '3', '4'], right=True)
-debates['Speed annotator accuracy bins'] = pd.cut(debates['Speed annotator accuracy'], bins=[-0.999, 0.001, 0.201, 0.401], labels=['0', '0.2', '0.4'])
+#print(debates['Untimed annotator context'].round().value_counts()) #check
+#print(debates['Untimed annotator context bins'].value_counts()) #check
+debates['Speed annotator accuracy bins'] = pd.cut(debates['Speed annotator accuracy'].round(1), bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5,0.6], labels=['0', '0.1', '0.2','0.3','0.4','0.5'], right=False)
 ## respectively, those speed annotator accuracies probably mean 0 right, 1 right, 2 right
+#print(debates['Speed annotator accuracy'].round(1).value_counts().sort_index()) #check #0.5 acc? 
+#print(debates['Speed annotator accuracy bins'].value_counts().sort_index()) #check
 
 debates['Final_Accuracy'] = debates['Final probability correct'] > 0.5
 
-print(f'Average accuracy per context required by question:\n{debates.groupby("Untimed annotator context bins")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'Average accuracy per context required by question:\n{debates.groupby("Untimed annotator context bins")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}\nOverall accuracy goes down the more context is required')
 
 print(f'Average accuracy per difficulty based on speed annotator accuracy:\n{debates.groupby("Speed annotator accuracy bins")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}\nHm, this seems less likely to be a good indicator of question difficulty')
 
@@ -129,18 +132,18 @@ print(f'Of those judgments, we have this much for each setting (not consolidatin
 
 judgments['Final_Accuracy'] = judgments['Final probability correct'] > 0.5
 
-print(f'Of those judgments, we have this much for each setting (aggregated):\n{judgments.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'Of those judgments, we have this much for each setting (aggregated):\n{judgments.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size").sort_index()}')
 
 # Remove judges who see the story more than once
 judgments['base_room_name'] = judgments['Room name'].str.extract('(.*)\d+$', expand=False).fillna(judgments['Room name'])
 judgments = judgments.sort_values(by=['base_room_name','End time']).groupby(['Participant', 'base_room_name']).first().reset_index()
 
-print(f'1. We then filter to judgments where the judge has only seen a story once, and now we have this much for each setting (aggregated):\n{judgments.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'1. We then filter to judgments where the judge has only seen a story once, and now we have this much for each setting (aggregated):\n{judgments.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size").sort_index()}')
 
 
 # Filter to online judges only
 judgments_online = judgments[judgments["Role"] == "Judge"]
-print(f'2. We\'ll make a copy of the online judgments only leaving us with the following judgments:\n{judgments_online.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'2. We\'ll make a copy of the online judgments only leaving us with the following judgments:\n{judgments_online.groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}') #halves the data
 
 
 judgments_online = judgments_online[judgments_online['Untimed annotator context bins'].isin(['2', '3', '4'])]
@@ -149,16 +152,17 @@ print(f'3. We then filter to judgments which require more than a sentence or two
 
 pd.set_option('display.max_columns', None)
 total_counts_for_setting = judgments_online.groupby('Final_Setting').size()
-result = judgments_online.groupby(["Final_Setting", "Untimed annotator context bins"]).agg(
+result = judgments_online.groupby(["Final_Setting", "Untimed annotator context bins"], observed=False).agg(
     Proportion_True=pd.NamedAgg(column='Final_Accuracy', aggfunc=lambda x: x.mean()),
-    Context_Count=pd.NamedAgg(column='Final_Accuracy', aggfunc='size'),
-    Proportion_All_Context=pd.NamedAgg(column='Final_Setting', aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
+    Count=pd.NamedAgg(column='Final_Accuracy', aggfunc='size'),
+    Proportion_Count=pd.NamedAgg(column='Final_Setting', aggfunc=lambda x: len(x) / total_counts_for_setting[x.mode()])
 )
 print(f'Are the difficult questions equally enough distributed amongst settings?:\n{result}')
 pd.reset_option('display.max_columns')
 ```
 So question difficulty isn't perfectly balanced... but consultancies have a different relationship with question difficulty anyway?
 **need a second opinion**
+We might at least want to ratio it better for AI settings...
 
 ## Trying to balance the data
 
@@ -249,15 +253,15 @@ judgments_online = balance_consultancies(judgments_online, 'AI Consultancy', ran
 
 #from statsmodels.stats.proportion import proportions_ztest
 
-def run_experiment(judgments_online):
-    judgments_online['Sample'] = False
-    judgments_online = balance_consultancies(judgments_online, 'Human Consultancy')
-    judgments_online = balance_consultancies(judgments_online, 'AI Consultancy')
-    sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
-    judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
-    consultancy_balanced = (~judgments_online['Setting'].str.contains('Consultancy', case=False, na=False)) | (judgments_online['Sample'] == True)
-    result = judgments_online[consultancy_balanced].groupby(["Final_Setting"])["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(), Total_Count="size")
-    return result
+#def run_experiment(judgments_online):
+#    judgments_online['Sample'] = False
+#    judgments_online = balance_consultancies(judgments_online, 'Human Consultancy')
+#    judgments_online = balance_consultancies(judgments_online, 'AI Consultancy')
+#    sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
+#    judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
+#    consultancy_balanced = (~judgments_online['Setting'].str.contains('Consultancy', case=False, na=False)) | (judgments_online['Sample'] == True)
+#    result = judgments_online[consultancy_balanced].groupby(["Final_Setting"])["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(), Total_Count="size")
+#    return result
 
 # Number of iterations
 #num_iterations = 1000
@@ -284,8 +288,8 @@ def run_experiment(judgments_online):
 
 #print(f'pval mean: {np.mean(p_vals)}')
 ```
-### Balance debates
 
+### Balance debates? (not actually used)
 ```{python balancing debates}
 def balance_debates(df, sample_setting, random_state):
     debates_df = df[df['Setting'].str.contains(sample_setting, na=False)]
@@ -318,7 +322,7 @@ judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
 judgments_online['Consultancy Sample'] = judgments_online[consultancy_sample_columns].any(axis=1)
 consultancy_balanced = (~judgments_online['Setting'].str.contains('Consultancy', case=False, na=False)) | (judgments_online['Consultancy Sample'] == True)
 
-print(f'Accuracy per setting (aggregated) after balancing:\n{judgments_online[consultancy_balanced].groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}')
+print(f'Accuracy per setting (aggregated) after balancing:\n{judgments_online[consultancy_balanced].groupby("Final_Setting")["Final_Accuracy"].agg(Proportion_True=lambda x: x.mean(),Total_Count="size")}\nAccuracies remain pretty similar')
 
 
 def question_weights(data, columns, weight_column_name, consultancy_sample=None, debate_sample=None):
@@ -362,13 +366,13 @@ judgments_online = question_weights(
 def print_weight_summary_by_setting(df, weight_column, consultancy_sample=None):
     consultancy_condition = df['Setting'].str.contains('Consultancy', case=False, na=False)
     if consultancy_sample is not None:
-        consultancy_condition &= (df['Sample'] == consultancy_sample)
-    for setting in df['Setting'].unique():
+        consultancy_condition &= (df['Consultancy Sample'] == consultancy_sample)
+    for setting in sorted(df['Setting'].unique()):
         total_weight = df[df['Setting'] == setting][weight_column].sum()
         print(f"Total {weight_column} for {setting}: {total_weight:.2f}")
     print("\n")
 
-print('Unsampled (initial) weights, by group setting')
+print('Unsampled consultancies/debates (initial) weights, by group setting')
 print_weight_summary_by_setting(judgments_online, 'initial_question_weights_grouped_setting')
 
 # Recalculate weights for balanced consultancies, all debates
@@ -380,28 +384,24 @@ judgments_online = question_weights(
 )
 judgments_online = question_weights(
     data=judgments_online, 
-    columns=['Article ID', 'Question', 'Final_Setting'], 
-    weight_column_name='sampled_consultancies_all_debates_weights_grouped_setting',
-    consultancy_sample=True
-)
-judgments_online = question_weights(
-    data=judgments_online, 
     columns=['Article ID', 'Question', 'Setting'], 
     weight_column_name='sampled_consultancies_all_debates_weights_setting',
     consultancy_sample=True
 )
-print('Consultancy balanced weights, by no/yes group setting')
-print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights', consultancy_sample=True)
-print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights_grouped_setting', consultancy_sample=True)
-print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights_setting', consultancy_sample=True)
-
 judgments_online = question_weights(
     data=judgments_online, 
     columns=['Article ID', 'Question', 'Final_Setting'], 
-    weight_column_name='sampled_consultancies_debates_weights_grouped_setting',
-    consultancy_sample=True,
-    debate_sample=True
+    weight_column_name='sampled_consultancies_all_debates_weights_grouped_setting',
+    consultancy_sample=True
 )
+print('Consultancy balanced weights, not grouped - (not balanced, would have to change balancing function...')
+print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights', consultancy_sample=True)
+print('Consultancy balanced weights, grouped by Setting - see that the consultancies are balanced between those with honest or dishonest consultant')
+print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights_setting', consultancy_sample=True)
+print('Consultancy balanced weights, grouped by Final Setting')
+print_weight_summary_by_setting(judgments_online[consultancy_balanced], 'sampled_consultancies_all_debates_weights_grouped_setting', consultancy_sample=True)
+
+
 judgments_online = question_weights(
     data=judgments_online, 
     columns=['Article ID', 'Question'], 
@@ -409,35 +409,62 @@ judgments_online = question_weights(
     consultancy_sample=True,
     debate_sample=True
 )
+judgments_online = question_weights(
+    data=judgments_online, 
+    columns=['Article ID', 'Question', 'Setting'], 
+    weight_column_name='sampled_consultancies_debates_weights_setting',
+    consultancy_sample=True,
+    debate_sample=True
+)
+judgments_online = question_weights(
+    data=judgments_online, 
+    columns=['Article ID', 'Question', 'Final_Setting'], 
+    weight_column_name='sampled_consultancies_debates_weights_grouped_setting',
+    consultancy_sample=True,
+    debate_sample=True
+)
 ```
 
-Note: we are not balancing between settings, and some of the counts of the debate settings are on the same questions
+Note: we are not balancing between settings(?), 
+and more counts of the human debate settings are on the same questions..?
 
 ## Load into R environment
 
 ```{r R pre}
 set.seed(123)
+# Read in objects from Python with py$
 judgments <- py$judgments
 judgments_online <- py$judgments_online
-# Convert the Accuracy column to a factor for better plotting
-judgments_online$Final_Accuracy_char <- as.logical.factor(as.character(judgments_online$Final_Accuracy))
+# Change type into factor so it is read as categories which can be manipulated instead of characters
 judgments_online$Participant <- as.factor(judgments_online$Participant)
 judgments_online$Setting <- as.factor(judgments_online$Setting)
 
-
+# Doing some sanity checks
 subset_dishonest <- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE & judgments_online$Setting == 'Human Consultancy Dishonest', c("sampled_consultancies_all_debates_weights_grouped_setting","Final_Accuracy")]
 subset_honest <- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE & judgments_online$Setting == 'Human Consultancy Honest', c("sampled_consultancies_all_debates_weights_grouped_setting","Final_Accuracy")]
-table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting, subset_dishonest$Final_Accuracy)
-table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting, subset_honest$Final_Accuracy)
+#Are the question weights equal for human consultancies?"
+table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting) ; table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting)
+#What does the accuracy look like for those question weights?
+#table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting, subset_dishonest$Final_Accuracy)
+#table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting, subset_honest$Final_Accuracy)
 
-table(subset_dishonest$sampled_consultancies_all_debates_weights_grouped_setting)
-table(subset_honest$sampled_consultancies_all_debates_weights_grouped_setting)
 
-subset_human_consultancies <- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE & judgments_online$Final_Setting == 'Human Consultancy', c("sampled_consultancies_all_debates_weights_grouped_setting","Final_Accuracy")]
-table(subset_human_consultancies$sampled_consultancies_all_debates_weights_grouped_setting, subset_human_consultancies$Final_Accuracy)
-table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights_grouped_setting)
-table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_debates_weights)
 
+#subset_human_consultancies <- judgments_online[judgments_online$`Human Consultancy Sample` == TRUE & judgments_online$Final_Setting == 'Human Consultancy', c("sampled_consultancies_all_debates_weights_grouped_setting","Final_Accuracy")]
+#table(subset_human_consultancies$sampled_consultancies_all_debates_weights_grouped_setting, subset_human_consultancies$Final_Accuracy)
+#Difference between grouping and not grouping question weights
+table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights_grouped_setting) ; table(judgments_online$Final_Setting, judgments_online$sampled_consultancies_all_debates_weights)
+
+
+# Balanced consultancies difference between grouping and not grouping question weights
+consultancy_condition <- (judgments_online$Sample == TRUE) | (!grepl("Consultancy", judgments_online$Final_Setting))
+table(judgments_online[consultancy_condition, ]$Final_Setting, judgments_online[consultancy_condition, ]$sampled_consultancies_all_debates_weights_grouped_setting, judgments_online[consultancy_condition, ]$Final_Accuracy)
+table(judgments_online[consultancy_condition, ]$Final_Setting, judgments_online[consultancy_condition, ]$sampled_consultancies_all_debates_weights, judgments_online[consultancy_condition, ]$Final_Accuracy)
+
+
+# Sampled data (balanced consultancies and sampled debates) difference between grouping and not grouping question weights
+table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgments_online[judgments_online$Sample == TRUE, ]$sampled_consultancies_debates_weights_grouped_setting)
+table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgments_online[judgments_online$Sample == TRUE, ]$sampled_consultancies_debates_weights)
 ```
 
 # Results
@@ -463,95 +490,127 @@ print("Really raw")
 acc_diff_test(svydesign(ids = ~1, data = judgments))
 print("Raw")
 acc_diff_test(svydesign(ids = ~1, data = judgments_online))
-print("Balanced consultancies")
+print("Balanced consultancies, NO weights") # still sig
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting))))
 print("Balanced consultancies, question weights (grouped settings)")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
+print("Balanced # consultancies, question weights")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights))
+print("Balanced consultancies sampled debates, NO weights")
+acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE)))
 print("Balanced consultancies sampled debates, question weights (grouped settings)")
 acc_diff_test(svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE), weights = ~sampled_consultancies_debates_weights_grouped_setting))
-acc_diff_test(svydesign(ids = ~1, data = judgments_online, weights = ~sampled_consultancies_debates_weights_grouped_setting))
-design = svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting)
-acc_diff_test(design)
+svytable(~Final_Setting+Final_Accuracy, svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE)))
+svytable(~Final_Setting+Final_Accuracy, svydesign(ids = ~1, data = subset(judgments_online, `Sample` == TRUE), weights = ~sampled_consultancies_debates_weights_grouped_setting))
 
 print("Now trying manually tests that aren't pairwise + cobfidence intervals for the table")
 
-## To maybe do: refactor this into function?
 
-final_table <- svytable(~Final_Setting+Final_Accuracy, 
-                        design = svydesign(ids = ~1, 
-                                           data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
-                                           weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
-final_table
-# Add accuracy
-final_table <- cbind(final_table, Accuracy = (final_table[,2] / (final_table[,1]+final_table[,2]))*100)
-# Calculate the difference in accuracy for each row compared to "Human Debate"
-difference_with_debate <- final_table[,"Accuracy"] - final_table["Human Debate", "Accuracy"]
-# Bind the difference column to the final_table
-final_table <- cbind(final_table, difference_with_debate)
-
-# Loop through each setting
-ci_lowers <- c()
-ci_uppers <- c()
-p_values <- c()
-# Loop through each setting
-for (setting in rownames(final_table)) {
-  # Use prop.test to compare the setting's accuracy with "Human Debate"
-  results <- prop.test(c(final_table["Human Debate", "TRUE"], final_table[setting, "TRUE"]), c((final_table["Human Debate", "TRUE"]+final_table["Human Debate", "FALSE"]), (final_table[setting, "TRUE"]+final_table[setting, "FALSE"])))
-  
-  # Extract the confidence interval and store it as a string in the format "lower - upper"
-  ci_lower <- results$conf.int[1] * 100  # Multiply by 100 to convert to percentage
-  ci_upper <- results$conf.int[2] * 100  # Multiply by 100 to convert to percentage
-  ci_lowers <- c(ci_lowers, ci_lower)
-  ci_uppers <- c(ci_uppers, ci_upper)
-  p_values <- c(p_values, results$p.value)
+process_table <- function(svy_table, round_by) {
+  # Ensure that the input is a svytable object
+  if (!inherits(svy_table, "svytable")) {
+    stop("Input must be a svytable object")
+  }
+  # Add accuracy
+  svy_table <- cbind(svy_table, Accuracy = (svy_table[,2] / (svy_table[,1] + svy_table[,2])) * 100)
+  # Calculate the difference in accuracy for each row compared to "Human Debate"
+  difference_with_debate <- svy_table[,"Accuracy"] - svy_table["Human Debate", "Accuracy"]
+  # Bind the difference column to the svy_table
+  svy_table <- cbind(svy_table, `Difference with Debate` = difference_with_debate)
+  # Initialize vectors to store confidence interval bounds and p-values
+  ci_lowers <- c() ; ci_uppers <- c() ; p_values <- c()
+  # Loop through each setting
+  for (setting in rownames(svy_table)) {
+    # Use prop.test to compare the setting's accuracy with "Human Debate"
+    results <- prop.test(
+      x = c(svy_table["Human Debate", "TRUE"], svy_table[setting, "TRUE"]),
+      n = c((svy_table["Human Debate", "TRUE"] + svy_table["Human Debate", "FALSE"]), (svy_table[setting, "TRUE"] + svy_table[setting, "FALSE"]))
+    )
+    # Extract the confidence interval and store it as a string in the format "lower - upper"
+    ci_lower <- round(results$conf.int[1] * 100,round_by)  # Multiply by 100 to convert to percentage
+    ci_upper <- round(results$conf.int[2] * 100,round_by)  # Multiply by 100 to convert to percentage
+    ci_lowers <- c(ci_lowers, ci_lower)
+    ci_uppers <- c(ci_uppers, ci_upper)
+    p_values <- c(p_values, results$p.value)
+  }
+  # Change to wanted format (judgments summed, split counts removed)
+  svy_table <- cbind("n Judgments (weighted)" = (svy_table[,"FALSE"] + svy_table[,"TRUE"]), svy_table)
+  svy_table <- svy_table[ , !(colnames(svy_table) %in% c("FALSE", "TRUE"))]
+  # Concatenate the CI bounds into a single string
+  ci_strings <- paste0("[", ci_lowers, ", ", ci_uppers, "]")
+  # Convert svy_table to a data.frame so adding the strings doesn't change the data type for entire matrix
+  svy_table <- as.data.frame(svy_table)
+  # Bind the confidence interval bounds and p-values to the svy_table
+  svy_table <- cbind(svy_table, `95% CI [lower, upper]` = ci_strings, `p val` = p_values)
+  return(svy_table)
 }
-final_table <- cbind(final_table, ci_lowers, ci_uppers, p_values)
+
+# First table, all data accuracy
+svy_table_input <- svytable(
+  ~Setting + Final_Accuracy, 
+  design = svydesign(
+    ids = ~1, 
+    data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
+    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+  )
+)
+
+# Call the function
+final_table <- process_table(svy_table_input, round_by = 1)
 final_table
-# Display the updated table using knitr::kable
-knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
-             col.names = c("# Incorrect (weighted)", "# Correct (weighted)", "Accuracy", "Difference", "95% CI Lower Limit","95% CI Upper Limit","p-value"))
+
+knitr::kable(final_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
 
 
-print("Second table, human settings only")
 
-human_only <- subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting))
-human_only$Setting <- droplevels(human_only$Setting)
-table(human_only$Setting)
 
-final_table <- svytable(~Setting+Final_Accuracy, 
-                        design = svydesign(ids = ~1, 
-                                           data = human_only,
-                                           weights = ~sampled_consultancies_all_debates_weights_setting))
-final_table
-# Add accuracy
-final_table <- cbind(final_table, Accuracy = (final_table[,2] / (final_table[,1]+final_table[,2]))*100)
-# Calculate the difference in accuracy for each row compared to "Human Debate"
-difference_with_debate <- final_table[,"Accuracy"] - final_table["Human Debate", "Accuracy"]
-# Bind the difference column to the final_table
-final_table <- cbind(final_table, difference_with_debate)
+# Possible table?, high confidence accuracy
+high_conf_data <- subset(judgments_online, 
+                         `Final probability correct` <= 0.01 | `Final probability correct` >= 0.99)
 
-# Loop through each setting
-ci_lowers <- c()
-ci_uppers <- c()
-p_values <- c()
-# Loop through each setting
-for (setting in rownames(final_table)) {
-  # Use prop.test to compare the setting's accuracy with "Human Debate"
-  results <- prop.test(c(final_table["Human Debate", "TRUE"], final_table[setting, "TRUE"]), c((final_table["Human Debate", "TRUE"]+final_table["Human Debate", "FALSE"]), (final_table[setting, "TRUE"]+final_table[setting, "FALSE"])))
-  
-  # Extract the confidence interval and store it as a string in the format "lower - upper"
-  ci_lower <- results$conf.int[1] * 100  # Multiply by 100 to convert to percentage
-  ci_upper <- results$conf.int[2] * 100  # Multiply by 100 to convert to percentage
-  ci_lowers <- c(ci_lowers, ci_lower)
-  ci_uppers <- c(ci_uppers, ci_upper)
-  p_values <- c(p_values, results$p.value)
-}
-final_table <- cbind(final_table, ci_lowers, ci_uppers, p_values)
-final_table
-# Display the updated table using knitr::kable
-knitr::kable(final_table, booktab = TRUE,  digits = c(rep(1,6),3),
-             col.names = c("# Incorrect (weighted)", "# Correct (weighted)", "Accuracy", "Difference", "95% CI Lower Limit","95% CI Upper Limit","p-value"))
+# Create the svytable object for high confidence accuracy
+svy_table_high_conf <- svytable(
+  ~Final_Setting + Final_Accuracy, 
+  design = svydesign(
+    ids = ~1, 
+    data = subset(high_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
+    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+  )
+)
+
+# Call the function for high confidence accuracy
+high_conf_table <- process_table(svy_table_high_conf, round_by = 1)
+high_conf_table
+
+# Render the high confidence accuracy table
+knitr::kable(high_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
+
+
+
+
+
+
+# Possible table?, high confidence accuracy
+low_conf_data <- subset(judgments_online, 
+                         `Final probability correct` >= 0.30 & `Final probability correct` <= 0.70)
+
+# Create the svytable object for high confidence accuracy
+svy_table_low_conf <- svytable(
+  ~Final_Setting + Final_Accuracy, 
+  design = svydesign(
+    ids = ~1, 
+    data = subset(low_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
+    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+  )
+)
+
+# Call the function for high confidence accuracy
+low_conf_table <- process_table(svy_table_low_conf, round_by = 1)
+low_conf_table
+
+# Render the high confidence accuracy table
+knitr::kable(low_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
+
 ```
 
 ```{r final probability correct}
@@ -932,39 +991,10 @@ filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(`Max judge ro
 ```{python strat, out.width = "100%", dpi = 300}
 all_turns = turns.merge(
         debates[["Room name", "Honest debater", "Dishonest debater", "Question", "Article ID",
-                 "Speed annotator accuracy","Untimed annotator context","Untimed annotator context bins","Is offline","Final_Setting", "Setting","Final_Accuracy"]],
+                 "Speed annotator accuracy","Untimed annotator context","Untimed annotator context bins","Is offline","Final_Setting", "Setting"]],
         how="left",
         on="Room name",
     )
-
-print(all_turns.groupby('Final_Setting')['Num previous judging rounds'].mean())
-
-for setting in all_turns['Setting'].unique():
-  all_turns_setting = all_turns[all_turns['Setting']==setting]
-  print(setting)
-  # Calculate the maximum 'Num previous judging rounds' for each combination of 'Room name' and 'Participant'
-  all_turns_setting['Max judge rounds by room'] = all_turns_setting.groupby(['Room name', 'Participant'])['Num previous judging rounds'].transform('max')
-  ## Just based on the number of rounds
-  
-  for i in range(1, all_turns_setting['Max judge rounds by room'].max() + 1):
-      max_rounds = all_turns_setting[(all_turns_setting['Max judge rounds by room'] == i) & (all_turns_setting['Untimed annotator context'] > 0)]
-      print(len(max_rounds))
-      # Group by 'Num previous judging rounds' and calculate the mean of 'Probability correct'
-      average_pc_per_round = max_rounds.groupby('Num previous judging rounds')['Probability correct'].mean()
-  
-      # Create a new DataFrame with 'Num previous judging rounds' and 'Average pc per round'
-      probability_correct_round = pd.DataFrame({'Num previous judging rounds': average_pc_per_round.index,
-                                                'Average pc per round': average_pc_per_round.values})
-  
-      # Plotting the data with label for the line
-      plt.plot(probability_correct_round['Num previous judging rounds'], probability_correct_round['Average pc per round'], label=f"Max Rounds: {i}")
-  
-  plt.title(f"Probability Correct for Setting: {setting}") 
-  plt.xlabel('Num previous judging rounds')
-  plt.ylabel('Average pc per round')
-  plt.legend()
-  plt.show()
-
 ```
 
 
@@ -974,20 +1004,59 @@ strat <- strat %>%
   group_by(`Room name`, Participant) %>%
   mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %>%
   ungroup()
+
+generate_bins <- function(start, end, step) {
+  breaks <- seq(start, end + 1, by = step)  # Extend the sequence to end + 1 to include the end point
+  labels <- sapply(1:(length(breaks) - 1), function(i) {
+    lower_bound = breaks[i]+1
+    upper_bound = breaks[i+1]
+    return(paste0(lower_bound, "-", upper_bound))  # Return the range string
+  })
+  breaks <- c(-Inf, breaks, Inf)  # Extend the breaks vector to include Inf
+  labels <- c("0", labels, paste0(end+1,"+"))
+  return(list(breaks = breaks, labels = labels))
+}
+
+# Now use this function to generate the breaks and labels:
+bins <- generate_bins(0, 15, 3)
+
+# Now use these dynamically generated values in your mutate function:
+strat <- strat %>%
+  mutate(`Max judge rounds bin` = cut(`Max judge rounds by room`,
+                                       breaks = bins$breaks,
+                                       labels = bins$labels,
+                                       right = TRUE,
+                                       include.lowest = TRUE))
 strat <- strat %>%
   mutate(`Max judge rounds bin` = cut(`Max judge rounds by room`, 
-                                      breaks = seq(0, max(`Max judge rounds by room`, na.rm = TRUE) + 3, by = 3), 
-                                      labels = FALSE, 
-                                      include.lowest = TRUE, 
-                                      right = FALSE))
-
+                                       breaks = c(-Inf, 0, 3, 6, 9, 12, 15, Inf),
+                                       labels = c("0", "1-3", "4-6", "7-9", "10-12", "13-15", "16+"),
+                                       right = TRUE, 
+                                       include.lowest = TRUE))
+# Bootstrap mean function
 bootstrap_mean <- function(data, indices) {
   return(mean(data[indices], na.rm = TRUE))
 }
 
-# Plot using ggplot2
+# deprecated, keep original max round except if above cutoff
+strat <- strat %>%
+  mutate(`Max judge rounds bin` = ifelse(`Max judge rounds by room` > 5, "6+", as.character(`Max judge rounds by room`))) %>%
+  mutate(`Max judge rounds bin` = factor(`Max judge rounds bin`, 
+                                        levels = c("0", "1", "2", "3", "4", "5"),
+                                         ordered = TRUE))
+
+# Extract unique bin values
+unique_bins <- levels(strat$`Max judge rounds bin`)[2:length(levels(strat$`Max judge rounds bin`))]
+
+# Create a decreasing sequence of alpha values
+alpha_values <- seq(1, 0.1, length.out = length(unique_bins))
+
+# Create a named vector for mapping
+alpha_map <- setNames(alpha_values, unique_bins)
+
 strat %>%
-  group_by(Setting, `Num previous judging rounds`, `Max judge rounds bin`) %>%
+  filter(`Max judge rounds bin` != "0") %>%  # Remove entries with "0" bin
+  group_by(Final_Setting, `Num previous judging rounds`, `Max judge rounds bin`) %>%
   do({
     boot_result <- boot(data = .$`Probability correct`, statistic = bootstrap_mean, R = 1000)
     data.frame(
@@ -996,15 +1065,18 @@ strat %>%
       upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
     )
   }) %>%
-  ggplot(aes(x = `Num previous judging rounds`, y = mean_accuracy, col = as.factor(`Max judge rounds bin`))) +
-  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = as.factor(`Max judge rounds bin`), group = as.factor(`Max judge rounds bin`), color = NULL), alpha = 0.15) +
-  labs(title = "Average Probability Correct Each Round, \nstratified by Max Round Binned",
+  ggplot(aes(x = `Num previous judging rounds`, y = mean_accuracy, col = `Max judge rounds bin`)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = `Max judge rounds bin`, group = `Max judge rounds bin`, color = NULL), alpha = 0.25) +
+  labs(title = "Average Probability Correct by Round, \nStratified by binned Max Round",
        x = "Round", 
        y = "Average Intermediate Probability Correct") +
-  geom_line() +
-  facet_wrap(~Setting) +
-  theme_bw() +
-  theme(legend.position = "none")
+  geom_line(aes(alpha = `Max judge rounds bin`)) +
+  scale_alpha_manual(values = alpha_map) +
+  facet_wrap(~Final_Setting) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
 
 
 
