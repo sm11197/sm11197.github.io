@@ -33,6 +33,7 @@ library(lme4) #linear mixed models
 library(lmerTest) #tests for the above
 library(brms) #bayesian regression models
 library(boot) #bootstrap resampling for confidence intervals
+library(coin) #for rank tests
 ```
 
 # Preprocessing
@@ -466,12 +467,105 @@ table(judgments_online[consultancy_condition, ]$Final_Setting, judgments_online[
 table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgments_online[judgments_online$Sample == TRUE, ]$sampled_consultancies_debates_weights_grouped_setting)
 table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgments_online[judgments_online$Sample == TRUE, ]$sampled_consultancies_debates_weights)
 ```
+## Robustness Checks
+```{r variance check}
+paste("Overall variance is", 
+      var(judgments_online$Final_Accuracy), "(mean way)",
+      ((sum(judgments_online$Final_Accuracy, na.rm = T) / length(judgments_online$Final_Accuracy)) * (1 - (sum(judgments_online$Final_Accuracy, na.rm = T)) / length(judgments_online$Final_Accuracy))) / (length(judgments_online$Final_Accuracy) - 1), "(prop way)")
+# Accuracy variation per setting
+judgments_online %>%
+  group_by(Final_Setting) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+# Accuracy variation per setting (consultancies balanced)
+judgments_online[consultancy_condition, ] %>%
+  group_by(Final_Setting) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+
+judgments_online %>%
+  group_by(base_room_name) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+judgments_online %>%
+  group_by(Question) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+
+
+
+judgments_online[consultancy_condition, ] %>%
+  group_by(base_room_name) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+judgments_online[consultancy_condition, ] %>%
+  group_by(Question) %>%
+  summarise(
+    var_mean = var(Final_Accuracy),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% mutate(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+
+
+judgments_online[consultancy_condition,] %>%
+  group_by(base_room_name) %>%
+  summarise(
+    var_mean = var(Final_Accuracy, na.rm = T),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy, na.rm = T),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% group_by(Final_Setting) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+judgments_online[consultancy_condition,] %>%
+  group_by(Question) %>%
+  summarise(
+    var_mean = var(Final_Accuracy, na.rm = T),
+    n = length(Final_Accuracy),
+    x_aka_num_correct = sum(Final_Accuracy, na.rm = T),
+    p_aka_accuracy = (x_aka_num_correct / n),
+    var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
+  ) %>% group_by(Final_Setting) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
+               avg_var_prop = mean(var_prop, na.rm = T))
+```
 
 # Results
 
-## Accuracy
 
-### Difference in proportions
+## Difference in Accuracy
 
 ```{r weighted chi}
 # Make a function to easily try out different weights
@@ -612,9 +706,10 @@ low_conf_table
 knitr::kable(low_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
 
 ```
+## Difference in final probability correct
 
 ```{r final probability correct}
-judgments_online$fpc <- judgments_online$`Final probability correct`
+judgments_online$`Reward penalty 0.5` <- log2(judgments_online$`Final probability correct`) - 0.5*
 
 # Weighted Kruskal-Wallis
 svyranktest(fpc~Final_Setting, svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
@@ -626,8 +721,31 @@ svyranktest(fpc~Final_Setting,
             svydesign(ids = ~1, data = subset(judgments_online, `Human Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting) & !grepl("AI", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting),
             test = "median")
 # TODO: check test for human consultancy & human debate, make table. Might have to rebuild package to get CIs
-# see calibration for confident mistakes
 # Note: see publication in help page for more
+
+# all
+pairwise.wilcox.test(judgments_online$`Final probability correct`, judgments_online$Final_Setting)
+# human settings
+filtered_data <- judgments_online[judgments_online$Final_Setting %in% c("Human Consultancy", "Human Debate"), ]
+wilcox.test(
+  `Final probability correct` ~ Final_Setting, 
+  data = filtered_data,
+  paired = FALSE,
+  conf.int = TRUE
+)
+wilcox.test(
+  log2(`Final probability correct`) ~ Final_Setting, 
+  data = filtered_data,
+  paired = FALSE,
+  conf.int = TRUE
+)
+# Conduct the Mann-Whitney U test and get the CI
+wilcox_test(
+  formula = `Final probability correct` ~ as.factor(Final_Setting), 
+  data = filtered_data,
+  #weights = ~sampled_consultancies_all_debates_weights_grouped_setting,
+  conf.int = TRUE  # Request the confidence interval
+)
 
 
 
@@ -664,8 +782,10 @@ weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_wei
 
 weighted_mannwhitney(fpc ~ Final_Setting + sampled_consultancies_all_debates_weights_grouped_setting, judgments_online)
 ```
-### Logistic regression
 
+## Models
+
+### Logistic regression
 ```{r}
 #judgments_online$Final_Setting <- relevel(judgments_online$Final_Setting, ref = "Human Debate")
 model1 <- glm(Final_Accuracy ~ relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments_online)
@@ -918,6 +1038,11 @@ filtered_outliers <- debater_turns %>%
          lower_bound = Q1 - 1.5 * IQR,
          upper_bound = Q3 + 1.5 * IQR)
 
+ggplot(data = debater_turns) +
+  geom_histogram(aes(x = quote_length, binwidth = 1)) +
+  facet_wrap(~ Final_Setting)
+
+
 ggplot(debater_turns) +
   geom_boxplot(aes(x = Final_Setting, y = `Quote length`)) +
   labs(y = "Total Quote Length (debater_turns)")+
@@ -941,7 +1066,7 @@ debater_turns %>%
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
   theme_minimal()
-pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
+pairwise.wilcox.test(filtered$quote_length, filtered$Final_Setting)
 
 
 filtered %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
@@ -958,7 +1083,7 @@ ggplot(debater_turns) +
   labs(y = 'Max Judging Rounds') +
   theme_minimal() 
 
-pairwise.t.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)
+pairwise.wilcox.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)
 
 
 filtered <- debater_turns %>%
@@ -980,7 +1105,7 @@ debater_turns %>%
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
   labs(y = "Rounds", x = "Setting")+
   theme_minimal()
-pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
+pairwise.wilcox.test(filtered$`Max judge rounds by room`, filtered$Final_Setting)
 
 filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(`Max judge rounds by room`))
 
@@ -1347,8 +1472,70 @@ for setting in judgments_online['Final_Setting'].unique():
 ### Judge Mistakes
 
 ## Debater Skill
+```{python leaderboard}
+leaderboard = sessions.merge(
+        debates[
+            [
+                "Room name",
+                "Honest debater",
+                "Dishonest debater"
+            ]
+        ],
+        how="left",
+        on="Room name",
+    )
 
-```{r}
+
+
+leaderboard = sessions.merge(
+        debates[
+            [
+                "Room name",
+                "Honest debater",
+                "Dishonest debater"
+            ]
+        ],
+        how="left",
+        on="Room name",
+    )
+# filter to sessions corresponding to a judge
+leaderboard = leaderboard[leaderboard['Final probability correct'].notna()]
+from math import log
+leaderboard['Judge reward'] = leaderboard.apply(
+    lambda row: log(row['Final probability correct']) - (0.05 * row['Number of judge continues']),
+    axis=1
+)
+leaderboard['Honest debater reward'] = leaderboard.apply(
+    lambda row: log(row['Final probability correct']),
+    axis=1
+)
+leaderboard['Dishonest debater reward'] = leaderboard.apply(
+    lambda row: log(1 - row['Final probability correct']),
+    axis=1
+)
+```
+
+```{r leaderboard rank}
+leaderboard<-py$leaderboard
+leaderboard <- leaderboard %>%
+  group_by(Participant) %>%
+  mutate(Avg_Judge_Reward = mean(`Judge reward`, na.rm = TRUE)) %>%
+  ungroup()
+leaderboard <- leaderboard %>%
+  group_by(`Honest debater`) %>%
+  mutate(Avg_Honest_Debater_Reward = mean(`Honest debater reward`, na.rm = TRUE)) %>%
+  ungroup()
+leaderboard <- leaderboard %>%
+  group_by(`Dishonest debater`) %>%
+  mutate(Avg_Dishonest_Debater_Reward = mean(`Dishonest debater reward`, na.rm = TRUE)) %>%
+  ungroup()
+leaderboard <- leaderboard %>%
+  mutate(Rank_Judge = rank(desc(Avg_Judge_Reward)),
+         Rank_Honest = rank(desc(Avg_Honest_Debater_Reward)),
+         Rank_Dishonest = rank(desc(Avg_Dishonest_Debater_Reward)))
+```
+
+```{r deprecated}
 random.intercept.model = lmer(`Final probability correct` ~  (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 

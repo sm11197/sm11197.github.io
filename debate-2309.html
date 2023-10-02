@@ -1000,12 +1000,9 @@ table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgmen
 </div>
 <div id="results" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Results</h1>
-<div id="accuracy" class="section level2" number="2.1">
-<h2><span class="header-section-number">2.1</span> Accuracy</h2>
-<div id="difference-in-proportions" class="section level3"
-number="2.1.1">
-<h3><span class="header-section-number">2.1.1</span> Difference in
-proportions</h3>
+<div id="difference-in-accuracy" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Difference in
+Accuracy</h2>
 <pre class="r foldable"><code># Make a function to easily try out different weights
 acc_diff_test &lt;- function(design, Setting){
   print(design)
@@ -1532,6 +1529,11 @@ knitr::kable(low_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))</code></
 </tr>
 </tbody>
 </table>
+</div>
+<div id="difference-in-final-probability-correct" class="section level2"
+number="2.2">
+<h2><span class="header-section-number">2.2</span> Difference in final
+probability correct</h2>
 <pre class="r foldable"><code>judgments_online$fpc &lt;- judgments_online$`Final probability correct`
 
 # Weighted Kruskal-Wallis
@@ -1567,12 +1569,77 @@ svyranktest(fpc~Final_Setting,
 ## difference in mean rank score 
 ##                       0.19427</code></pre>
 <pre class="r foldable"><code># TODO: check test for human consultancy &amp; human debate, make table. Might have to rebuild package to get CIs
-# see calibration for confident mistakes
 # Note: see publication in help page for more
 
-
-
-# The rest is stuff i tried
+# all
+pairwise.wilcox.test(judgments_online$`Final probability correct`, judgments_online$Final_Setting)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using Wilcoxon rank sum test with continuity correction 
+## 
+## data:  judgments_online$`Final probability correct` and judgments_online$Final_Setting 
+## 
+##                   AI Consultancy AI Debate Human Consultancy
+## AI Debate         1.0000         -         -                
+## Human Consultancy 0.0219         0.0161    -                
+## Human Debate      1.0000         1.0000    0.0079           
+## 
+## P value adjustment method: holm</code></pre>
+<pre class="r foldable"><code># human settings
+filtered_data &lt;- judgments_online[judgments_online$Final_Setting %in% c(&quot;Human Consultancy&quot;, &quot;Human Debate&quot;), ]
+wilcox.test(
+  `Final probability correct` ~ Final_Setting, 
+  data = filtered_data,
+  paired = FALSE,
+  conf.int = TRUE
+)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  Final probability correct by Final_Setting
+## W = 6389, p-value = 0.00131
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.09007106413 -0.00004673124
+## sample estimates:
+## difference in location 
+##            -0.04999384</code></pre>
+<pre class="r foldable"><code>wilcox.test(
+  log2(`Final probability correct`) ~ Final_Setting, 
+  data = filtered_data,
+  paired = FALSE,
+  conf.int = TRUE
+)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  log2(`Final probability correct`) by Final_Setting
+## W = 6389, p-value = 0.00131
+## alternative hypothesis: true location shift is not equal to 0
+## 95 percent confidence interval:
+##  -0.13756400531 -0.00002539694
+## sample estimates:
+## difference in location 
+##              -0.077957</code></pre>
+<pre class="r foldable"><code># Conduct the Mann-Whitney U test and get the CI
+wilcox_test(
+  formula = `Final probability correct` ~ as.factor(Final_Setting), 
+  data = filtered_data,
+  #weights = ~sampled_consultancies_all_debates_weights_grouped_setting,
+  conf.int = TRUE  # Request the confidence interval
+)</code></pre>
+<pre><code>## 
+##  Asymptotic Wilcoxon-Mann-Whitney Test
+## 
+## data:  Final probability correct by
+##   as.factor(Final_Setting) (Human Consultancy, Human Debate)
+## Z = -3.2146, p-value = 0.001306
+## alternative hypothesis: true mu is not equal to 0
+## 95 percent confidence interval:
+##  -0.090000001162139 -0.000000002954064
+## sample estimates:
+## difference in location 
+##            -0.04999999</code></pre>
+<pre class="r foldable"><code># The rest is stuff i tried
 judgments_online %&gt;%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = fpc)) +
@@ -1646,8 +1713,10 @@ svyranktest(fpc~Final_Setting, human_consultancy_design)</code></pre>
 ##   comparison of fpc by Final_Setting
 ##   Chisq=3.00  df=12  p-value=0.006</code></pre>
 </div>
-<div id="logistic-regression" class="section level3" number="2.1.2">
-<h3><span class="header-section-number">2.1.2</span> Logistic
+<div id="models" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Models</h2>
+<div id="logistic-regression" class="section level3" number="2.3.1">
+<h3><span class="header-section-number">2.3.1</span> Logistic
 regression</h3>
 <pre class="r foldable"><code>#judgments_online$Final_Setting &lt;- relevel(judgments_online$Final_Setting, ref = &quot;Human Debate&quot;)
 model1 &lt;- glm(Final_Accuracy ~ relevel(factor(Final_Setting), &#39;Human Debate&#39;), family = &#39;binomial&#39;, data = judgments_online)
@@ -1838,8 +1907,8 @@ summary(model2)</code></pre>
 ## 
 ## Number of Fisher Scoring iterations: 14</code></pre>
 </div>
-<div id="lmer" class="section level3" number="2.1.3">
-<h3><span class="header-section-number">2.1.3</span> LMER</h3>
+<div id="lmer" class="section level3" number="2.3.2">
+<h3><span class="header-section-number">2.3.2</span> LMER</h3>
 <pre class="r foldable"><code>random.intercept.model = lmer(`Final probability correct` ~ (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 judgments$random.intercept.preds = predict(random.intercept.model)
@@ -1946,8 +2015,8 @@ summary(random.intercept.model)</code></pre>
   </script>
 </div>
 </div>
-<div id="brms" class="section level3" number="2.1.4">
-<h3><span class="header-section-number">2.1.4</span> BRMS</h3>
+<div id="brms" class="section level3" number="2.3.3">
+<h3><span class="header-section-number">2.3.3</span> BRMS</h3>
 <pre class="r foldable"><code>#brm1 &lt;- brm(data = judgments_online,
 #             formula = as.numeric(Final_Accuracy) | trials(2) ~ 1 + (1 | Final_Setting),
 #             family = binomial(&quot;identity&quot;),
@@ -1957,10 +2026,10 @@ summary(random.intercept.model)</code></pre>
 #plot(brm1)</code></pre>
 </div>
 </div>
-<div id="efficiency" class="section level2" number="2.2">
-<h2><span class="header-section-number">2.2</span> Efficiency</h2>
-<div id="quotes-caveats" class="section level3" number="2.2.1">
-<h3><span class="header-section-number">2.2.1</span> Quotes %,
+<div id="efficiency" class="section level2" number="2.4">
+<h2><span class="header-section-number">2.4</span> Efficiency</h2>
+<div id="quotes-caveats" class="section level3" number="2.4.1">
+<h3><span class="header-section-number">2.4.1</span> Quotes %,
 caveats</h3>
 <pre class="python foldable"><code>debater_turns = turns.merge(
         debates[[&quot;Room name&quot;, &quot;Question&quot;, &quot;Story length&quot;,
@@ -2224,11 +2293,18 @@ ggplot(span_difference_debate_consultancies) +
          lower_bound = Q1 - 1.5 * IQR,
          upper_bound = Q3 + 1.5 * IQR)
 
-ggplot(debater_turns) +
+ggplot(data = debater_turns) +
+  geom_histogram(aes(x = quote_length, binwidth = 1)) +
+  facet_wrap(~ Final_Setting)</code></pre>
+<pre><code>## Warning in geom_histogram(aes(x = quote_length, binwidth = 1)): Ignoring
+## unknown aesthetics: binwidth</code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="debate-2309_files/figure-html/quote_length%20graph-2.png" width="100%" /></p>
+<pre class="r foldable"><code>ggplot(debater_turns) +
   geom_boxplot(aes(x = Final_Setting, y = `Quote length`)) +
   labs(y = &quot;Total Quote Length (debater_turns)&quot;)+
   theme_minimal()</code></pre>
-<p><img src="debate-2309_files/figure-html/quote_length%20graph-2.png" width="100%" /></p>
+<p><img src="debate-2309_files/figure-html/quote_length%20graph-3.png" width="100%" /></p>
 <pre class="r foldable"><code>filtered &lt;- debater_turns %&gt;%
   group_by(Final_Setting) %&gt;%
   mutate(Q1 = quantile(quote_length, 0.25),
@@ -2243,23 +2319,25 @@ filtered %&gt;%
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = &quot;Total Quote Length in a Debate/Consultancy (unique tokens)&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
-<p><img src="debate-2309_files/figure-html/quote_length%20graph-3.png" width="100%" /></p>
+<p><img src="debate-2309_files/figure-html/quote_length%20graph-4.png" width="100%" /></p>
 <pre class="r foldable"><code>debater_turns %&gt;%
   ggplot() +
   geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
   labs(y = &quot;Total Quote Length in a Debate/Consultancy (unique tokens)&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
-<p><img src="debate-2309_files/figure-html/quote_length%20graph-4.png" width="100%" /></p>
-<pre class="r foldable"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
+<p><img src="debate-2309_files/figure-html/quote_length%20graph-5.png" width="100%" /></p>
+<pre class="r foldable"><code>pairwise.wilcox.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
+<pre><code>## Warning in wilcox.test.default(xi, xj, paired = paired, ...): cannot compute
+## exact p-value with ties</code></pre>
 <pre><code>## 
-##  Pairwise comparisons using t tests with pooled SD 
+##  Pairwise comparisons using Wilcoxon rank sum test with continuity correction 
 ## 
 ## data:  filtered$quote_length and filtered$Final_Setting 
 ## 
-##                   AI Consultancy AI Debate      Human Consultancy
-## AI Debate         0.04290        -              -                
-## Human Consultancy 0.00017        0.000000000018 -                
-## Human Debate      0.80222        0.00443        0.000000019213   
+##                   AI Consultancy AI Debate    Human Consultancy
+## AI Debate         0.09677        -            -                
+## Human Consultancy 0.00067        0.0000000003 -                
+## Human Debate      0.25839        0.0000398836 0.0000000943     
 ## 
 ## P value adjustment method: holm</code></pre>
 <pre class="r foldable"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = median(quote_length))</code></pre>
@@ -2283,16 +2361,18 @@ ggplot(debater_turns) +
   labs(y = &#39;Max Judging Rounds&#39;) +
   theme_minimal() </code></pre>
 <p><img src="debate-2309_files/figure-html/rounds%20graph-1.png" width="100%" /></p>
-<pre class="r foldable"><code>pairwise.t.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)</code></pre>
+<pre class="r foldable"><code>pairwise.wilcox.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)</code></pre>
+<pre><code>## Warning in wilcox.test.default(xi, xj, paired = paired, ...): cannot compute
+## exact p-value with ties</code></pre>
 <pre><code>## 
-##  Pairwise comparisons using t tests with pooled SD 
+##  Pairwise comparisons using Wilcoxon rank sum test with continuity correction 
 ## 
 ## data:  debater_turns$`Max judge rounds by room` and debater_turns$Final_Setting 
 ## 
-##                   AI Consultancy AI Debate Human Consultancy
-## AI Debate         0.137          -         -                
-## Human Consultancy 0.055          0.914     -                
-## Human Debate      0.0000003      0.002     0.0000020        
+##                   AI Consultancy AI Debate   Human Consultancy
+## AI Debate         1.00000        -           -                
+## Human Consultancy 1.00000        1.00000     -                
+## Human Debate      0.00077        0.000039860 0.000000076      
 ## 
 ## P value adjustment method: holm</code></pre>
 <pre class="r foldable"><code>filtered &lt;- debater_turns %&gt;%
@@ -2316,16 +2396,18 @@ filtered %&gt;%
   labs(y = &quot;Rounds&quot;, x = &quot;Setting&quot;)+
   theme_minimal()</code></pre>
 <p><img src="debate-2309_files/figure-html/rounds%20graph-3.png" width="100%" /></p>
-<pre class="r foldable"><code>pairwise.t.test(filtered$quote_length, filtered$Final_Setting)</code></pre>
+<pre class="r foldable"><code>pairwise.wilcox.test(filtered$`Max judge rounds by room`, filtered$Final_Setting)</code></pre>
+<pre><code>## Warning in wilcox.test.default(xi, xj, paired = paired, ...): cannot compute
+## exact p-value with ties</code></pre>
 <pre><code>## 
-##  Pairwise comparisons using t tests with pooled SD 
+##  Pairwise comparisons using Wilcoxon rank sum test with continuity correction 
 ## 
-## data:  filtered$quote_length and filtered$Final_Setting 
+## data:  filtered$`Max judge rounds by room` and filtered$Final_Setting 
 ## 
-##                   AI Consultancy   AI Debate        Human Consultancy
-## AI Debate         0.192            -                -                
-## Human Consultancy 0.00000150627713 0.00000000000097 -                
-## Human Debate      0.560            0.018            0.00000000003675 
+##                   AI Consultancy AI Debate Human Consultancy
+## AI Debate         1.000          -         -                
+## Human Consultancy 1.000          0.543     -                
+## Human Debate      0.007          0.0000465 0.0000065        
 ## 
 ## P value adjustment method: holm</code></pre>
 <pre class="r foldable"><code>filtered %&gt;% group_by(Final_Setting) %&gt;% summarise(avground = mean(`Max judge rounds by room`))</code></pre>
@@ -2336,8 +2418,8 @@ filtered %&gt;%
 </div>
 </div>
 <div id="length-of-debates-stratified" class="section level3"
-number="2.2.2">
-<h3><span class="header-section-number">2.2.2</span> Length of debates,
+number="2.4.2">
+<h3><span class="header-section-number">2.4.2</span> Length of debates,
 stratified</h3>
 <pre class="python foldable"><code>all_turns = turns.merge(
         debates[[&quot;Room name&quot;, &quot;Honest debater&quot;, &quot;Dishonest debater&quot;, &quot;Question&quot;, &quot;Article ID&quot;,
@@ -2439,8 +2521,8 @@ strat %&gt;%
 <pre><code>## Warning: Removed 10 rows containing missing values (`geom_line()`).</code></pre>
 <p><img src="debate-2309_files/figure-html/strat%20ggplot-2.png" width="2100" /></p>
 </div>
-<div id="time-offline-judging.." class="section level3" number="2.2.3">
-<h3><span class="header-section-number">2.2.3</span> Time (offline
+<div id="time-offline-judging.." class="section level3" number="2.4.3">
+<h3><span class="header-section-number">2.4.3</span> Time (offline
 judging..?)</h3>
 <pre class="python foldable"><code># Convert to datetime
 judgments[&quot;Offline judging start time&quot;] = pd.to_datetime(judgments[&quot;Offline judging start time&quot;], unit=&quot;ms&quot;)
@@ -2797,6 +2879,63 @@ Involvement</h3>
 </div>
 <div id="debater-skill" class="section level2" number="3.3">
 <h2><span class="header-section-number">3.3</span> Debater Skill</h2>
+<pre class="python foldable"><code>leaderboard = sessions.merge(
+        debates[
+            [
+                &quot;Room name&quot;,
+                &quot;Honest debater&quot;,
+                &quot;Dishonest debater&quot;
+            ]
+        ],
+        how=&quot;left&quot;,
+        on=&quot;Room name&quot;,
+    )
+
+
+
+leaderboard = sessions.merge(
+        debates[
+            [
+                &quot;Room name&quot;,
+                &quot;Honest debater&quot;,
+                &quot;Dishonest debater&quot;
+            ]
+        ],
+        how=&quot;left&quot;,
+        on=&quot;Room name&quot;,
+    )
+# filter to sessions corresponding to a judge
+leaderboard = leaderboard[leaderboard[&#39;Final probability correct&#39;].notna()]
+from math import log
+leaderboard[&#39;Judge reward&#39;] = leaderboard.apply(
+    lambda row: log(row[&#39;Final probability correct&#39;]) - (0.05 * row[&#39;Number of judge continues&#39;]),
+    axis=1
+)
+leaderboard[&#39;Honest debater reward&#39;] = leaderboard.apply(
+    lambda row: log(row[&#39;Final probability correct&#39;]),
+    axis=1
+)
+leaderboard[&#39;Dishonest debater reward&#39;] = leaderboard.apply(
+    lambda row: log(1 - row[&#39;Final probability correct&#39;]),
+    axis=1
+)</code></pre>
+<pre class="r foldable"><code>leaderboard&lt;-py$leaderboard
+leaderboard &lt;- leaderboard %&gt;%
+  group_by(Participant) %&gt;%
+  mutate(Avg_Judge_Reward = mean(`Judge reward`, na.rm = TRUE)) %&gt;%
+  ungroup()
+leaderboard &lt;- leaderboard %&gt;%
+  group_by(`Honest debater`) %&gt;%
+  mutate(Avg_Honest_Debater_Reward = mean(`Honest debater reward`, na.rm = TRUE)) %&gt;%
+  ungroup()
+leaderboard &lt;- leaderboard %&gt;%
+  group_by(`Dishonest debater`) %&gt;%
+  mutate(Avg_Dishonest_Debater_Reward = mean(`Dishonest debater reward`, na.rm = TRUE)) %&gt;%
+  ungroup()
+leaderboard &lt;- leaderboard %&gt;%
+  mutate(Rank_Judge = rank(desc(Avg_Judge_Reward)),
+         Rank_Honest = rank(desc(Avg_Honest_Debater_Reward)),
+         Rank_Dishonest = rank(desc(Avg_Dishonest_Debater_Reward)))</code></pre>
 <pre class="r foldable"><code>random.intercept.model = lmer(`Final probability correct` ~  (1|Final_Setting), 
                               data = judgments, REML = TRUE)
 
@@ -3105,7 +3244,7 @@ summary(random_intercept_model)</code></pre>
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r foldable"><code>dishonest$random.intercept.preds = predict(random_intercept_model)
 plot(dishonest$random.intercept.preds, dishonest$`Final probability correct`)</code></pre>
-<p><img src="debate-2309_files/figure-html/unnamed-chunk-3-9.png" width="672" /></p>
+<p><img src="debate-2309_files/figure-html/deprecated-1.png" width="672" /></p>
 <div id="debater-experience-ratings---how-many-wins"
 class="section level3" number="3.3.1">
 <h3><span class="header-section-number">3.3.1</span> Debater
