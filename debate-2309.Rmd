@@ -1,18 +1,13 @@
 ---
 title: 'Results'
 output:
-  html_document:
-    code_folding: hide
-    df_print: paged
-    toc: true
-    toc_depth: 3
-    number_sections: true
-    toc_float: true
+  pdf_document:
+    keep_tex: True
 ---
 >Notes:  
 - Some of this is already in or was based on the blogpost/interface code. Hit show to see code. I switch between R and Python 
 - Some of this won't make it to the paper. You can probably skip preprocessing unless you want to check certain things, example: did we make sure to remove judgments based on X condition
-- If you want to clarify/comment anything do so at https://github.com/sm11197/sm11197.github.io/blob/main/debate-0923.Rmd) or message me elsewhere
+
 
 
 ```{r setup, include=FALSE}
@@ -24,7 +19,7 @@ knitr::opts_chunk$set(class.source = "foldable") #folds code so only results sho
 #knitr::opts_chunk$set(cache = TRUE) #so the same output isn't rerun
 
 library(reticulate) #for interop with Python
-reticulate::use_virtualenv("/Users/bila/git/sm11197.github.io/sm11197.github.io/.venv")
+reticulate::use_virtualenv("/Users/bila/git/for-debate/debate/.venv")
 library(ggplot2) #graphs
 library(dplyr) #data manipulation
 library(survey) #weighted statistics
@@ -34,6 +29,10 @@ library(lmerTest) #tests for the above
 library(brms) #bayesian regression models
 library(boot) #bootstrap resampling for confidence intervals
 library(coin) #for rank tests
+
+library(purrr)
+library(tidyr)
+library(kableExtra)
 ```
 
 # Preprocessing
@@ -115,7 +114,7 @@ source = sessions.merge(
         debates[["Room name", "Debater A","Debater B","Honest debater", "Dishonest debater",
                  "Is single debater", 'Has honest debater',
                  "Final_Setting", "Setting",
-                 "Question", "Article ID",
+                 "Question", "Article ID", "Story length",
                  "Speed annotator accuracy bins","Untimed annotator context bins",
                  "Speed annotator accuracy","Untimed annotator context", "Is offline",
                  'End time', 'Last modified time']],
@@ -200,50 +199,49 @@ def balance_consultancies(df, sample_setting, random_state):
         else:
             return sample_df.index
     # Get distinct consultancies
-    sample_size = min(len(distinct_honest_df.groupby(['Question', 'Article ID'])), len(distinct_dishonest_df.groupby(['Question', 'Article ID'])))
-    honest_sample = distinct_honest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
-    dishonest_sample = distinct_dishonest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
+    sample_size = min(len(distinct_honest_df), len(distinct_dishonest_df))
+    honest_sample = distinct_honest_df.sample(sample_size, random_state=random_state)
+    dishonest_sample = distinct_dishonest_df.sample(sample_size, random_state=random_state)
     df.loc[extract_correct_index(honest_sample), sample_column_name] = True
     df.loc[extract_correct_index(dishonest_sample), sample_column_name] = True
     # Drop sampled questions from distinct dataframes
     honest_remove_distinct = set(honest_sample[['Article ID', 'Question']].itertuples(index=False, name=None))
     dishonest_remove_distinct = set(dishonest_sample[['Article ID', 'Question']].itertuples(index=False, name=None))
-    distinct_honest_df = distinct_honest_df[~distinct_honest_df.set_index(['Article ID', 'Question']).index.isin(honest_remove_distinct)]
-    distinct_dishonest_df = distinct_dishonest_df[~distinct_dishonest_df.set_index(['Article ID', 'Question']).index.isin(dishonest_remove_distinct)]
-    honest_distinct_remaining = len(distinct_honest_df.groupby(['Question', 'Article ID']))
-    dishonest_distinct_remaining = len(distinct_dishonest_df.groupby(['Question', 'Article ID']))
+    distinct_honest_df = distinct_honest_df[~distinct_honest_df.index.isin(honest_sample.index)]
+    distinct_dishonest_df = distinct_dishonest_df[~distinct_dishonest_df.index.isin(dishonest_sample.index)]
+    honest_distinct_remaining = len(distinct_honest_df)
+    dishonest_distinct_remaining = len(distinct_dishonest_df)
     # Sample from remaining distinct questions, using common questions for the other (bigger count) setting as needed
     if honest_distinct_remaining > dishonest_distinct_remaining:
-        sample_size = min(honest_distinct_remaining, len(common_dishonest_df.groupby(['Question', 'Article ID'])))
-        honest_sample = distinct_honest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
-        dishonest_sample = common_dishonest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
+        sample_size = min(honest_distinct_remaining, len(common_dishonest_df))
+        honest_sample = distinct_honest_df.sample(sample_size, random_state=random_state)
+        dishonest_sample = common_dishonest_df.sample(sample_size, random_state=random_state)
         df.loc[extract_correct_index(dishonest_sample), sample_column_name] = True
         df.loc[extract_correct_index(honest_sample), sample_column_name] = True
         dishonest_remove_common = set(dishonest_sample[['Article ID', 'Question']].itertuples(index=False, name=None))
-        common_dishonest_df = common_dishonest_df[~common_dishonest_df.set_index(['Article ID', 'Question']).index.isin(dishonest_remove_common)]
-        common_honest_df = common_honest_df[~common_honest_df.set_index(['Article ID', 'Question']).index.isin(dishonest_remove_common)]
+        common_dishonest_df = common_dishonest_df[~common_dishonest_df.index.isin(dishonest_sample.index)]
+        common_honest_df = common_honest_df[~common_honest_df.index.isin(honest_sample.index)]
     else:
-        sample_size = min(dishonest_distinct_remaining, len(common_honest_df.groupby(['Question', 'Article ID'])))
-        honest_sample = common_honest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
-        dishonest_sample = distinct_dishonest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
+        sample_size = min(dishonest_distinct_remaining, len(common_honest_df))
+        honest_sample = common_honest_df.sample(sample_size, random_state=random_state)
+        dishonest_sample = distinct_dishonest_df.sample(sample_size, random_state=random_state)
         df.loc[extract_correct_index(dishonest_sample), sample_column_name] = True
         df.loc[extract_correct_index(honest_sample), sample_column_name] = True
         honest_remove_common = set(honest_sample[['Article ID', 'Question']].itertuples(index=False, name=None))
-        common_dishonest_df = common_dishonest_df[~common_dishonest_df.set_index(['Article ID', 'Question']).index.isin(honest_remove_common)]
-        common_honest_df = common_honest_df[~common_honest_df.set_index(['Article ID', 'Question']).index.isin(honest_remove_common)]
+        common_dishonest_df = common_dishonest_df[~common_dishonest_df.index.isin(dishonest_sample.index)]
+        common_honest_df = common_honest_df[~common_honest_df.index.isin(honest_sample.index)]
     # Remaining independent samples from common_honest_df
-    if len(common_honest_df) or len(common_dishonest_df) > 0:
-        sample_size = min(len(common_honest_df.groupby(['Question', 'Article ID'])), len(common_dishonest_df.groupby(['Question', 'Article ID'])))
-        honest_sample = common_honest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
-        dishonest_sample = common_dishonest_df.groupby(['Question', 'Article ID']).apply(lambda x: x.sample(1, random_state=random_state)).sample(sample_size, random_state=random_state)
+    if len(common_honest_df) > 0 or len(common_dishonest_df) > 0:
+        sample_size = min(len(common_honest_df), len(common_dishonest_df))
+        honest_sample = common_honest_df.sample(sample_size, random_state=random_state)
+        dishonest_sample = common_dishonest_df.sample(sample_size, random_state=random_state)
         df.loc[extract_correct_index(honest_sample), sample_column_name] = True
         df.loc[extract_correct_index(dishonest_sample), sample_column_name] = True
     return df
-
-
+  
 # Run the sampling to balance the consultancies
-judgments_online = balance_consultancies(judgments_online, 'Human Consultancy', random_state = 123)
-judgments_online = balance_consultancies(judgments_online, 'AI Consultancy', random_state = 123)
+judgments_online = balance_consultancies(judgments_online, 'Human Consultancy', random_state = 12345)
+judgments_online = balance_consultancies(judgments_online, 'AI Consultancy', random_state = 12345)
 # Create one sample column for easier indexing, create mask
 #sample_columns = [col for col in judgments_online.columns if 'Sample' in col]
 #judgments_online['Sample'] = judgments_online[sample_columns].any(axis=1)
@@ -429,13 +427,202 @@ judgments_online = question_weights(
 Note: we are not balancing between settings(?), 
 and more counts of the human debate settings are on the same questions..?
 
+## Judge Accuracy Vis
+
+```{python judge_accuracy_setting, out.width = "100%", dpi = 300}
+import altair
+# set graphic parameters
+correctColor = "green"
+incorrectColor = "crimson"
+nullColor = "lightgrey"
+onlineColor = "orange"
+offlineColor = "blue"
+aggColor = "black"
+fullWidth = 1400
+# fullHeight = 600
+def outcomes_by_field(source, rowEncoding = None):
+    source['outcome'] = source.apply(
+        lambda row: "incomplete" if math.isnan(row['Final probability correct'])
+        else "tie" if row['Final probability correct'] == 0.5
+        else "correct" if row['Final probability correct'] > 0.5
+        else "incorrect",
+        axis=1
+    )
+    source['Final probability correct (with imputation)'] = source.apply(
+        lambda row: 0.5 if math.isnan(row['Final probability correct'])
+        else row['Final probability correct'],
+        axis=1
+    )
+    source['Final probability correct (dist from half)'] = source.apply(
+        lambda row: 0.0 if math.isnan(row['Final probability correct'])
+        else abs(row['Final probability correct'] - 0.5),
+        axis=1
+    )
+    if rowEncoding is None:
+        groups = ['outcome']
+    else:
+        groups = ['outcome', rowEncoding.field]
+    base = alt.Chart(
+        source
+    ).transform_joinaggregate(
+        groupby=groups,
+        group_count='count()'
+    ).encode(
+        y=alt.Y('outcome:N', scale=alt.Scale(domain=['correct', 'incorrect', 'tie', 'incomplete']))
+    )
+    if rowEncoding is not None:
+        base = base.encode(row=rowEncoding)
+    main_bar = base.mark_bar().encode(
+        x=alt.X('count():Q', axis=None),
+        color = alt.Color(
+            'Final probability correct (with imputation):Q',
+            scale=alt.Scale(range=[incorrectColor, nullColor, correctColor], domain=[0.0, 1.0]),
+            title='Final Probability\nAssigned to\nCorrect Answer'
+        ),
+        order=alt.Order(
+            'Final probability correct (dist from half):Q',
+            sort='ascending'
+        ),
+        tooltip = [
+            'outcome:N',
+            alt.Tooltip('group_count:Q', title="Judgments"),
+            alt.Tooltip('count():Q', title = 'Judgments with this probability'),
+            'Final probability correct:Q'
+        ]
+    ).properties(width=fullWidth)# height=fullHeight/3)
+    return main_bar
+
+def accuracy_by_field(source, by_turn: bool = False, yEncoding = None, invert = False):
+    if by_turn:
+        prob_correct_field = 'Probability correct'
+    else:
+        prob_correct_field = 'Final probability correct'
+    if source.get('Final probability assigned') is not None:
+        prob_assigned_field = 'Final probability assigned'
+    else:
+        prob_assigned_field = prob_correct_field
+    if yEncoding is None:
+        groups = []
+    else:
+        groups = [yEncoding.field]
+    base = alt.Chart(source).transform_joinaggregate(
+        total = "count()",
+        groupby = groups
+    ).transform_calculate(
+        proportion = '1 / datum.total'
+    ).transform_calculate(
+        is_correct = f'datum["{prob_correct_field}"] > 0.5 ? 1 : 0',
+        is_win = f'datum["{prob_assigned_field}"] > 0.5 ? 1 : 0',
+        is_not_correct = f'datum["{prob_correct_field}"] <= 0.5 ? 1 : 0'
+    )
+    if yEncoding is not None:
+        base = base.encode(y=yEncoding)
+    main_bar = base.mark_bar().encode(
+        x=alt.X('sum(proportion):Q',
+            axis=alt.Axis(title=None, format='.0%', labelExpr="(datum.value * 5) % 1 ? null : datum.label"),
+            scale=alt.Scale(domain=[0.0, 1.0])
+        ),
+        color=alt.Color(f'{prob_correct_field}:Q', scale=alt.Scale(range=[incorrectColor, nullColor, correctColor], domain=[0.0, 1.0]), title = ["Probability","Assigned"], legend=alt.Legend(format=".0%", labelFontSize=12, titleFontSize=12, gradientLength=225, gradientThickness=35)),
+        order=alt.Order(
+            f'{prob_assigned_field}:Q',
+            sort='descending' if not invert else 'ascending'
+        ),
+        tooltip = [
+            'count():Q',
+            'total:Q',
+            'sum(proportion):Q',
+            f'{prob_correct_field}:Q',
+            'Room name:N',
+            'Participant:N'
+        ]
+    ).properties(width=fullWidth)# height=fullHeight/12)
+    prop_color = aggColor
+    # rule_thickness = 1.0
+    # err_thickness = 1.0
+    point_size = 25.0
+    mean_field = 'is_win' if not invert else 'is_not_correct'
+    gold_err = (base
+    ).mark_rule(
+        # extent='ci',
+        color=prop_color,
+    ).encode(
+        x=f'ci0({mean_field}):Q',
+        x2=f'ci1({mean_field}):Q',
+        # scale=alt.Scale(zero=False)
+        tooltip=[]
+    )
+    gold_mean = base.mark_point(
+        # thickness=2.0
+        color=prop_color, size=point_size, filled=True
+    ).encode(
+        x=alt.X(f'mean({mean_field}):Q',
+            scale=alt.Scale(zero=False)),
+    )
+    gold_mean_num = base.mark_text(
+        color=prop_color,
+        align='left',
+        baseline='bottom',
+        fontSize=24,
+        fontWeight='bold',
+        dx=4,
+        dy=-4
+    ).encode(
+        text=alt.Text(f'mean({mean_field}):Q', format='.0%'),
+        x=alt.X(f'mean({mean_field}):Q',
+            scale=alt.Scale(zero=False)),
+    )
+    return main_bar + gold_err + gold_mean + gold_mean_num
+
+def accuracy_by_judge_setting(setting,data_frame_source):
+    source = data_frame_source
+    yEncoding = alt.Y(field = setting, type='nominal', title=None)
+    outcomes_source = source
+    accuracy_source = source[source['Final probability correct'].notna()]
+    chart = alt.vconcat(
+        accuracy_by_field(
+            accuracy_source,
+            yEncoding = yEncoding
+        ).properties(title=alt.TitleParams(text="Judge Accuracy", fontSize=28)),
+    ).resolve_scale(x = 'independent')
+    return chart.configure(
+            padding = {"left": 7, "top": 5, "right": 5, "bottom": 5},
+            axis = alt.Axis(labelFontSize=20,labelLimit=300),
+            legend = alt.LegendConfig(disable = True)
+            ).configure_view(
+        step=65,  # adjust the step parameter for margins
+        )
+
+accuracy_by_judge_setting(setting = 'Final_Setting', data_frame_source = judgments_online.loc[
+    (judgments_online['Consultancy Sample'] == True) |
+    (~judgments_online['Final_Setting'].str.contains("Consultancy", na=False))
+])
+
+
+#chart.save('judge_accuracy_settings.png', scale_factor=4)
+```
+
+```{python judge_accuracy_setting_consultancies, out.width = "100%", dpi = 300}
+consultancies = judgments_online.loc[judgments_online['Consultancy Sample'] == True]
+consultancies['Setting'] = consultancies['Setting'].apply(lambda x: ' '.join(x.split()[:-1]) + f" ({x.split()[-1].lower()})")
+accuracy_by_judge_setting(setting = 'Setting', data_frame_source = consultancies)
+
+sample = judgments_online.loc[
+    (judgments_online['Consultancy Sample'] == True) |
+    (~judgments_online['Final_Setting'].str.contains("Consultancy", na=False))
+]
+```
 ## Load into R environment
 
 ```{r R pre}
+sample <- py$sample
+sample <- sample[,c("Room name", "Participant")]
+write.csv(sample, "/Users/bila/Downloads/python_sample.csv")
 set.seed(123)
 # Read in objects from Python with py$
 judgments <- py$judgments
 judgments_online <- py$judgments_online
+correctColor = "#008000"
+incorrectColor = "#DC143C"
 # Change type into factor so it is read as categories which can be manipulated instead of characters
 judgments_online$Participant <- as.factor(judgments_online$Participant)
 judgments_online$Setting <- as.factor(judgments_online$Setting)
@@ -468,6 +655,43 @@ table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgmen
 table(judgments_online[judgments_online$Sample == TRUE, ]$Final_Setting, judgments_online[judgments_online$Sample == TRUE, ]$sampled_consultancies_debates_weights)
 ```
 ## Robustness Checks
+```{r match_samples}
+# read other sampling
+sample.rooms <- read.csv("~/Downloads/sample-rooms-2.csv", header=FALSE)
+# Check whether chosen sample in sample.rooms is the same as judgments_online
+# based on columns V2 and V1 in sample.rooms and Participant and `Room name` in judgments_online
+sample.rooms_samples <- sort(paste0(sample.rooms$V2, sample.rooms$V1))
+judgments_online_samples <- paste0(judgments_online[consultancy_condition,]$Participant, judgments_online[consultancy_condition,]$`Room name`)
+
+missing_sample.room <- sample.rooms[sample.rooms_samples %in% judgments_online_samples == FALSE, ]
+sampled_judgments_online <- judgments_online[consultancy_condition,]
+missing_judgments_online <- sampled_judgments_online[judgments_online_samples %in% sample.rooms_samples == FALSE, ]
+
+judgments_online$check <- paste0(judgments_online$Participant, judgments_online$`Room name`)
+matching_sampled_judgments_online <- subset(judgments_online, judgments_online$check %in% sample.rooms_samples)
+rooms_hc <- subset(matching_sampled_judgments_online, matching_sampled_judgments_online$Final_Setting == "Human Consultancy")
+```
+
+```{python}
+different_sample = r.rooms_hc 
+different_sample.groupby(['Question', 'Article ID']).size().value_counts().sum()
+judgments_online[(judgments_online['Setting'].str.contains('Human Consultancy')) & (judgments_online['Consultancy Sample'] == True)].groupby(['Question', 'Article ID']).size().value_counts().sum()
+
+
+filtered_df1 = different_sample.groupby(['Question', 'Article ID']).filter(lambda x: len(x) > 2)
+filtered_df2 = different_sample.groupby(['Question', 'Article ID']).filter(lambda x: len(x) <= 2)
+
+filtered_df1["Untimed annotator context bins"].value_counts()
+filtered_df2["Untimed annotator context bins"].value_counts()
+
+filtered_df1["Final_Accuracy"].mean()
+filtered_df2["Final_Accuracy"].mean()
+
+judgments_online[judgments_online['Final_Setting']=="Human Debate"].groupby(['Question', 'Article ID']).size().value_counts()
+judgments_online[judgments_online['Final_Setting']=="AI Debate"].groupby(['Question', 'Article ID']).size().value_counts()
+```
+
+
 ```{r variance check}
 paste("Overall variance is", 
       var(judgments_online$Final_Accuracy), "(mean way)",
@@ -548,7 +772,7 @@ judgments_online[consultancy_condition,] %>%
     x_aka_num_correct = sum(Final_Accuracy, na.rm = T),
     p_aka_accuracy = (x_aka_num_correct / n),
     var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
-  ) %>% group_by(Final_Setting) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
+  ) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
                avg_var_prop = mean(var_prop, na.rm = T))
 judgments_online[consultancy_condition,] %>%
   group_by(Question) %>%
@@ -558,7 +782,7 @@ judgments_online[consultancy_condition,] %>%
     x_aka_num_correct = sum(Final_Accuracy, na.rm = T),
     p_aka_accuracy = (x_aka_num_correct / n),
     var_prop = (p_aka_accuracy * (1 - p_aka_accuracy)) / (n - 1)
-  ) %>% group_by(Final_Setting) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
+  ) %>% summarise(avg_var_mean = mean(var_mean, na.rm = T),
                avg_var_prop = mean(var_prop, na.rm = T))
 ```
 
@@ -617,8 +841,9 @@ process_table <- function(svy_table, round_by) {
   for (setting in rownames(svy_table)) {
     # Use prop.test to compare the setting's accuracy with "Human Debate"
     results <- prop.test(
-      x = c(svy_table["Human Debate", "TRUE"], svy_table[setting, "TRUE"]),
-      n = c((svy_table["Human Debate", "TRUE"] + svy_table["Human Debate", "FALSE"]), (svy_table[setting, "TRUE"] + svy_table[setting, "FALSE"]))
+      x = c(svy_table[setting, "TRUE"], svy_table["Human Debate", "TRUE"]),
+      n = c((svy_table[setting, "TRUE"] + svy_table[setting, "FALSE"]), (svy_table["Human Debate", "TRUE"] + svy_table["Human Debate", "FALSE"])),
+      correct = F
     )
     # Extract the confidence interval and store it as a string in the format "lower - upper"
     ci_lower <- round(results$conf.int[1] * 100,round_by)  # Multiply by 100 to convert to percentage
@@ -628,7 +853,7 @@ process_table <- function(svy_table, round_by) {
     p_values <- c(p_values, results$p.value)
   }
   # Change to wanted format (judgments summed, split counts removed)
-  svy_table <- cbind("n Judgments (weighted)" = (svy_table[,"FALSE"] + svy_table[,"TRUE"]), svy_table)
+  svy_table <- cbind("n Judgments" = (svy_table[,"FALSE"] + svy_table[,"TRUE"]), svy_table)
   svy_table <- svy_table[ , !(colnames(svy_table) %in% c("FALSE", "TRUE"))]
   # Concatenate the CI bounds into a single string
   ci_strings <- paste0("[", ci_lowers, ", ", ci_uppers, "]")
@@ -641,76 +866,99 @@ process_table <- function(svy_table, round_by) {
 
 # First table, all data accuracy
 svy_table_input <- svytable(
-  ~Setting + Final_Accuracy, 
+  ~Final_Setting + Final_Accuracy, 
   design = svydesign(
     ids = ~1, 
     data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
-    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+  )
+)
+
+svy_table_input_2 <- svytable(
+  ~Final_Setting + Final_Accuracy, 
+  design = svydesign(
+    ids = ~1, 
+    data = matching_sampled_judgments_online,
   )
 )
 
 # Call the function
-final_table <- process_table(svy_table_input, round_by = 1)
+final_table <- process_table(svy_table_input, round_by = 3)
 final_table
 
-knitr::kable(final_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
+final_table_2 <- process_table(svy_table_input_2, round_by = 3)
+final_table_2
+
+knitr::kable(final_table, booktab = TRUE, digits = c(rep(3,3),NA,3))
+knitr::kable(final_table_2, booktab = TRUE, digits = c(rep(3,3),NA,3))
 
 
-
-
-# Possible table?, high confidence accuracy
-high_conf_data <- subset(judgments_online, 
-                         `Final probability correct` <= 0.01 | `Final probability correct` >= 0.99)
-
-# Create the svytable object for high confidence accuracy
-svy_table_high_conf <- svytable(
+svy_table <- svytable(
   ~Final_Setting + Final_Accuracy, 
   design = svydesign(
     ids = ~1, 
-    data = subset(high_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
-    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+    data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
   )
 )
+prop.test(
+      x = c(svy_table["Human Consultancy", "TRUE"], svy_table["Human Debate", "TRUE"]),
+      n = c((svy_table["Human Consultancy", "TRUE"] + svy_table["Human Consultancy", "FALSE"]), (svy_table["Human Debate", "TRUE"] + svy_table["Human Debate", "FALSE"]))
+    )
+
+
+# # Possible table?, high confidence accuracy
+# high_conf_data <- subset(judgments_online, 
+#                          `Final probability correct` <= 0.01 | `Final probability correct` >= 0.99)
+
+# # Create the svytable object for high confidence accuracy
+# svy_table_high_conf <- svytable(
+#   ~Final_Setting + Final_Accuracy, 
+#   design = svydesign(
+#     ids = ~1, 
+#     data = subset(high_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
+#     weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+#   )
+# )
+
+# # Call the function for high confidence accuracy
+# high_conf_table <- process_table(svy_table_high_conf, round_by = 1)
+# high_conf_table
+
+# # Render the high confidence accuracy table
+# knitr::kable(high_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
+
+
+
+
+
+
+# # Possible table?, high confidence accuracy
+# low_conf_data <- subset(judgments_online, 
+#                          `Final probability correct` >= 0.30 & `Final probability correct` <= 0.70)
+
+# # Create the svytable object for high confidence accuracy
+# svy_table_low_conf <- svytable(
+#   ~Final_Setting + Final_Accuracy, 
+#   design = svydesign(
+#     ids = ~1, 
+#     data = subset(low_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
+#     weights = ~sampled_consultancies_all_debates_weights_grouped_setting
+#   )
+# )
 
 # Call the function for high confidence accuracy
-high_conf_table <- process_table(svy_table_high_conf, round_by = 1)
-high_conf_table
+#low_conf_table <- process_table(svy_table_low_conf, round_by = 1)
+#low_conf_table
 
 # Render the high confidence accuracy table
-knitr::kable(high_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
-
-
-
-
-
-
-# Possible table?, high confidence accuracy
-low_conf_data <- subset(judgments_online, 
-                         `Final probability correct` >= 0.30 & `Final probability correct` <= 0.70)
-
-# Create the svytable object for high confidence accuracy
-svy_table_low_conf <- svytable(
-  ~Final_Setting + Final_Accuracy, 
-  design = svydesign(
-    ids = ~1, 
-    data = subset(low_conf_data, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)),
-    weights = ~sampled_consultancies_all_debates_weights_grouped_setting
-  )
-)
-
-# Call the function for high confidence accuracy
-low_conf_table <- process_table(svy_table_low_conf, round_by = 1)
-low_conf_table
-
-# Render the high confidence accuracy table
-knitr::kable(low_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
+#knitr::kable(low_conf_table, booktab = TRUE, digits = c(rep(1,3),NA,3))
 
 ```
 ## Difference in final probability correct
 
 ```{r final probability correct}
-judgments_online$`Reward penalty 0.5` <- log2(judgments_online$`Final probability correct`) - 0.5*
-
+judgments_online$`Reward penalty 0.5` <- log2(judgments_online$`Final probability correct`) - 0.5*(judgments_online$`Number of judge continues`)
+judgments_online$fpc <- judgments_online$`Final probability correct`
+  
 # Weighted Kruskal-Wallis
 svyranktest(fpc~Final_Setting, svydesign(ids = ~1, data = subset(judgments_online, `Consultancy Sample` == TRUE | !grepl("Consultancy", Final_Setting)), weights = ~sampled_consultancies_all_debates_weights_grouped_setting))
 # Test Human Settings only
@@ -794,9 +1042,13 @@ summary(model1)
 table(model1$fitted.values > 0.5) 
 table(judgments_online$Final_Accuracy)
 
-model2 <- glm(Final_Accuracy ~ relevel(factor(Participant),'Aliyaah Toussaint') + relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments_online)
+model2 <- glm(Final_Accuracy ~ relevel(factor(Participant),'Sean Wang') + relevel(factor(Final_Setting), 'Human Debate'), family = 'binomial', data = judgments_online)
 
 summary(model2)
+
+model3 <- glm(Final_Accuracy ~ relevel(factor(Participant),'Sean Wang') + relevel(factor(Final_Setting), 'Human Debate') + `Untimed annotator context`, family = 'binomial', data = judgments_online)
+
+summary(model3)
 ```
 
 ### LMER
@@ -837,11 +1089,11 @@ ranova(random.intercept.model)
 
 ```{python quote_length}
 debater_turns = turns.merge(
-        debates[["Room name", "Question", "Story length",
+        judgments_online[["Room name", "Question", "Story length",
                  "Untimed annotator context","Untimed annotator context bins",
                  "Setting", "Final_Setting", "Final_Accuracy",
-                 "Is offline"]],
-        how="left",
+                 "Is offline","Number of judge continues","Participant"]],
+        how="inner",
         on="Room name",
     )
 
@@ -850,6 +1102,24 @@ debater_turns = turns.merge(
 # Filtering for specific roles
 debater_turns = debater_turns[debater_turns['Role (honest/dishonest)'].isin(['Honest debater', 'Dishonest debater'])]
 
+# Aggregating function to concatenate quote spans
+def custom_join(series):
+    return ' '.join(filter(lambda x: isinstance(x, str), series))
+
+
+aggregates = {
+    'Quote length': 'sum',
+    'Story length': 'mean',
+    'Number of judge continues': 'max',
+    'Participant quote span': custom_join
+}
+debater_turns_agg = debater_turns.groupby('Room name').agg(aggregates).reset_index()
+debater_turns_agg_simple = debater_turns_agg.merge(
+    debater_turns[['Room name', 'Setting', 'Final_Setting', 'Question', 'Untimed annotator context bins','Final_Accuracy', 'Participant_y']].drop_duplicates(),
+    on='Room name'
+)
+
+
 # Extracting the spans
 def extract_spans(span_str):
     """Extract numerical spans from the given string."""
@@ -857,6 +1127,20 @@ def extract_spans(span_str):
         return []
     spans = re.findall(r'<<(\d+)-(\d+)>>', span_str)
     return [(int(start), int(end)) for start, end in spans]
+
+# Functions to compute and compare spans across settings
+def extract_numbers_from_span(span_str):
+    spans = extract_spans(span_str)
+    numbers = set()
+    for start, end in spans:
+        numbers.update(range(int(start), int(end)+1))
+    return numbers
+def quote_length(span_str):
+  spans = extract_spans(span_str)
+  numbers = set()
+  for start, end in spans:
+    numbers.update(range(int(start), int(end)))
+  return numbers
 
 # Merging overlapping spans
 def merge_overlapping_spans(span_str):
@@ -876,9 +1160,11 @@ def merge_overlapping_spans(span_str):
             merged.append(current)
     return ' '.join(f'<<{start}-{end}>>' for start, end in merged)
 
-# Aggregating function to concatenate quote spans
-def custom_join(series):
-    return ' '.join(filter(lambda x: isinstance(x, str), series))
+
+debater_turns_agg_simple["quote_length"] = debater_turns_agg_simple["Participant quote span"].apply(lambda row: len(quote_length(row)))
+
+
+
 
 # Identify questions with more than one setting and filter out the debater_turns dataframe
 questions_with_multi_settings = debater_turns.groupby("Question").filter(lambda x: len(x["Setting"].unique()) > 1)["Question"].unique()
@@ -888,7 +1174,7 @@ debater_turns_filtered = debater_turns[debater_turns["Question"].isin(questions_
 aggregates = {
     'Quote length': 'sum',
     'Story length': 'mean',
-    'Num previous judging rounds': 'max',
+    'Number of judge continues': 'max',
     'Participant quote span': custom_join
 }
 # Grouping by 'Room name' and aggregating
@@ -900,25 +1186,11 @@ debater_turns_agg = debater_turns_filtered_by_room.merge(
     on='Room name'
 )
 
+debater_turns_agg["quote_length"] = debater_turns_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
+
 # Merge overlapping spans after the aggregation
 debater_turns_agg["merged_quote_spans"] = debater_turns_agg["Participant quote span"].apply(merge_overlapping_spans)
 
-# Functions to compute and compare spans across settings
-def extract_numbers_from_span(span_str):
-    spans = extract_spans(span_str)
-    numbers = set()
-    for start, end in spans:
-        numbers.update(range(int(start), int(end)+1))
-    return numbers
-
-def quote_length(span_str):
-  spans = extract_spans(span_str)
-  numbers = set()
-  for start, end in spans:
-    numbers.update(range(int(start), int(end)))
-  return numbers
-
-debater_turns_agg["quote_length"] = debater_turns_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
 #debater_turns_agg["merged_quote_length"] = debater_turns_agg["Participant quote span"].apply(lambda row: len(quote_length(row)))
 #print(debater_turns_agg["merged_quote_length"][1])
 #print((debater_turns_agg["merged_quote_length"]==debater_turns_agg["quote_length"]).value_counts())
@@ -1024,11 +1296,18 @@ print(filtered_no_outliers.groupby(['Setting 2','Acc_1','Acc_2'])['Span Differen
 ```
 
 ```{r quote_length graph, out.width = "100%", dpi = 300}
-debater_turns<- py$debater_turns_agg
+debater_turns<- py$debater_turns_agg_simple
+debater_turns$check <- paste0(debater_turns$Participant_y, debater_turns$`Room name`)
+sample.rooms <- read.csv("~/Downloads/sample-rooms-2.csv", header=FALSE)
+sample.rooms_samples <- sort(paste0(sample.rooms$V2, sample.rooms$V1))
+debater_turns <- subset(debater_turns, debater_turns$check %in% sample.rooms_samples)
+
 span_difference_debate_consultancies<-py$filtered_df
 ggplot(span_difference_debate_consultancies) +
   geom_boxplot(aes(x = `Setting 2`, y = `Span Difference Count`))
 
+final_table_desc_stats <- debater_turns %>% group_by(Final_Setting) %>% summarise(n = n(), rounds = mean(`Number of judge continues`), quotes = mean(quote_length), quotes.rounds = mean(quote_length/`Number of judge continues`))
+knitr::kable(final_table_desc_stats, booktab = TRUE, digits = 1, col.names = c("Setting", "n", "rounds per debate", "quoted tokens per debate", "tokens per round"))
 
 filtered_outliers <- debater_turns %>%
   group_by(Final_Setting) %>%
@@ -1041,6 +1320,8 @@ filtered_outliers <- debater_turns %>%
 ggplot(data = debater_turns) +
   geom_histogram(aes(x = quote_length, binwidth = 1)) +
   facet_wrap(~ Final_Setting)
+
+pairwise.t.test(debater_turns$quote_length, debater_turns$Final_Setting)
 
 
 ggplot(debater_turns) +
@@ -1063,10 +1344,37 @@ filtered %>%
   theme_minimal()
 debater_turns %>%
   ggplot() +
-  geom_boxplot(aes(x = Final_Setting, y = quote_length)) +
+  geom_violin(aes(x = Final_Setting, y = quote_length)) +
+  geom_dotplot(aes(x = Final_Setting, y = quote_length), binaxis= "y",
+               stackdir = "center",
+               dotsize = 0.5,
+               fill = 1) +
   labs(y = "Total Quote Length in a Debate/Consultancy (unique tokens)", x = "Setting")+
   theme_minimal()
-pairwise.wilcox.test(filtered$quote_length, filtered$Final_Setting)
+
+
+debater_turns %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(quote_length),
+            lower_ci = t.test(quote_length)$conf.int[1],
+            upper_ci = t.test(quote_length)$conf.int[2]) %>%
+  ggplot(aes(x = avg)) +
+  geom_histogram(data = debater_turns, aes(x = quote_length), binwidth = 100, alpha = 0.25) +
+  geom_vline(aes(xintercept = avg, color = Final_Setting), linetype="dashed", size=1) +
+  geom_rect(aes(xmin = lower_ci, xmax = upper_ci, ymin = -Inf, ymax = Inf, fill = Final_Setting), alpha = 0.25) +
+  labs(x = "Total Quote Length in a Debate/Consultancy (unique tokens) per Setting", 
+       y = "Frequency") +
+  facet_wrap(~Final_Setting, ncol = 1, strip.position = "left") +
+  theme_minimal() +
+  theme(
+    axis.title.y.right = element_text(angle = 90),
+  ) + 
+  scale_y_continuous(position = "right") +
+  theme(legend.position="none")
+
+
+
+pairwise.t.test(filtered$quote_length, filtered$Final_Setting)
 
 
 filtered %>% group_by(Final_Setting) %>% summarise(avground = median(quote_length))
@@ -1075,48 +1383,147 @@ debater_turns %>% group_by(Final_Setting) %>% summarise(avground = median(quote_
 
 ```{r rounds graph, out.width = "100%", dpi = 300}
 debater_turns <- debater_turns %>%
-  group_by(`Room name`,) %>%
-  mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %>%
+  group_by(`Room name`) %>%
+  mutate(`Max judge rounds by room` = max(`Number of judge continues`, na.rm = TRUE)) %>%
   ungroup()
+debater_turns <- debater_turns %>%
+  mutate(`Max judge rounds bin` = factor(ifelse(`Max judge rounds by room` > 7, "8", as.character(`Max judge rounds by room`))))
+
+table(debater_turns$`Max judge rounds bin`)
 ggplot(debater_turns) +
   geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
   labs(y = 'Max Judging Rounds') +
   theme_minimal() 
 
-pairwise.wilcox.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)
+pairwise.t.test(debater_turns$`Max judge rounds by room`, debater_turns$Final_Setting)
 
+table(round(debater_turns$quote_length, -2))
+debater_turns$quote_length_bin <- as.factor(round(debater_turns$quote_length, -2))
+debater_turns$quote_length_bin <- ordered(debater_turns$quote_length_bin, levels = paste(sort(as.integer(levels(debater_turns$quote_length_bin)))))
+table(debater_turns$quote_length_bin)
 
-filtered <- debater_turns %>%
-  group_by(Final_Setting) %>%
-  mutate(Q1 = quantile(`Max judge rounds by room`, 0.25),
-         Q3 = quantile(`Max judge rounds by room`, 0.75),
-         IQR = Q3 - Q1,
-         lower_bound = Q1 - 1.5 * IQR,
-         upper_bound = Q3 + 1.5 * IQR) %>%
-  filter(`Max judge rounds by room` >= lower_bound & `Max judge rounds by room` <= upper_bound) %>%
-  select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound)
-filtered %>%
-  ggplot() +
-  geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`), outlier.shape = NA) +
-  labs(y = "Rounds", x = "Setting")+
-  theme_minimal()
+# Define the color function and palette
+colfunc <- colorRampPalette(c(correctColor,"white",incorrectColor))
+palette <- colfunc(length(levels(as.factor(debater_turns$`Max judge rounds bin`))))
+
+# Plot
 debater_turns %>%
+  filter(`Max judge rounds bin` != "0") %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T),
+            lower_ci = t.test(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T)$conf.int[1],
+            upper_ci = t.test(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T)$conf.int[2],
+            n = n())
+debater_turns %>%
+  filter(`Max judge rounds bin` != "0" & !is.na(Final_Setting)) %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T),
+            lower_ci = t.test(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T)$conf.int[1],
+            upper_ci = t.test(as.numeric(levels(quote_length_bin))[quote_length_bin], na.rm = T)$conf.int[2]) %>%
+  ggplot(aes(x = avg)) +
+  geom_bar(data = debater_turns %>% filter(`Max judge rounds bin` != "0" & !is.na(Final_Setting)), 
+                 aes(x = as.numeric(levels(quote_length_bin))[quote_length_bin], fill = as.factor(`Max judge rounds bin`)), 
+                 position='stack', 
+                 color = "black",
+                 size = 0.1) +
+  #geom_vline(aes(xintercept = avg), size=1, color = "black") +
+  #geom_rect(aes(xmin = lower_ci, xmax = upper_ci, ymin = -Inf, ymax = Inf), alpha = 0.25, fill = "black") +
+  labs(x = "Total Unique Quote Tokens", 
+       y = "Frequency") +
+  facet_wrap(~Final_Setting, ncol = 1, strip.position = "left") +
+  scale_fill_manual(values = palette, name = "Total Rounds") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_bw(base_size = 16) +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_line(linewidth = 1),
+        panel.grid.minor.y = element_line(linewidth = 0.25))
+
+
+
+colfunc <- colorRampPalette(c(correctColor,"white",incorrectColor))
+palette <- colfunc(length(levels(as.factor(debater_turns$quote_length_bin))))
+debater_turns %>%
+  filter(`Max judge rounds by room` != "0" & !is.na(Final_Setting)) %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(`Max judge rounds by room`),
+            lower_ci = t.test(`Max judge rounds by room`)$conf.int[1],
+            upper_ci = t.test(`Max judge rounds by room`)$conf.int[2]) %>%
+  ggplot(aes(x = avg)) +
+  geom_histogram(data = debater_turns %>% filter(`Max judge rounds by room` != "0" & !is.na(Final_Setting)), 
+                 aes(x = `Max judge rounds by room`, fill = quote_length_bin), 
+                 position='stack', 
+                 binwidth = 1,
+                 color = "black",
+                 size = 0.1) +
+  geom_vline(aes(xintercept = avg), size=1, color = "black") +
+  geom_rect(aes(xmin = lower_ci, xmax = upper_ci, ymin = -Inf, ymax = Inf), alpha = 0.25, fill = "black") +
+  labs(x = "Total Rounds", 
+       y = "Frequency") +
+  facet_wrap(~Final_Setting, ncol = 1, strip.position = "left", scales = "free_y") +
+  scale_fill_manual(values = palette, name = "Total\nUnique\nTokens*") +
+  scale_x_continuous(breaks = 1:25, expand = expansion(mult = c(0, 0))) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_bw(base_size = 16) +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_line(linewidth = 1),
+        panel.grid.minor.y = element_line(linewidth = 0.25))
+
+
+
+
+debater_turns %>%
+  filter(`Max judge rounds by room` != "0" & !is.na(Final_Setting)) %>%
+  group_by(`Max judge rounds by room`, quote_length, Final_Setting) %>%
+  mutate(counts = n()) %>%
   ggplot() +
-  geom_boxplot(aes(x = Final_Setting, y = `Max judge rounds by room`)) +
-  labs(y = "Rounds", x = "Setting")+
-  theme_minimal()
-pairwise.wilcox.test(filtered$`Max judge rounds by room`, filtered$Final_Setting)
+  geom_point(aes(x = `Max judge rounds by room`, 
+                 y = quote_length,  
+                 color = Final_Setting,
+                 #fill = Final_Setting,
+                 size = counts,
+                 stroke = 1),
+             alpha = 0.65,
+             shape = 21) +
+  geom_smooth(aes(x = `Max judge rounds by room`, 
+                  y = quote_length, 
+                  color = Final_Setting,
+                  fill = Final_Setting),  # Added fill aesthetic here
+              method = "lm", 
+              linetype = "solid") +
+  labs(x = "Total Rounds", 
+       y = "Total Quote Tokens*",
+       color = "Settings:") +
+  guides(size = "none", fill = "none", 
+         color = guide_legend(override.aes = list(fill = "white"))) +
+  scale_x_continuous(breaks = 0:25) +
+  scale_color_manual(values = c("#32759b", "#a3d6d2", "#d14904", "#fdc998")) +
+  scale_fill_manual(values = c("#32759b", "#a3d6d2", "#d14904", "#fdc998")) +  # Set fill colors here
+  theme_bw(base_size = 16) +
+  theme(legend.position = "top")
 
-filtered %>% group_by(Final_Setting) %>% summarise(avground = mean(`Max judge rounds by room`))
 
+ggsave("efficiency_rounds_tokens.png", plot = last_plot(), width = 13, height = 8, bg = "white", dpi = 300)
+
+debater_turns %>%
+  filter(`Max judge rounds by room` != "0" & !is.na(Final_Setting)) %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(`Max judge rounds by room`),
+            lower_ci = t.test(`Max judge rounds by room`)$conf.int[1],
+            upper_ci = t.test(`Max judge rounds by room`)$conf.int[2])
+debater_turns %>%
+  filter(`Max judge rounds by room` & !is.na(Final_Setting)) %>%
+  group_by(Final_Setting) %>%
+  summarise(avg = mean(quote_length),
+            lower_ci = t.test(quote_length)$conf.int[1],
+            upper_ci = t.test(quote_length)$conf.int[2])
 ```
 
 ### Length of debates, stratified
 
 ```{python strat, out.width = "100%", dpi = 300}
 all_turns = turns.merge(
-        debates[["Room name", "Honest debater", "Dishonest debater", "Question", "Article ID",
-                 "Speed annotator accuracy","Untimed annotator context","Untimed annotator context bins","Is offline","Final_Setting", "Setting"]],
+        judgments_online[["Room name", "Honest debater", "Dishonest debater", "Question", "Article ID",
+                 "Speed annotator accuracy","Untimed annotator context","Untimed annotator context bins","Is offline","Final_Setting", "Setting","Number of judge continues"]],
         how="left",
         on="Room name",
     )
@@ -1125,53 +1532,20 @@ all_turns = turns.merge(
 
 ```{r strat ggplot, width='100%', dpi=300}
 strat <- py$all_turns
+strat <- subset(strat, strat$Role == "Judge")
 strat <- strat %>%
   group_by(`Room name`, Participant) %>%
-  mutate(`Max judge rounds by room` = max(`Num previous judging rounds`, na.rm = TRUE)) %>%
+  mutate(`Max judge rounds` = max(`Number of judge continues`, na.rm = TRUE)) %>%
   ungroup()
 
-generate_bins <- function(start, end, step) {
-  breaks <- seq(start, end + 1, by = step)  # Extend the sequence to end + 1 to include the end point
-  labels <- sapply(1:(length(breaks) - 1), function(i) {
-    lower_bound = breaks[i]+1
-    upper_bound = breaks[i+1]
-    return(paste0(lower_bound, "-", upper_bound))  # Return the range string
-  })
-  breaks <- c(-Inf, breaks, Inf)  # Extend the breaks vector to include Inf
-  labels <- c("0", labels, paste0(end+1,"+"))
-  return(list(breaks = breaks, labels = labels))
-}
-
-# Now use this function to generate the breaks and labels:
-bins <- generate_bins(0, 15, 3)
-
-# Now use these dynamically generated values in your mutate function:
-strat <- strat %>%
-  mutate(`Max judge rounds bin` = cut(`Max judge rounds by room`,
-                                       breaks = bins$breaks,
-                                       labels = bins$labels,
-                                       right = TRUE,
-                                       include.lowest = TRUE))
-strat <- strat %>%
-  mutate(`Max judge rounds bin` = cut(`Max judge rounds by room`, 
-                                       breaks = c(-Inf, 0, 3, 6, 9, 12, 15, Inf),
-                                       labels = c("0", "1-3", "4-6", "7-9", "10-12", "13-15", "16+"),
-                                       right = TRUE, 
-                                       include.lowest = TRUE))
 # Bootstrap mean function
 bootstrap_mean <- function(data, indices) {
   return(mean(data[indices], na.rm = TRUE))
 }
 
-# deprecated, keep original max round except if above cutoff
-strat <- strat %>%
-  mutate(`Max judge rounds bin` = ifelse(`Max judge rounds by room` > 5, "6+", as.character(`Max judge rounds by room`))) %>%
-  mutate(`Max judge rounds bin` = factor(`Max judge rounds bin`, 
-                                        levels = c("0", "1", "2", "3", "4", "5"),
-                                         ordered = TRUE))
 
 # Extract unique bin values
-unique_bins <- levels(strat$`Max judge rounds bin`)[2:length(levels(strat$`Max judge rounds bin`))]
+unique_bins <- levels(strat$`Max judge rounds`)[2:length(levels(strat$`Max judge rounds`))]
 
 # Create a decreasing sequence of alpha values
 alpha_values <- seq(1, 0.1, length.out = length(unique_bins))
@@ -1180,8 +1554,8 @@ alpha_values <- seq(1, 0.1, length.out = length(unique_bins))
 alpha_map <- setNames(alpha_values, unique_bins)
 
 strat %>%
-  filter(`Max judge rounds bin` != "0") %>%  # Remove entries with "0" bin
-  group_by(Final_Setting, `Num previous judging rounds`, `Max judge rounds bin`) %>%
+  filter(`Max judge rounds` != "0"& !is.na(Final_Setting)) %>% 
+  group_by(Final_Setting, `Number of judge continues`, `Max judge rounds`) %>%
   do({
     boot_result <- boot(data = .$`Probability correct`, statistic = bootstrap_mean, R = 1000)
     data.frame(
@@ -1190,33 +1564,149 @@ strat %>%
       upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
     )
   }) %>%
-  ggplot(aes(x = `Num previous judging rounds`, y = mean_accuracy, col = `Max judge rounds bin`)) +
-  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = `Max judge rounds bin`, group = `Max judge rounds bin`, color = NULL), alpha = 0.25) +
+  ggplot(aes(x = `Number of judge continues`, y = mean_accuracy, col = as.factor(`Max judge rounds`))) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = as.factor(`Max judge rounds`), group = as.factor(`Max judge rounds`), color = NULL), alpha = 0.25) +
   labs(title = "Average Probability Correct by Round, \nStratified by binned Max Round",
        x = "Round", 
        y = "Average Intermediate Probability Correct") +
-  geom_line(aes(alpha = `Max judge rounds bin`)) +
-  scale_alpha_manual(values = alpha_map) +
+  geom_line() +
+  #scale_alpha_manual(values = alpha_map) +
   facet_wrap(~Final_Setting) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  guides(alpha = "none")
 
 
 
+strat <- strat %>%
+  mutate(
+    `Max judge rounds bin` = case_when(
+      `Max judge rounds` <= 0 ~ "0",
+      `Max judge rounds` <= 2 ~ "1-2",
+      `Max judge rounds` <= 4 ~ "3-4",
+      `Max judge rounds` <= 6 ~ "5-6",
+      `Max judge rounds` <= 8 ~ "7-8",
+      TRUE ~ "9+"
+    )
+  ) %>%
+  mutate(
+    `Max judge rounds bin` = factor(
+      `Max judge rounds bin`,
+      levels = rev(c("0","1-2","3-4","5-6", "7-8","9+")),
+      ordered = TRUE
+    )
+  )
 
+table(strat$`Max judge rounds`)
+table(strat$`Max judge rounds bin`)
+strat %>%
+  filter(`Max judge rounds` != "0" & !is.na(Final_Setting)) %>%  # Remove entries with "0" bin
+  group_by(Final_Setting, `Number of judge continues`, `Max judge rounds`) %>%
+  do({
+    boot_result <- boot(data = .$`Probability correct`, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = `Number of judge continues`, y = mean_accuracy, col = as.factor(`Max judge rounds`))) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = as.factor(`Max judge rounds`), color = NULL), alpha = 0.2) +
+  labs(x = "Rounds", 
+       y = "Average Intermediate Probability Correct",
+       col = "Settings") +  # Rename the legend
+  geom_line() +
+  facet_wrap(~Final_Setting) +
+  guides(alpha = "none", color = "none", fill = guide_legend(nrow = 1)) +  # Specify that legend should be displayed in a single row
+  theme_bw(base_size = 16) +
+  theme(legend.position = "top")  # Specify legend position
+
+
+
+strat$reward_unpenalized <- log2(strat$`Probability correct`)
+strat %>%
+  filter(`Max judge rounds` != "0" & !is.na(Final_Setting)) %>%  # Remove entries with "0" bin
+  group_by(Final_Setting, `Number of judge continues`, `Max judge rounds bin`) %>%
+  do({
+    boot_result <- boot(data = .$reward_unpenalized, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = `Number of judge continues`, y = mean_accuracy, col = `Max judge rounds bin`)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = `Max judge rounds bin`, color = NULL), alpha = 0.2) +
+  labs(x = "Rounds", 
+       y = "Average Reward (unpenalized)",
+       col = "Settings") +  # Rename the legend
+  geom_line() +
+  facet_wrap(~Final_Setting) +
+  guides(alpha = "none", color = "none", fill = guide_legend(nrow = 1)) +  # Specify that legend should be displayed in a single row
+  theme_bw(base_size = 16) +
+  theme(legend.position = "top")  # Specify legend position
+
+colfunc <- colorRampPalette(c("grey", "black"), bias = 3)
+palette <- colfunc(length(c("0-1", "2-3", "4-5", "6-7")))
 
 strat %>%
-  group_by(Setting, `Num previous judging rounds`, `Max judge rounds by room`) %>%
-  summarize(`Average Probability Correct` = mean(`Probability correct`, na.rm = TRUE)) %>%
-  mutate(Completion = `Num previous judging rounds` / `Max judge rounds by room`) %>%
-  ggplot(aes(x = Completion, y = `Average Probability Correct`, col = as.factor(`Max judge rounds by room`), group = as.factor(`Max judge rounds by room`))) +
-  geom_line() +
-  labs(title = "Average Probability Correct by Percentage of Completion",
-       x = "Percentage of Completion", 
-       y = "Average Probability Correct") +
-  facet_wrap(~Setting) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  filter(`Max judge rounds` != "0" & !is.na(Final_Setting) &
+        `Max judge rounds bin` %in% c("1-2","3-4","5-6", "7-8")) %>%  # Remove entries with "9+" bin
+  group_by(Final_Setting, `Number of judge continues`, `Max judge rounds bin`) %>%
+  do({
+    boot_result <- boot(data = .$reward_unpenalized, statistic = bootstrap_mean, R = 1000)
+    data.frame(
+      mean_accuracy = mean(boot_result$t, na.rm = TRUE),
+      lower_ci = quantile(boot_result$t, 0.025, na.rm = TRUE),
+      upper_ci = quantile(boot_result$t, 0.975, na.rm = TRUE)
+    )
+  }) %>%
+  ggplot(aes(x = `Number of judge continues`, y = mean_accuracy, col = `Max judge rounds bin`)) +
+  #geom_hline(yintercept = -1, linetype="solid", color = "black") +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = `Max judge rounds bin`, color = NULL), alpha = 0.25) +
+  labs(x = "Rounds", 
+       y = "Average Reward (unpenalized)",
+       col = "Settings") +  # Rename the legend
+  geom_line(linewidth=1.5) +
+  facet_wrap(~Final_Setting) +
+  #scale_color_brewer(palette = "Set1") +
+  #scale_fill_brewer(palette = "Set1") +
+  scale_color_manual(values = c("#fdc998", "#a3d6d2","#32759b", "#d14904")) +
+  scale_fill_manual(values = c( "#fdc998", "#a3d6d2", "#32759b","#d14904")) +
+  guides(alpha = "none", fill = "none", color = guide_legend(nrow = 1, title = "Max Judge Rounds (binned)", override.aes = list(fill = "white"))) +  # Specify that legend should be displayed in a single row
+  theme_bw(base_size = 24) +
+  theme(legend.position = "top") +
+  coord_cartesian(ylim = c(-2, NA))
+
+
+
+ggsave("main_info_accuracy.png", plot = last_plot(), width = 13, height = 8, bg = "white", dpi = 300)
+
+
+# Split strat into subsets based on Max judge rounds
+strat_split <- split(strat, strat$`Max judge rounds bin`)
+
+# Define the analysis function
+analysis_function <- function(df) {
+  df %>%
+    filter(`Max judge rounds` != "0" & !is.na(Final_Setting)) %>%
+    group_by(Final_Setting, `Number of judge continues`) %>%
+    summarise(mean_prob_correct = mean(log2(`Probability correct`), na.rm = TRUE)) %>%
+    mutate(diff = mean_prob_correct - lag(mean_prob_correct)) %>%
+    summarise(mean_diff = mean(diff, na.rm=TRUE))
+}
+
+# Apply the analysis function to each subset
+results <- map(strat_split, analysis_function)
+
+# Get the unique values of 'Max judge rounds' (assuming they are in the same order as 'results')
+max_judge_rounds_values <- as.numeric(names(results))
+
+# Add a column to each data frame in 'results' to identify the value of 'Max judge rounds'
+results <- map2(results, max_judge_rounds_values, ~ mutate(.x, `Max judge rounds` = .y))
+
+# Combine the list of data frames into a single data frame
+final_result <- bind_rows(results)
 
 ```
 
@@ -1327,6 +1817,23 @@ judgments_online %>%
 ### Judge "Experience"
 
 ```{r, out.width = "100%", dpi = 300}
+test_trend <- judgments_online %>%
+  arrange(Final_Setting, Participant, `End time`) %>%
+  group_by(Final_Setting, `End time`) %>%
+  summarise(Final_Accuracy=as.numeric(Final_Accuracy)) %>%
+  spread(key = Final_Setting, value = Final_Accuracy) %>%
+  select(-`End time`)
+
+test_trend <- judgments_online %>%
+  arrange(Final_Setting, Participant, `End time`) %>%
+  group_by(Final_Setting, `End time`) %>%
+  summarise(Final_Accuracy=as.numeric(Final_Accuracy)) %>%
+  spread(key = Final_Setting, value = Final_Accuracy) %>%
+  select(-`End time`)
+
+library(funtimes)
+apply(test_trend, 2, function(x) notrend_test(na.omit(x))$p.value)
+
 judgments_online %>% 
   group_by(Final_Setting, Participant) %>%
   arrange(`End time`) %>%
@@ -1374,9 +1881,6 @@ S: (1) debaters didnt learn calibration -\> calibration over time? S: (2) dishon
 ```{r confident mistakes}
 library(ggplot2)
 library(dplyr)
-
-correctColor = "#008000"
-incorrectColor = "#DC143C"
 
 # Segregate confidently correct and confidently wrong
 judgments_online$confidence_label <- case_when(
